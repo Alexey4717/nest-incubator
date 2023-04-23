@@ -32,7 +32,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserController } from './modules/user/api/user.controller';
 import { UserService } from './modules/user/application/user.service';
-import { User } from './modules/user/models/user.schema';
+import { User } from './modules/user/models/User.schema';
 import { MongooseConfig } from './configs/mongoose.config';
 import { UserModule } from './modules/user/user.module';
 import { UserQueryRepository } from './modules/user/infrastructure/user-query.repository';
@@ -40,18 +40,56 @@ import { UserRepository } from './modules/user/infrastructure/user.repository';
 import { EmailService } from './services/email.service';
 import { EmailManager } from './managers/email.manager';
 import { EmailAdapter } from './adapters/email.adapter';
+import { PostModule } from './modules/post/post.module';
+import { BlogModule } from './modules/blog/blog.module';
+import { BlogService } from './modules/blog/application/blog.service';
+import { BlogRepository } from './modules/blog/infrastructure/blog.repository';
+import { BlogController } from './modules/blog/api/blog.controller';
+import { BlogQueryRepository } from './modules/blog/infrastructure/blog-query.repository';
+import { PostController } from './modules/post/api/post.controller';
+import { PostService } from './modules/post/application/post.service';
+import { PostRepository } from './modules/post/infrastructure/post.repository';
+import { PostQueryRepository } from './modules/post/infrastructure/post-query.repository';
+import { CommentModule } from './modules/comment/comment.module';
+import { CommentController } from './modules/comment/api/comment.controller';
+import { CommentService } from './modules/comment/application/comment.service';
+import { CommentQueryRepository } from './modules/comment/infrastructure/comment-query.repository';
+import { CommentRepository } from './modules/comment/infrastructure/comment.repository';
 
 const config = configurations();
 
-const controllers = [AppController, UserController];
+const controllers = [
+  AppController,
+  UserController,
+  BlogController,
+  PostController,
+  CommentController,
+];
 
 const guards = [];
 const validators = [];
-const services = [AppService, UserService, EmailService];
+const services = [
+  AppService,
+  UserService,
+  EmailService,
+  BlogService,
+  PostService,
+  CommentService,
+];
 const managers = [EmailManager];
 const adapters = [EmailAdapter];
-const queryRepositories = [UserQueryRepository];
-const repositories = [UserRepository];
+const queryRepositories = [
+  UserQueryRepository,
+  BlogQueryRepository,
+  PostQueryRepository,
+  CommentQueryRepository,
+];
+const repositories = [
+  UserRepository,
+  BlogRepository,
+  PostRepository,
+  CommentRepository,
+];
 
 @Module({
   imports: [
@@ -63,6 +101,9 @@ const repositories = [UserRepository];
     }),
     MongooseModule.forFeature([{ name: User.name, schema: User }]),
     UserModule,
+    PostModule,
+    BlogModule,
+    CommentModule,
   ],
   controllers,
   providers: [

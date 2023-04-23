@@ -16,3 +16,9 @@ export type CommonQueryParamsTypes = {
   pageNumber: number;
   pageSize: number;
 };
+
+export enum LikeStatus {
+  None = 'None',
+  Like = 'Like',
+  Dislike = 'Dislike',
+}

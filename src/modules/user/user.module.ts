@@ -4,7 +4,7 @@ import { UserController } from './api/user.controller';
 import { UserRepository } from './infrastructure/user.repository';
 import { UserQueryRepository } from './infrastructure/user-query.repository';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './models/user.schema';
+import { User, UserSchema } from './models/User.schema';
 // import { UserLoginExistsValidator } from '../../validators/user-login-exists.validator';
 // import { UserEmailExistsValidator } from '../../validators/user-email-exists.validator';
 

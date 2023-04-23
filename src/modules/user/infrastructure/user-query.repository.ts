@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from '../models/user.schema';
+import { User } from '../models/User.schema';
 import { Model, Types } from 'mongoose';
 import {
   CommonQueryParamsTypes,
