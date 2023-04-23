@@ -1,9 +1,8 @@
-import {LikeStatus} from "../../types/common";
-
+import { LikeStatus } from '../../../types/common';
 
 export type UpdatePostLikeStatusInputModel = {
-    /**
-     * Update likeStatus of post. Required.
-     */
-    likeStatus: LikeStatus,
+  /**
+   * Update likeStatus of post. Required.
+   */
+  likeStatus: LikeStatus;
 };

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
@@ -11,7 +11,7 @@ import { CommentQueryRepository } from './comment-query.repository';
 export class CommentRepository {
   constructor(
     @InjectModel(Comment.name) private CommentModel: Model<Comment>,
-    private readonly commentQueryRepository: CommentQueryRepository,
+    private commentQueryRepository: CommentQueryRepository,
   ) {}
 
   async createCommentInPost(newComment: TCommentDb): Promise<boolean> {

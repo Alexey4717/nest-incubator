@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +10,7 @@ import {
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { UserRepository } from '../infrastructure/user.repository';
 import { UserQueryRepository } from '../infrastructure/user-query.repository';
-import { EmailManager } from '../../../managers/email.manager';
+// import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
   login: string;
@@ -35,9 +35,8 @@ type CreateUserInputType = CreateUserInputModel & {
 @Injectable()
 export class UserService {
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly userQueryRepository: UserQueryRepository,
-    private readonly emailManager: EmailManager,
+    private userRepository: UserRepository,
+    private userQueryRepository: UserQueryRepository, // private emailManager: EmailManager,
   ) {}
 
   async createUser({
@@ -54,43 +53,43 @@ export class UserService {
     return await this.userRepository.createUser(newUser);
   }
 
-  async createUserAndSendConfirmationMessage({
-    login,
-    email,
-    password,
-  }: CreateUserInputModel): Promise<boolean> {
-    const newUser = await this._getNewUser({
-      login,
-      email,
-      password,
-      isConfirmed: false,
-    });
-    const createdUser = await this.userRepository.createUser(newUser);
-    try {
-      await this.emailManager.sendEmailConfirmationMessage({
-        user: createdUser,
-      });
-    } catch (error) {
-      console.error(`authService.registerUser error is occurred: ${error}`);
-      await this.userRepository.deleteUserById(createdUser._id.toString());
-      return false;
-    }
-    return Boolean(createdUser);
-  }
-
-  async resendConfirmationMessage(email: string): Promise<boolean> {
-    const foundUser = await this.userQueryRepository.findByLoginOrEmail(email);
-    if (!foundUser) return false;
-    const confirmationCode = uuidv4();
-    return await this.emailManager.sendEmailConfirmationMessage({
-      user: foundUser,
-      confirmationCode,
-    });
-  }
-
-  async recoveryPassword(email: string): Promise<boolean> {
-    return await this.emailManager.sendPasswordRecoveryMessage(email);
-  }
+  // async createUserAndSendConfirmationMessage({
+  //   login,
+  //   email,
+  //   password,
+  // }: CreateUserInputModel): Promise<boolean> {
+  //   const newUser = await this._getNewUser({
+  //     login,
+  //     email,
+  //     password,
+  //     isConfirmed: false,
+  //   });
+  //   const createdUser = await this.userRepository.createUser(newUser);
+  //   try {
+  //     await this.emailManager.sendEmailConfirmationMessage({
+  //       user: createdUser,
+  //     });
+  //   } catch (error) {
+  //     console.error(`authService.registerUser error is occurred: ${error}`);
+  //     await this.userRepository.deleteUserById(createdUser._id.toString());
+  //     return false;
+  //   }
+  //   return Boolean(createdUser);
+  // }
+  //
+  // async resendConfirmationMessage(email: string): Promise<boolean> {
+  //   const foundUser = await this.userQueryRepository.findByLoginOrEmail(email);
+  //   if (!foundUser) return false;
+  //   const confirmationCode = uuidv4();
+  //   return await this.emailManager.sendEmailConfirmationMessage({
+  //     user: foundUser,
+  //     confirmationCode,
+  //   });
+  // }
+  //
+  // async recoveryPassword(email: string): Promise<boolean> {
+  //   return await this.emailManager.sendPasswordRecoveryMessage(email);
+  // }
 
   async confirmEmail(code: string): Promise<boolean> {
     const user = await this.userQueryRepository.findByConfirmationCode(code);

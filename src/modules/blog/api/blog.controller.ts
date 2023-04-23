@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { constants } from 'http2';
@@ -28,8 +29,8 @@ import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
 @Controller('posts')
 export class BlogController {
   constructor(
-    private readonly blogService: BlogService,
-    private readonly blogQueryRepository: BlogQueryRepository,
+    private blogService: BlogService,
+    private blogQueryRepository: BlogQueryRepository,
   ) {}
 
   @Get()

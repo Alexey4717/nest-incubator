@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ObjectId } from 'mongodb';
@@ -31,8 +31,8 @@ interface UpdateLikeStatusPostArgs {
 @Injectable()
 export class BlogService {
   constructor(
-    private readonly blogRepository: BlogRepository,
-    private readonly blogQueryRepository: BlogQueryRepository,
+    private blogRepository: BlogRepository,
+    private blogQueryRepository: BlogQueryRepository,
     @InjectModel(Post.name) private PostModel: Model<Post>,
   ) {}
 

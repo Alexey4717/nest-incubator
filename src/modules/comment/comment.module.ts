@@ -5,8 +5,12 @@ import { CommentController } from './api/comment.controller';
 import { CommentService } from './application/comment.service';
 import { CommentQueryRepository } from './infrastructure/comment-query.repository';
 import { CommentRepository } from './infrastructure/comment.repository';
+import { Post, PostSchema } from '../post/models/Post.schema';
 
-const schemas = [{ name: Comment.name, schema: CommentSchema }];
+const schemas = [
+  { name: Comment.name, schema: CommentSchema },
+  { name: Post.name, schema: PostSchema },
+];
 
 @Module({
   imports: [MongooseModule.forFeature(schemas)],

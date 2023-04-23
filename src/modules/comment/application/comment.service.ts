@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { LikeStatus } from '../../../types/common';
@@ -38,8 +38,8 @@ interface UpdateCommentLikeStatusArgs {
 @Injectable()
 export class CommentService {
   constructor(
-    private readonly commentQueryRepository: CommentQueryRepository,
-    private readonly commentRepository: CommentRepository,
+    private commentQueryRepository: CommentQueryRepository,
+    private commentRepository: CommentRepository,
     @InjectModel(Post.name) private PostModel: Model<Post>,
   ) {}
 
@@ -59,7 +59,6 @@ export class CommentService {
 
   async createCommentInPost(
     input: CreateCommentInput,
-    // ): Promise<GetCommentOutputModelFromMongoDB | null> {
   ): Promise<GetMappedCommentOutputModel | null> {
     const { postId, content, userId, userLogin } = input;
 

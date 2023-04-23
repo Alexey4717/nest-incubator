@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import {
@@ -10,6 +10,8 @@ import { LikeStatus } from '../../../types/common';
 import { Post } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostRepository } from '../infrastructure/post.repository';
+import { Blog } from '../../blog/models/Blog.schema';
+import { ObjectId } from 'mongodb';
 
 interface UpdatePostArgs {
   id: string;
@@ -26,8 +28,9 @@ interface UpdateLikeStatusPostArgs {
 @Injectable()
 export class PostService {
   constructor(
-    private readonly postRepository: PostRepository,
+    private postRepository: PostRepository,
     @InjectModel(Post.name) private PostModel: Model<Post>,
+    @InjectModel(Blog.name) private BlogModel: Model<Blog>,
   ) {}
 
   _mapPostToViewType(post: TPostDb): GetMappedPostOutputModel {
@@ -53,7 +56,9 @@ export class PostService {
   ): Promise<GetMappedPostOutputModel | null> {
     const { title, shortDescription, blogId, content } = input || {};
 
-    const foundBlog = await blogsQueryRepository.findBlogById(blogId);
+    const foundBlog = await this.BlogModel.findOne({
+      _id: new ObjectId(blogId),
+    });
 
     if (!foundBlog) return null;
 

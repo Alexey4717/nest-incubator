@@ -1,18 +1,15 @@
 // import { Injectable } from '@nestjs/common';
+// import { EmailAdapter } from './email.adapter';
 //
-// // import { EmailAdapter } from '../modules/email/email.adapter';
-//
-// type SendEmailConfirmationMessageInputType = {
+// interface SendEmailConfirmationMessageInputType {
 //   email: string;
 //   subject: string;
 //   message: string;
-// };
+// }
 //
 // @Injectable()
 // export class EmailService {
-//   constructor(
-//     // private readonly emailAdapter: EmailAdapter
-//   ) {}
+//   constructor(private readonly emailAdapter: EmailAdapter) {}
 //
 //   async sendEmailConfirmationMessage({
 //     email,

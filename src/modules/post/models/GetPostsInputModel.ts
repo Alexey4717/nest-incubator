@@ -1,5 +1,5 @@
 import { GetPostOutputModel } from './GetPostOutputModel';
-import { SortDirections } from '../../types/common';
+import { SortDirections } from '../../../types/common';
 
 export type SortPostsBy = keyof GetPostOutputModel;
 

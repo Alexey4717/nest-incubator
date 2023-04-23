@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { constants } from 'http2';
@@ -30,10 +31,12 @@ import { getMappedCommentViewModel } from '../../comment/helpers';
 @Controller('posts')
 export class PostController {
   constructor(
-    private readonly postService: PostService,
-    private readonly postQueryRepository: PostQueryRepository,
-    private readonly commentQueryRepository: CommentQueryRepository,
-    private readonly commentService: CommentService,
+    private postService: PostService,
+    private postQueryRepository: PostQueryRepository,
+    @Inject(CommentQueryRepository.name)
+    protected commentQueryRepository: CommentQueryRepository,
+    @Inject(CommentService.name)
+    protected commentService: CommentService,
   ) {}
 
   @Get()

@@ -7,18 +7,24 @@ import { PostRepository } from './infrastructure/post.repository';
 import { PostQueryRepository } from './infrastructure/post-query.repository';
 import { CommentQueryRepository } from '../comment/infrastructure/comment-query.repository';
 import { CommentService } from '../comment/application/comment.service';
+import { Blog, BlogSchema } from '../blog/models/Blog.schema';
+import { CommentRepository } from '../comment/infrastructure/comment.repository';
 
-const schemas = [{ name: Post.name, schema: PostSchema }];
+const schemas = [
+  { name: Post.name, schema: PostSchema },
+  { name: Blog.name, schema: BlogSchema },
+];
 
 @Module({
   imports: [MongooseModule.forFeature(schemas)],
   controllers: [PostController],
   providers: [
-    PostService,
+    CommentRepository,
+    CommentQueryRepository,
     CommentService,
+    PostService,
     PostRepository,
     PostQueryRepository,
-    CommentQueryRepository,
   ],
 })
 export class PostModule {}

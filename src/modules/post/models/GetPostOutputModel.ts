@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { LikeStatus } from '../../types/common';
+import { LikeStatus } from '../../../types/common';
 
 export type NewestLikeType = {
   addedAt: string;

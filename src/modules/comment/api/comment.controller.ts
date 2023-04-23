@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { constants } from 'http2';
@@ -21,8 +22,8 @@ import { CommentService } from '../application/comment.service';
 @Controller('posts')
 export class CommentController {
   constructor(
-    private readonly commentService: CommentService,
-    private readonly commentQueryRepository: CommentQueryRepository,
+    private commentService: CommentService,
+    private commentQueryRepository: CommentQueryRepository,
   ) {}
 
   @Get()

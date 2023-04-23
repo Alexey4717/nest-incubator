@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { UserService } from '../application/user.service';
@@ -21,8 +22,8 @@ import { CreateUserInputModel } from '../models/CreateUserInputModel';
 @Controller('users')
 export class UserController {
   constructor(
-    private readonly userService: UserService,
-    private readonly userQueryRepository: UserQueryRepository,
+    private userService: UserService,
+    private userQueryRepository: UserQueryRepository,
   ) {}
 
   @Get()
