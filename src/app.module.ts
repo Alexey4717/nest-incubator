@@ -52,7 +52,7 @@ const validators = [];
   imports: [
     configModule,
     MongooseModule.forRootAsync({ useClass: MongooseConfig }),
-    MongooseModule.forRoot(process.env.MONGO_URI),
+    // MongooseModule.forRoot(process.env.MONGO_URI),
     ...modules,
   ],
   controllers: [AppController],

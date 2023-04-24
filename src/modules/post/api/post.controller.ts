@@ -33,9 +33,7 @@ export class PostController {
   constructor(
     private postService: PostService,
     private postQueryRepository: PostQueryRepository,
-    @Inject(CommentQueryRepository.name)
     protected commentQueryRepository: CommentQueryRepository,
-    @Inject(CommentService.name)
     protected commentService: CommentService,
   ) {}
 

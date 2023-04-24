@@ -9,10 +9,12 @@ import { CommentQueryRepository } from '../comment/infrastructure/comment-query.
 import { CommentService } from '../comment/application/comment.service';
 import { Blog, BlogSchema } from '../blog/models/Blog.schema';
 import { CommentRepository } from '../comment/infrastructure/comment.repository';
+import { Comment, CommentSchema } from '../comment/models/Comment.schema';
 
 const schemas = [
   { name: Post.name, schema: PostSchema },
   { name: Blog.name, schema: BlogSchema },
+  { name: Comment.name, schema: CommentSchema },
 ];
 
 @Module({
