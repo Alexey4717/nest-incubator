@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { User } from '../models/User.schema';
 import { Model, Types } from 'mongoose';
+import { User, UserDocument } from '../models/User.schema';
 import {
   CommonQueryParamsTypes,
   Paginator,
@@ -19,7 +19,7 @@ type GetUsersArgs = CommonQueryParamsTypes & {
 
 @Injectable()
 export class UserQueryRepository {
-  constructor(@InjectModel(User.name) private UserModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getUsers({
     searchLoginTerm,

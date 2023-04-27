@@ -8,7 +8,7 @@ import {
 } from '../models/GetCommentOutputModel';
 import { CommentManageStatuses } from '../types';
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
-import { Post } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/Post.schema';
 import { ObjectId } from 'mongodb';
 import { CommentRepository } from '../infrastructure/comment.repository';
 
@@ -40,7 +40,7 @@ export class CommentService {
   constructor(
     private commentQueryRepository: CommentQueryRepository,
     private commentRepository: CommentRepository,
-    @InjectModel(Post.name) private PostModel: Model<Post>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
   ) {}
 
   _mapCommentToViewType(comment: TCommentDb): GetMappedCommentOutputModel {

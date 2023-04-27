@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Post } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { LikeStatus } from '../../../types/common';
 import { TReactions } from '../models/GetPostOutputModel';
@@ -22,7 +22,7 @@ interface UpdateLikeStatusPostArgs {
 @Injectable()
 export class PostRepository {
   constructor(
-    @InjectModel(Post.name) private PostModel: Model<Post>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
     private postQueryRepository: PostQueryRepository,
   ) {}
 

@@ -7,10 +7,10 @@ import {
 } from '../models/GetPostOutputModel';
 import { CreatePostInputModel } from '../models/CreatePostInputModel';
 import { LikeStatus } from '../../../types/common';
-import { Post } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostRepository } from '../infrastructure/post.repository';
-import { Blog } from '../../blog/models/Blog.schema';
+import { Blog, BlogDocument } from '../../blog/models/Blog.schema';
 import { ObjectId } from 'mongodb';
 
 interface UpdatePostArgs {
@@ -29,8 +29,8 @@ interface UpdateLikeStatusPostArgs {
 export class PostService {
   constructor(
     private postRepository: PostRepository,
-    @InjectModel(Post.name) private PostModel: Model<Post>,
-    @InjectModel(Blog.name) private BlogModel: Model<Blog>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
+    @InjectModel(Blog.name) private BlogModel: Model<BlogDocument>,
   ) {}
 
   _mapPostToViewType(post: TPostDb): GetMappedPostOutputModel {

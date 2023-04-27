@@ -8,7 +8,7 @@ import {
 import { TPostDb } from '../models/GetPostOutputModel';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/Post.schema';
 import { Model, Types } from 'mongoose';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
@@ -17,7 +17,7 @@ type GetPostsArgs = CommonQueryParamsTypes & {
 
 Injectable();
 export class PostQueryRepository {
-  constructor(@InjectModel(Post.name) private PostModel: Model<Post>) {}
+  constructor(@InjectModel(Post.name) private PostModel: Model<PostDocument>) {}
 
   async getPosts({
     sortBy,

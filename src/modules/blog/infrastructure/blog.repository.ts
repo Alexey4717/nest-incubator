@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Post } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/Post.schema';
 import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import { GetBlogOutputModel } from '../models/GetBlogOutputModel';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { ObjectId } from 'mongodb';
-import { Blog } from '../models/Blog.schema';
+import { Blog, BlogDocument } from '../models/Blog.schema';
 
 interface UpdateBlogArgs {
   id: string;
@@ -16,8 +16,8 @@ interface UpdateBlogArgs {
 @Injectable()
 export class BlogRepository {
   constructor(
-    @InjectModel(Post.name) private PostModel: Model<Post>,
-    @InjectModel(Blog.name) private BlogModel: Model<Blog>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
+    @InjectModel(Blog.name) private BlogModel: Model<BlogDocument>,
   ) {}
 
   async createBlog(newBlog: GetBlogOutputModel): Promise<boolean> {

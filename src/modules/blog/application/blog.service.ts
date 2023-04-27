@@ -8,7 +8,7 @@ import {
 } from '../../post/models/GetPostOutputModel';
 import { CreatePostInputModel } from '../../post/models/CreatePostInputModel';
 import { LikeStatus } from '../../../types/common';
-import { Post } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/Post.schema';
 import { CreateBlogInputModel } from '../models/CreateBlogInputModel';
 import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
 import { CreatePostInBlogInputAndQueryModel } from '../models/CreatePostInBlogInputModel';
@@ -33,7 +33,7 @@ export class BlogService {
   constructor(
     private blogRepository: BlogRepository,
     private blogQueryRepository: BlogQueryRepository,
-    @InjectModel(Post.name) private PostModel: Model<Post>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
   ) {}
 
   async createBlog(

@@ -8,16 +8,16 @@ import {
 } from '../../../types/common';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/Post.schema';
 import { GetPostsInputModel } from '../models/GetPostCommentsInputModel';
-import { Comment } from '../models/Comment.schema';
+import { Comment, CommentDocument } from '../models/Comment.schema';
 import { TCommentDb } from '../models/GetCommentOutputModel';
 
 Injectable();
 export class CommentQueryRepository {
   constructor(
-    @InjectModel(Post.name) private PostModel: Model<Post>,
-    @InjectModel(Comment.name) private CommentModel: Model<Comment>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
+    @InjectModel(Comment.name) private CommentModel: Model<CommentDocument>,
   ) {}
 
   async getPostComments({

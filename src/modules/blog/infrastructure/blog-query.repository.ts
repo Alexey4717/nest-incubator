@@ -9,10 +9,10 @@ import {
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/Post.schema';
 import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
 import { ObjectId } from 'mongodb';
-import { Blog } from '../models/Blog.schema';
+import { Blog, BlogDocument } from '../models/Blog.schema';
 import { SortBlogsBy } from '../models/GetBlogsInputModel';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
@@ -31,8 +31,8 @@ type GetBlogsArgs = CommonQueryParamsTypes & {
 Injectable();
 export class BlogQueryRepository {
   constructor(
-    @InjectModel(Post.name) private PostModel: Model<Post>,
-    @InjectModel(Blog.name) private BlogModel: Model<Blog>,
+    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
+    @InjectModel(Blog.name) private BlogModel: Model<BlogDocument>,
   ) {}
 
   async getBlogs({
