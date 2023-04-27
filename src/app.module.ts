@@ -35,9 +35,11 @@ import { UserModule } from './modules/user/user.module';
 import { PostModule } from './modules/post/post.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { CommentModule } from './modules/comment/comment.module';
+import { TestingModule } from './modules/testing/testing.module';
 // import { EmailModule } from './modules/email/email.module';
 
 const modules = [
+  TestingModule,
   UserModule,
   PostModule,
   BlogModule,
