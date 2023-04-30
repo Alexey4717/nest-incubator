@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   Inject,
+  NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { constants } from 'http2';
@@ -45,11 +46,11 @@ export class PostController {
     //   : undefined;
 
     const resData = await this.postQueryRepository.getPosts({
-      sortBy: (query.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query.sortDirection?.toString() ||
+      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection?.toString() ||
         SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query.pageNumber || 1), // by-default 1
-      pageSize: +(query.pageSize || 10), // by-default 10
+      pageNumber: +(query?.pageNumber || 1), // by-default 1
+      pageSize: +(query?.pageSize || 10), // by-default 10
     });
     const { pagesCount, page, pageSize, totalCount, items } = resData || {};
     // const itemsWithCurrentUserId = items.map((item) => ({
@@ -74,10 +75,7 @@ export class PostController {
     //   ? new ObjectId(req.context.user?._id).toString()
     //   : undefined;
 
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!resData) throw new NotFoundException();
     return getMappedPostViewModel({
       ...resData,
       // currentUserId,
@@ -94,18 +92,15 @@ export class PostController {
     const postId = params.postId;
 
     const resData = await this.commentQueryRepository.getPostComments({
-      sortBy: (query.sortBy?.toString() || 'createdAt') as SortPostCommentsBy, // by-default createdAt
-      sortDirection: (query.sortDirection?.toString() ||
+      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostCommentsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection?.toString() ||
         SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query.pageNumber || 1), // by-default 1
-      pageSize: +(query.pageSize || 10), // by-default 10
+      pageNumber: +(query?.pageNumber || 1), // by-default 1
+      pageSize: +(query?.pageSize || 10), // by-default 10
       postId,
     });
 
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!resData) throw new NotFoundException();
 
     const { pagesCount, page, pageSize, totalCount, items } = resData || {};
 
@@ -139,10 +134,7 @@ export class PostController {
     const createdPost = await this.postService.createPost(body);
 
     // Если указан невалидный blogId
-    // if (!createdPost) {
-    //   res.sendStatus(constants.HTTP_STATUS_BAD_REQUEST);
-    //   return;
-    // }
+    if (!createdPost) throw new NotFoundException();
     return createdPost;
   }
 
@@ -168,10 +160,7 @@ export class PostController {
     });
 
     // Если не найден пост
-    // if (!createdCommentInPost) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!createdCommentInPost) throw new NotFoundException();
 
     return createdCommentInPost;
   }
@@ -186,10 +175,7 @@ export class PostController {
       id: params.id,
       input: body,
     });
-    // if (!isPostUpdated) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!isPostUpdated) throw new NotFoundException();
 
     return isPostUpdated;
   }
@@ -205,17 +191,14 @@ export class PostController {
 
     const isPostUpdated = await this.postService.updatePostLikeStatus({
       postId: params.postId,
-      likeStatus: body.likeStatus,
+      likeStatus: body?.likeStatus,
       // userId,
       // userLogin,
       userId: undefined,
       userLogin: undefined,
     });
 
-    // if (!isPostUpdated) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!isPostUpdated) throw new NotFoundException();
 
     return isPostUpdated;
   }
@@ -224,10 +207,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deletePost(@Param() params: GetPostInputModel) {
     const resData = await this.postService.deletePostById(params.id);
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!resData) throw new NotFoundException();
     return resData;
   }
 }

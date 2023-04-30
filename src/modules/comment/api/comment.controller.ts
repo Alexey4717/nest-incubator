@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   Inject,
+  NotFoundException,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { getMappedCommentViewModel } from '../helpers';
@@ -17,6 +18,7 @@ import { GetCommentInputModel } from '../models/GetCommentInputModel';
 import { UpdateCommentInputModel } from '../models/UpdateCommentInputModel';
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
 import { CommentService } from '../application/comment.service';
+import { CommentManageStatuses } from '../types';
 
 @Controller('comments')
 export class CommentController {
@@ -31,10 +33,8 @@ export class CommentController {
     const foundComment = await this.commentQueryRepository.getCommentById(
       params.id,
     );
-    // if (!foundComment) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND)
-    //   return;
-    // }
+
+    if (!foundComment) throw new NotFoundException();
 
     // const currentUserId = req?.context?.user?._id ? new ObjectId(req?.context?.user?._id).toString() : undefined;
     // const foundReactionByUserId = foundComment.reactions.find((reaction) => reaction.userId === currentUserId);
@@ -57,7 +57,7 @@ export class CommentController {
     //   return
     // }
 
-    const commentIsUpdated = await this.commentService.updateCommentById({
+    const result = await this.commentService.updateCommentById({
       // userId: context.user._id.toString(),
       userId: undefined,
       id: params.commentId,
@@ -69,12 +69,10 @@ export class CommentController {
     //   return;
     // }
     //
-    // if (result === CommentManageStatuses.NOT_FOUND) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (result === CommentManageStatuses.NOT_FOUND)
+      throw new NotFoundException();
 
-    return commentIsUpdated;
+    return result;
   }
 
   @Delete(':commentId')
@@ -85,7 +83,7 @@ export class CommentController {
     //   return
     // }
 
-    const commentIsDeleted = await this.commentService.deleteCommentById({
+    const result = await this.commentService.deleteCommentById({
       commentId: params.commentId,
       // userId: context.user._id.toString(),
       userId: undefined,
@@ -96,12 +94,10 @@ export class CommentController {
     //   return;
     // }
 
-    // if (result === CommentManageStatuses.NOT_FOUND) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (result === CommentManageStatuses.NOT_FOUND)
+      throw new NotFoundException();
 
-    return commentIsDeleted;
+    return result;
   }
 
   @Put(':commentId')
@@ -123,10 +119,7 @@ export class CommentController {
         likeStatus: body.likeStatus,
       });
 
-    // if (!result) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!likeStatusIsUpdated) throw new NotFoundException();
 
     return likeStatusIsUpdated;
   }

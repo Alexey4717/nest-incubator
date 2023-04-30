@@ -8,6 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
+  NotFoundException,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { getMappedBlogViewModel } from '../helpers';
@@ -56,10 +57,7 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getBlog(@Param() params: { id: string }) {
     const resData = await this.blogQueryRepository.findBlogById(params.id);
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!resData) throw new NotFoundException();
     return getMappedBlogViewModel(resData);
   }
 
@@ -74,18 +72,15 @@ export class BlogController {
     //   : undefined;
 
     const resData = await this.blogQueryRepository.getPostsInBlog({
-      blogId: params.blogId,
-      sortBy: (query.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query.sortDirection?.toString() ||
+      blogId: params?.blogId,
+      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection?.toString() ||
         SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query.pageNumber || 1), // by-default 1
-      pageSize: +(query.pageSize || 10), // by-default 10
+      pageNumber: +(query?.pageNumber || 1), // by-default 1
+      pageSize: +(query?.pageSize || 10), // by-default 10
     });
 
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!resData) throw new NotFoundException();
 
     const { pagesCount, page, pageSize, totalCount, items } = resData || {};
 
@@ -125,10 +120,8 @@ export class BlogController {
     });
 
     // Если по какой-то причине не найден блог
-    // if (!createdPostInBlog) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND)
-    //   return;
-    // }
+    if (!createdPostInBlog) throw new NotFoundException();
+
     return getMappedPostViewModel({
       ...createdPostInBlog,
       // currentUserId
@@ -145,10 +138,8 @@ export class BlogController {
       id: params.id,
       input: body,
     });
-    // if (!isBlogUpdated) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+
+    if (!isBlogUpdated) throw new NotFoundException();
 
     return isBlogUpdated;
   }
@@ -157,10 +148,7 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }) {
     const isBlogDeleted = await this.blogService.deleteBlogById(params.id);
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
+    if (!isBlogDeleted) throw new NotFoundException();
     return isBlogDeleted;
   }
 }
