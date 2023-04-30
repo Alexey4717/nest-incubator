@@ -41,7 +41,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPosts(@Query() query: GetPostsInputModel) {
     // const currentUserId = req?.context?.user?._id
-    //   ? new Types.ObjectId(req.context.user?._id).toString()
+    //   ? new ObjectId(req.context.user?._id).toString()
     //   : undefined;
 
     const resData = await this.postQueryRepository.getPosts({
@@ -66,7 +66,7 @@ export class PostController {
     };
   }
 
-  @Get()
+  @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPost(@Param() params: GetPostInputModel) {
     const resData = await this.postQueryRepository.findPostById(params.id);
@@ -84,7 +84,7 @@ export class PostController {
     });
   }
 
-  @Get()
+  @Get(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getCommentsOfPost(
     @Param() params: { postId: string },
@@ -146,7 +146,7 @@ export class PostController {
     return createdPost;
   }
 
-  @Post()
+  @Post(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createCommentInPost(
     @Param() params: { postId: string },
@@ -176,7 +176,7 @@ export class PostController {
     return createdCommentInPost;
   }
 
-  @Put()
+  @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePost(
     @Param() params: GetPostInputModel,
@@ -194,7 +194,7 @@ export class PostController {
     return isPostUpdated;
   }
 
-  @Put()
+  @Put(':postId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePostLikeStatus(
     @Param() params: GetPostLikeStatusInputModel,
@@ -220,7 +220,7 @@ export class PostController {
     return isPostUpdated;
   }
 
-  @Delete()
+  @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deletePost(@Param() params: GetPostInputModel) {
     const resData = await this.postService.deletePostById(params.id);

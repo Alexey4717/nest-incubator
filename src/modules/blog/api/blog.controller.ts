@@ -8,9 +8,7 @@ import {
   Body,
   Query,
   HttpCode,
-  Inject,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
 import { constants } from 'http2';
 import { getMappedBlogViewModel } from '../helpers';
 import { Paginator, SortDirections } from '../../../types/common';
@@ -26,7 +24,7 @@ import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import { BlogService } from '../application/blog.service';
 import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
 
-@Controller('posts')
+@Controller('blogs')
 export class BlogController {
   constructor(
     private blogService: BlogService,
@@ -37,12 +35,12 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getBlogs(@Query() query: GetBlogsInputModel) {
     const resData = await this.blogQueryRepository.getBlogs({
-      searchNameTerm: query.searchNameTerm?.toString() || null, // by-default null
-      sortBy: (query.sortBy?.toString() || 'createdAt') as SortBlogsBy, // by-default createdAt
-      sortDirection: (query.sortDirection?.toString() ||
+      searchNameTerm: query?.searchNameTerm?.toString() || null, // by-default null
+      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortBlogsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection?.toString() ||
         SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query.pageNumber || 1), // by-default 1,
-      pageSize: +(query.pageSize || 10), // by-default 10
+      pageNumber: +(query?.pageNumber || 1), // by-default 1,
+      pageSize: +(query?.pageSize || 10), // by-default 10
     });
     const { pagesCount, page, pageSize, totalCount, items } = resData || {};
     return {
@@ -54,7 +52,7 @@ export class BlogController {
     };
   }
 
-  @Get()
+  @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getBlog(@Param() params: { id: string }) {
     const resData = await this.blogQueryRepository.findBlogById(params.id);
@@ -65,10 +63,10 @@ export class BlogController {
     return getMappedBlogViewModel(resData);
   }
 
-  @Get()
+  @Get(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPostsOfBlog(
-    @Param() params: { id: string },
+    @Param() params: { blogId: string },
     @Query() query: GetPostsInputModel,
   ) {
     // const currentUserId = req?.context?.user?._id
@@ -76,7 +74,7 @@ export class BlogController {
     //   : undefined;
 
     const resData = await this.blogQueryRepository.getPostsInBlog({
-      blogId: params.id,
+      blogId: params.blogId,
       sortBy: (query.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
       sortDirection: (query.sortDirection?.toString() ||
         SortDirections.desc) as SortDirections, // by-default desc
@@ -111,10 +109,10 @@ export class BlogController {
     return getMappedBlogViewModel(createdBlog);
   }
 
-  @Post()
+  @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPostInBlog(
-    @Param() params: { id: string },
+    @Param() params: { blogId: string },
     @Body() body: CreatePostInBlogInputModel,
   ) {
     // const currentUserId = req?.context?.user?._id
@@ -122,7 +120,7 @@ export class BlogController {
     //   : undefined;
 
     const createdPostInBlog = await this.blogService.createPostInBlog({
-      blogId: params.id,
+      blogId: params?.blogId,
       input: body,
     });
 
@@ -137,7 +135,7 @@ export class BlogController {
     });
   }
 
-  @Put()
+  @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateBlog(
     @Param() params: { id: string },
@@ -155,7 +153,7 @@ export class BlogController {
     return isBlogUpdated;
   }
 
-  @Delete()
+  @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }) {
     const isBlogDeleted = await this.blogService.deleteBlogById(params.id);

@@ -70,7 +70,7 @@ export class CommentService {
 
     // TODO add dto
     const newComment: TCommentDb = {
-      _id: new Types.ObjectId(),
+      _id: new ObjectId(),
       postId,
       content,
       commentatorInfo: { userId, userLogin },

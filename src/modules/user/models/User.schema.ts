@@ -1,9 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, {
-  HydratedDocument,
-  Schema as MongooseSchema,
-  Types,
-} from 'mongoose';
+import { HydratedDocument } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 @Schema({ _id: false, id: false, versionKey: false })
 class AccountData {
@@ -54,9 +51,9 @@ const RecoveryDataSchema = SchemaFactory.createForClass(RecoveryData);
 @Schema()
 export class User {
   @Prop({
-    type: MongooseSchema.Types.ObjectId,
+    type: ObjectId,
   })
-  _id: Types.ObjectId;
+  _id: ObjectId;
 
   @Prop(AccountDataSchema)
   accountData: AccountData;

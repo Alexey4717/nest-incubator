@@ -1,25 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../models/User.schema';
 import {
   CreateUserInsertToDBModel,
   RecoveryDataType,
 } from '../models/CreateUserInsertToDBModel';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
+import { ObjectId } from 'mongodb';
 
 type UpdateUserConfirmationCodeInputType = {
-  userId: Types.ObjectId;
+  userId: ObjectId;
   newCode: string;
 };
 
 type ChangeUserPasswordArgs = {
-  userId: Types.ObjectId;
+  userId: ObjectId;
   passwordHash: string;
 };
 
 type SetUserRecoveryDataInputType = {
-  userId: Types.ObjectId;
+  userId: ObjectId;
   recoveryData: RecoveryDataType;
 };
 
@@ -41,7 +42,7 @@ export class UserRepository {
   async deleteUserById(id: string): Promise<boolean> {
     try {
       const result = await this.UserModel.deleteOne({
-        _id: new Types.ObjectId(id),
+        _id: new ObjectId(id),
       });
       return result.deletedCount === 1;
     } catch (error) {
@@ -50,7 +51,7 @@ export class UserRepository {
     }
   }
 
-  async updateConfirmation(userId: Types.ObjectId): Promise<boolean> {
+  async updateConfirmation(userId: ObjectId): Promise<boolean> {
     const result = await this.UserModel.updateOne(
       { _id: userId },
       { $set: { 'emailConfirmation.isConfirmed': true } },

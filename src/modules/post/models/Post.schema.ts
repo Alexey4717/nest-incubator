@@ -1,10 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, {
-  HydratedDocument,
-  Schema as MongooseSchema,
-  Types,
-} from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 import { LikeStatus } from '../../../types/common';
+import { ObjectId } from 'mongodb';
 
 @Schema({ _id: false, id: false })
 class Reaction {
@@ -30,9 +27,9 @@ const ReactionSchema = SchemaFactory.createForClass(Reaction);
 @Schema()
 export class Post {
   @Prop({
-    type: MongooseSchema.Types.ObjectId,
+    type: ObjectId,
   })
-  _id: Types.ObjectId;
+  _id: ObjectId;
 
   @Prop({ type: String, required: true })
   title: string;

@@ -1,5 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { add } from 'date-fns';
@@ -10,6 +9,7 @@ import {
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { UserRepository } from '../infrastructure/user.repository';
 import { UserQueryRepository } from '../infrastructure/user-query.repository';
+import { ObjectId } from 'mongodb';
 // import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
@@ -101,7 +101,7 @@ export class UserService {
     )
       return false;
     return await this.userRepository.updateConfirmation(
-      new Types.ObjectId(user._id),
+      new ObjectId(user._id as ObjectId),
     );
   }
 
@@ -121,7 +121,7 @@ export class UserService {
       return false;
     const passwordHash = await this._generateHash(newPassword);
     return await this.userRepository.changeUserPasswordAndNullifyRecoveryData({
-      userId: new Types.ObjectId(user._id),
+      userId: new ObjectId(user._id),
       passwordHash,
     });
   }
@@ -160,7 +160,7 @@ export class UserService {
   }: CreateUserInputType): Promise<CreateUserInsertToDBModel> {
     const passwordHash = await this._generateHash(password);
     return {
-      _id: new Types.ObjectId(),
+      _id: new ObjectId(),
       accountData: {
         login,
         email,

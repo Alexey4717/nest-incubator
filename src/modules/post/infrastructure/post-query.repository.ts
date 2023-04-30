@@ -10,6 +10,7 @@ import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from '../models/Post.schema';
 import { Model, Types } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
   sortBy: SortPostsBy;
@@ -51,7 +52,7 @@ export class PostQueryRepository {
   async findPostById(id: string): Promise<TPostDb | null> {
     try {
       const foundPost = await this.PostModel.findOne({
-        _id: new Types.ObjectId(id),
+        _id: new ObjectId(id),
       }).lean();
       return foundPost;
     } catch (error) {

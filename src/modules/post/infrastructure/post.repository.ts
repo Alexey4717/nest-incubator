@@ -1,11 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { LikeStatus } from '../../../types/common';
-import { TReactions } from '../models/GetPostOutputModel';
+import {
+  GetMappedPostOutputModel,
+  GetPostOutputModel,
+  GetPostOutputModelFromMongoDB,
+  TPostDb,
+  TReactions,
+} from '../models/GetPostOutputModel';
 import { PostQueryRepository } from './post-query.repository';
+import { ObjectId } from 'mongodb';
 
 interface UpdatePostArgs {
   id: string;
@@ -26,22 +33,22 @@ export class PostRepository {
     private postQueryRepository: PostQueryRepository,
   ) {}
 
-  async createPost(newPost: any): Promise<any> {
+  async createPost(newPost: TPostDb): Promise<TPostDb | null> {
     try {
-      return await newPost.save();
+      return await this.PostModel.create(newPost);
       // return true;
       // const result = await postsCollection.insertOne(newPost);
       // return Boolean(result.insertedId);
     } catch (error) {
       console.log(`postsRepository.createPost error is occurred: ${error}`);
-      return false;
+      return null;
     }
   }
 
   async updatePost({ id, input }: UpdatePostArgs): Promise<boolean> {
     try {
       const response = await this.PostModel.updateOne(
-        { _id: new Types.ObjectId(id) },
+        { _id: new ObjectId(id) },
         { $set: input },
       );
       return response.matchedCount === 1;
@@ -58,7 +65,7 @@ export class PostRepository {
     likeStatus,
   }: UpdateLikeStatusPostArgs): Promise<boolean> {
     try {
-      const filter = { _id: new Types.ObjectId(postId) };
+      const filter = { _id: new ObjectId(postId) };
       const foundPost = await this.postQueryRepository.findPostById(postId);
 
       if (!foundPost) return false;
@@ -106,7 +113,7 @@ export class PostRepository {
   async deletePostById(id: string): Promise<boolean> {
     try {
       const result = await this.PostModel.deleteOne({
-        _id: new Types.ObjectId(id),
+        _id: new ObjectId(id),
       });
       return result.deletedCount === 1;
     } catch (error) {

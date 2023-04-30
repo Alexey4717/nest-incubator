@@ -42,6 +42,7 @@ export class BlogService {
     const { name, websiteUrl, description } = input || {};
 
     const newBlog = {
+      _id: new ObjectId(),
       name,
       websiteUrl,
       description,
@@ -49,8 +50,9 @@ export class BlogService {
       createdAt: new Date().toISOString(),
     };
 
-    await this.blogRepository.createBlog(newBlog);
-    return newBlog as GetBlogOutputModelFromMongoDB;
+    return (await this.blogRepository.createBlog(
+      newBlog,
+    )) as GetBlogOutputModelFromMongoDB;
   }
 
   async createPostInBlog({

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { User, UserDocument } from '../models/User.schema';
 import {
   CommonQueryParamsTypes,
@@ -10,6 +10,7 @@ import {
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { SortUsersBy } from '../models/GetUsersInputModel';
+import { ObjectId } from 'mongodb';
 
 type GetUsersArgs = CommonQueryParamsTypes & {
   searchLoginTerm: string | null;
@@ -72,11 +73,11 @@ export class UserQueryRepository {
   }
 
   async findUserById(
-    id: Types.ObjectId,
+    id: ObjectId,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
     try {
       return await this.UserModel.findOne({
-        _id: new Types.ObjectId(id),
+        _id: new ObjectId(id),
       }).lean();
     } catch (error) {
       console.log(

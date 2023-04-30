@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from '../../post/models/Post.schema';
 import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
-import { GetBlogOutputModel } from '../models/GetBlogOutputModel';
+import {
+  GetBlogOutputModel,
+  GetBlogOutputModelFromMongoDB,
+} from '../models/GetBlogOutputModel';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { ObjectId } from 'mongodb';
 import { Blog, BlogDocument } from '../models/Blog.schema';
@@ -20,13 +23,14 @@ export class BlogRepository {
     @InjectModel(Blog.name) private BlogModel: Model<BlogDocument>,
   ) {}
 
-  async createBlog(newBlog: GetBlogOutputModel): Promise<boolean> {
+  async createBlog(
+    newBlog: GetBlogOutputModel,
+  ): Promise<GetBlogOutputModelFromMongoDB | null> {
     try {
-      await this.BlogModel.create(newBlog);
-      return true;
+      return await this.BlogModel.create(newBlog);
     } catch (error) {
       console.log(`blogsRepository.createBlog error is occurred: ${error}`);
-      return false;
+      return null;
     }
   }
 

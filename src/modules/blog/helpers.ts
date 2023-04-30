@@ -11,7 +11,7 @@ export const getMappedBlogViewModel = ({
   isMembership,
   createdAt,
 }: GetBlogOutputModelFromMongoDB): GetMappedBlogOutputModel => ({
-  id: _id.toString(),
+  id: _id?.toString(),
   name,
   description,
   websiteUrl,

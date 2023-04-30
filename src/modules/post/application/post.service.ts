@@ -35,7 +35,7 @@ export class PostService {
 
   _mapPostToViewType(post: TPostDb): GetMappedPostOutputModel {
     return {
-      id: post._id.toString(),
+      id: post?._id?.toString(),
       title: post.title,
       shortDescription: post.shortDescription,
       content: post.content,
@@ -63,8 +63,8 @@ export class PostService {
     if (!foundBlog) return null;
 
     // TODO add DTO
-    const newPost: TPostDb = await this.PostModel.create({
-      _id: new Types.ObjectId(),
+    const newPost: TPostDb = {
+      _id: new ObjectId(),
       title,
       shortDescription,
       blogId,
@@ -72,7 +72,7 @@ export class PostService {
       content,
       createdAt: new Date().toISOString(),
       reactions: [],
-    });
+    };
 
     const postFromDB = await this.postRepository.createPost(newPost);
     return this._mapPostToViewType(postFromDB);

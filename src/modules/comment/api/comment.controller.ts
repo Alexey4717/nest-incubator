@@ -10,7 +10,6 @@ import {
   HttpCode,
   Inject,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
 import { constants } from 'http2';
 import { getMappedCommentViewModel } from '../helpers';
 import { LikeStatus } from '../../../types/common';
@@ -19,14 +18,14 @@ import { UpdateCommentInputModel } from '../models/UpdateCommentInputModel';
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
 import { CommentService } from '../application/comment.service';
 
-@Controller('posts')
+@Controller('comments')
 export class CommentController {
   constructor(
     private commentService: CommentService,
     private commentQueryRepository: CommentQueryRepository,
   ) {}
 
-  @Get()
+  @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getComment(@Param() params: { id: string }) {
     const foundComment = await this.commentQueryRepository.getCommentById(
@@ -47,7 +46,7 @@ export class CommentController {
     });
   }
 
-  @Put()
+  @Put(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateComment(
     @Param() params: GetCommentInputModel,
@@ -78,7 +77,7 @@ export class CommentController {
     return commentIsUpdated;
   }
 
-  @Delete()
+  @Delete(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteComment(@Param() params: GetCommentInputModel) {
     // if (!req.context.user) {
@@ -105,7 +104,7 @@ export class CommentController {
     return commentIsDeleted;
   }
 
-  @Put()
+  @Put(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async changeLikeStatus(
     @Param() params: GetCommentInputModel,
