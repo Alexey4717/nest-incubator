@@ -36,12 +36,12 @@ export class PostService {
   _mapPostToViewType(post: TPostDb): GetMappedPostOutputModel {
     return {
       id: post?._id?.toString(),
-      title: post.title,
-      shortDescription: post.shortDescription,
-      content: post.content,
-      blogId: post.blogId,
-      blogName: post.blogName,
-      createdAt: post.createdAt,
+      title: post?.title,
+      shortDescription: post?.shortDescription,
+      content: post?.content,
+      blogId: post?.blogId,
+      blogName: post?.blogName,
+      createdAt: post?.createdAt,
       extendedLikesInfo: {
         likesCount: 0,
         dislikesCount: 0,

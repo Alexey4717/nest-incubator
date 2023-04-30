@@ -53,11 +53,24 @@ export class UserQueryRepository {
 
       const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
       const items = await this.UserModel.find(filter)
-        // была коллекция, посомтреть как для модели монгуса
-        .sort({ [sortBy]: sortDirection === SortDirections.desc ? -1 : 1 })
+        .sort({ [`accountData.${sortBy}`]: sortDirection === 'asc' ? 1 : -1 })
         .skip(skipValue)
         .limit(pageSize)
         .lean();
+
+      // const items = await this.UserModel.aggregate([
+      //   { $match: filter },
+      //   { $sort: { [sortBy]: sortDirection === 'asc' ? 1 : -1 } },
+      //   { $skip: skipValue },
+      //   { $limit: pageSize },
+      //   {
+      //     $project: {
+      //       _id: true,
+      //       accountData: '$accountData',
+      //     },
+      //   },
+      // ]);
+
       const totalCount = await this.UserModel.count(filter);
       const pagesCount = Math.ceil(totalCount / pageSize);
       return {

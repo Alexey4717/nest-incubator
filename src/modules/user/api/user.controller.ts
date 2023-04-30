@@ -29,22 +29,36 @@ export class UserController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getUsers(@Query() query: GetUsersInputModel) {
-    // return this.userService.getUsers(query?.term);
-
+  async getUsers(
+    @Query()
+    {
+      searchLoginTerm,
+      searchEmailTerm,
+      sortBy,
+      sortDirection,
+      pageNumber,
+      pageSize,
+    }: GetUsersInputModel,
+  ) {
     const resData = await this.userQueryRepository.getUsers({
-      searchLoginTerm: query?.searchLoginTerm || null, // by-default null
-      searchEmailTerm: query?.searchEmailTerm || null, // by-default null
-      sortBy: (query?.sortBy || 'createdAt') as SortUsersBy, // by-default createdAt
-      sortDirection: query?.sortDirection || SortDirections.desc, // by-default desc
-      pageNumber: +(query?.pageNumber || 1), // by-default 1
-      pageSize: +(query?.pageSize || 10), // by-default 10
+      searchLoginTerm: searchLoginTerm || null, // by-default null
+      searchEmailTerm: searchEmailTerm || null, // by-default null
+      sortBy: (sortBy || 'createdAt') as SortUsersBy, // by-default createdAt
+      sortDirection: sortDirection || SortDirections.desc, // by-default desc
+      pageNumber: +(pageNumber || 1), // by-default 1
+      pageSize: +(pageSize || 10), // by-default 10
     });
-    const { pagesCount, page, pageSize, totalCount, items } = resData || {};
+    const {
+      pagesCount,
+      page,
+      pageSize: responsePageSize,
+      totalCount,
+      items,
+    } = resData || {};
     return {
       pagesCount,
       page,
-      pageSize,
+      pageSize: responsePageSize,
       totalCount,
       items: items.map(getMappedUserViewModel),
     };
