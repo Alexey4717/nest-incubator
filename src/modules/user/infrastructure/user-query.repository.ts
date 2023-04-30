@@ -53,6 +53,7 @@ export class UserQueryRepository {
 
       const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
       const items = await this.UserModel.find(filter)
+        // была коллекция, посомтреть как для модели монгуса
         .sort({ [sortBy]: sortDirection === SortDirections.desc ? -1 : 1 })
         .skip(skipValue)
         .limit(pageSize)

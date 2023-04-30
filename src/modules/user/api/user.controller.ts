@@ -33,11 +33,10 @@ export class UserController {
     // return this.userService.getUsers(query?.term);
 
     const resData = await this.userQueryRepository.getUsers({
-      searchLoginTerm: query?.searchLoginTerm?.toString() || null, // by-default null
-      searchEmailTerm: query?.searchEmailTerm?.toString() || null, // by-default null
-      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortUsersBy, // by-default createdAt
-      sortDirection: (query?.sortDirection?.toString() ||
-        SortDirections.desc) as SortDirections, // by-default desc
+      searchLoginTerm: query?.searchLoginTerm || null, // by-default null
+      searchEmailTerm: query?.searchEmailTerm || null, // by-default null
+      sortBy: (query?.sortBy || 'createdAt') as SortUsersBy, // by-default createdAt
+      sortDirection: query?.sortDirection || SortDirections.desc, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10
     });
