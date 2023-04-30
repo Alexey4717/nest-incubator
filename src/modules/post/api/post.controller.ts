@@ -40,19 +40,27 @@ export class PostController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getPosts(@Query() query: GetPostsInputModel) {
+  async getPosts(
+    @Query()
+    { sortBy, sortDirection, pageNumber, pageSize }: GetPostsInputModel,
+  ) {
     // const currentUserId = req?.context?.user?._id
     //   ? new ObjectId(req.context.user?._id).toString()
     //   : undefined;
 
     const resData = await this.postQueryRepository.getPosts({
-      sortBy: (query?.sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection ||
-        SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query?.pageNumber || 1), // by-default 1
-      pageSize: +(query?.pageSize || 10), // by-default 10
+      sortBy: (sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
+      sortDirection: (sortDirection || SortDirections.desc) as SortDirections, // by-default desc
+      pageNumber: +(pageNumber || 1), // by-default 1
+      pageSize: +(pageSize || 10), // by-default 10
     });
-    const { pagesCount, page, pageSize, totalCount, items } = resData || {};
+    const {
+      pagesCount,
+      page,
+      pageSize: responsePageSize,
+      totalCount,
+      items,
+    } = resData || {};
     // const itemsWithCurrentUserId = items.map((item) => ({
     //   ...item,
     //   currentUserId,
@@ -60,7 +68,7 @@ export class PostController {
     return {
       pagesCount,
       page,
-      pageSize,
+      pageSize: responsePageSize,
       totalCount,
       items: items.map(getMappedPostViewModel),
       // items: itemsWithCurrentUserId.map(getMappedPostViewModel),
