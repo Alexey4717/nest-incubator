@@ -46,8 +46,8 @@ export class PostController {
     //   : undefined;
 
     const resData = await this.postQueryRepository.getPosts({
-      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection?.toString() ||
+      sortBy: (query?.sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection ||
         SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10
@@ -92,8 +92,8 @@ export class PostController {
     const postId = params.postId;
 
     const resData = await this.commentQueryRepository.getPostComments({
-      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostCommentsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection?.toString() ||
+      sortBy: (query?.sortBy || 'createdAt') as SortPostCommentsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection ||
         SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10

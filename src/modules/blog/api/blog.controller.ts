@@ -36,9 +36,9 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getBlogs(@Query() query: GetBlogsInputModel) {
     const resData = await this.blogQueryRepository.getBlogs({
-      searchNameTerm: query?.searchNameTerm?.toString() || null, // by-default null
-      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortBlogsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection?.toString() ||
+      searchNameTerm: query?.searchNameTerm || null, // by-default null
+      sortBy: (query?.sortBy || 'createdAt') as SortBlogsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection ||
         SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1,
       pageSize: +(query?.pageSize || 10), // by-default 10
@@ -73,8 +73,8 @@ export class BlogController {
 
     const resData = await this.blogQueryRepository.getPostsInBlog({
       blogId: params?.blogId,
-      sortBy: (query?.sortBy?.toString() || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection?.toString() ||
+      sortBy: (query?.sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
+      sortDirection: (query?.sortDirection ||
         SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10
