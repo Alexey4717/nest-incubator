@@ -34,19 +34,27 @@ export class UserQueryRepository {
       let filter = {} as any;
 
       if (searchLoginTerm && !searchEmailTerm) {
-        filter.login = { $regex: searchLoginTerm, $options: 'i' };
+        filter['accountData.login'] = {
+          $regex: searchLoginTerm,
+          $options: 'i',
+        };
       } else if (searchEmailTerm && !searchLoginTerm) {
-        filter.email = { $regex: searchEmailTerm, $options: 'i' };
+        filter['accountData.email'] = {
+          $regex: searchEmailTerm,
+          $options: 'i',
+        };
       } else if (searchLoginTerm && searchLoginTerm) {
         filter = {
           $or: [
             {
-              login: {
+              [`accountData.login`]: {
                 $regex: searchLoginTerm,
                 $options: 'i',
               },
             },
-            { email: { $regex: searchEmailTerm, $options: 'i' } },
+            {
+              [`accountData.email`]: { $regex: searchEmailTerm, $options: 'i' },
+            },
           ],
         };
       }
