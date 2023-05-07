@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ObjectId } from 'mongodb';
-import { Model, Types } from 'mongoose';
-import {
-  CommonQueryParamsTypes,
-  Paginator,
-  SortDirections,
-} from '../../../types/common';
+import { Model } from 'mongoose';
+import { Paginator, SortDirections } from '../../../types/common';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from '../../post/models/Post.schema';
@@ -28,9 +23,7 @@ export class CommentQueryRepository {
     postId,
   }: GetPostsInputModel) {
     try {
-      const foundPost = await this.PostModel.findOne({
-        _id: new ObjectId(postId),
-      }).lean();
+      const foundPost = await this.PostModel.findOne({ id: postId }).lean();
 
       if (!foundPost) return null;
 
@@ -60,7 +53,7 @@ export class CommentQueryRepository {
 
   async getCommentById(id: string): Promise<TCommentDb | null> {
     try {
-      return await this.CommentModel.findOne({ _id: new ObjectId(id) }).lean();
+      return await this.CommentModel.findOne({ id }).lean();
     } catch (error) {
       console.log(
         `commentsQueryRepository.getCommentById error is occurred: ${error}`,

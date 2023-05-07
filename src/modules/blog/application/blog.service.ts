@@ -1,12 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
+import { randomUUID } from 'crypto';
 import { InjectModel } from '@nestjs/mongoose';
-import { ObjectId } from 'mongodb';
-import {
-  GetMappedPostOutputModel,
-  TPostDb,
-} from '../../post/models/GetPostOutputModel';
-import { CreatePostInputModel } from '../../post/models/CreatePostInputModel';
+import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { LikeStatus } from '../../../types/common';
 import { Post, PostDocument } from '../../post/models/Post.schema';
 import { CreateBlogInputModel } from '../models/CreateBlogInputModel';
@@ -19,13 +15,6 @@ import { BlogRepository } from '../infrastructure/blog.repository';
 interface UpdateBlogArgs {
   id: string;
   input: UpdateBlogInputModel;
-}
-
-interface UpdateLikeStatusPostArgs {
-  postId: string;
-  userId: string;
-  userLogin: string;
-  likeStatus: LikeStatus;
 }
 
 @Injectable()
@@ -42,7 +31,7 @@ export class BlogService {
     const { name, websiteUrl, description } = input || {};
 
     const newBlog = {
-      _id: new ObjectId(),
+      id: randomUUID(),
       name,
       websiteUrl,
       description,
@@ -66,7 +55,7 @@ export class BlogService {
     if (!foundBlog) return null;
 
     const newPost: TPostDb = {
-      _id: new ObjectId(),
+      id: randomUUID(),
       title,
       shortDescription,
       blogId,

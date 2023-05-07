@@ -1,13 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
-import { ObjectId } from 'mongodb';
+import { HydratedDocument } from 'mongoose';
 
-@Schema()
+@Schema({ id: false, _id: false, versionKey: false })
 export class Blog {
-  @Prop({
-    type: ObjectId,
-  })
-  _id: ObjectId;
+  @Prop({ type: String, required: true, unique: true })
+  id: string;
 
   @Prop({ type: String, required: true })
   name: string;

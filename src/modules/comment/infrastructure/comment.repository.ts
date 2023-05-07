@@ -1,9 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
 import { Comment, CommentDocument } from '../models/Comment.schema';
-import { ObjectId } from 'mongodb';
 import { LikeStatus } from '../../../types/common';
 import { CommentQueryRepository } from './comment-query.repository';
 
@@ -32,13 +31,9 @@ export class CommentRepository {
   async updateCommentById({ id, content }: any): Promise<boolean> {
     try {
       const result = await this.CommentModel.updateOne(
-        { _id: new ObjectId(id) },
+        { id },
         { $set: { content } },
       );
-      // const result = await commentsCollection.updateOne(
-      //     {"_id": new ObjectId(id)},
-      //     {$set: {content}}
-      // )
       return result?.matchedCount === 1;
     } catch (error) {
       console.log(
@@ -59,7 +54,7 @@ export class CommentRepository {
     likeStatus: LikeStatus;
   }): Promise<boolean> {
     try {
-      const filter = { _id: new ObjectId(commentId) };
+      const filter = { id: commentId };
       const foundComment = await this.commentQueryRepository.getCommentById(
         commentId,
       );
@@ -114,10 +109,7 @@ export class CommentRepository {
 
   async deleteCommentById(id: string): Promise<boolean> {
     try {
-      const result = await this.CommentModel.deleteOne({
-        _id: new ObjectId(id),
-      });
-      // const result = await commentsCollection.deleteOne({_id: new ObjectId(id)});
+      const result = await this.CommentModel.deleteOne({ id });
       return result.deletedCount === 1;
     } catch (error) {
       console.log(

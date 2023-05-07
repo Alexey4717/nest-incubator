@@ -4,10 +4,10 @@ import {
 } from './models/GetUserOutputModel';
 
 export const getMappedUserViewModel = ({
-  _id,
+  id,
   accountData,
 }: GetUserOutputModelFromMongoDB): GetMappedUserOutputModel => ({
-  id: _id.toString(),
+  id,
   login: accountData.login,
   email: accountData.email,
   createdAt: accountData.createdAt,

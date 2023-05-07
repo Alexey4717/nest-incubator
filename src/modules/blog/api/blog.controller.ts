@@ -67,9 +67,7 @@ export class BlogController {
     @Param() params: { blogId: string },
     @Query() query: GetPostsInputModel,
   ) {
-    // const currentUserId = req?.context?.user?._id
-    //   ? new ObjectId(req.context.user?._id).toString()
-    //   : undefined;
+    // const currentUserId = req?.context?.user?.id
 
     const resData = await this.blogQueryRepository.getPostsInBlog({
       blogId: params?.blogId,
@@ -110,9 +108,7 @@ export class BlogController {
     @Param() params: { blogId: string },
     @Body() body: CreatePostInBlogInputModel,
   ) {
-    // const currentUserId = req?.context?.user?._id
-    //   ? new ObjectId(req.context.user?._id).toString()
-    //   : undefined;
+    // const currentUserId = req?.context?.user?.id
 
     const createdPostInBlog = await this.blogService.createPostInBlog({
       blogId: params?.blogId,

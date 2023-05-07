@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { LikeStatus } from '../../../types/common';
-import { ObjectId } from 'mongodb';
 
 @Schema({ _id: false, id: false })
 class CommentatorInfo {
@@ -34,10 +33,8 @@ const ReactionSchema = SchemaFactory.createForClass(Reaction);
 
 @Schema()
 export class Comment {
-  @Prop({
-    type: ObjectId,
-  })
-  _id: ObjectId;
+  @Prop({ type: String, unique: true, required: true })
+  id: string;
 
   @Prop({ type: String, required: true })
   postId: string;

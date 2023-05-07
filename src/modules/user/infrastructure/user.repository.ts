@@ -15,7 +15,7 @@ type UpdateUserConfirmationCodeInputType = {
 };
 
 type ChangeUserPasswordArgs = {
-  userId: ObjectId;
+  userId: string;
   passwordHash: string;
 };
 
@@ -41,9 +41,7 @@ export class UserRepository {
 
   async deleteUserById(id: string): Promise<boolean> {
     try {
-      const result = await this.UserModel.deleteOne({
-        _id: new ObjectId(id),
-      });
+      const result = await this.UserModel.deleteOne({ id });
       return result.deletedCount === 1;
     } catch (error) {
       console.log(`usersRepository.deleteUserById error is occurred: ${error}`);
@@ -51,9 +49,9 @@ export class UserRepository {
     }
   }
 
-  async updateConfirmation(userId: ObjectId): Promise<boolean> {
+  async updateConfirmation(userId: string): Promise<boolean> {
     const result = await this.UserModel.updateOne(
-      { _id: userId },
+      { id: userId },
       { $set: { 'emailConfirmation.isConfirmed': true } },
     );
     return result.matchedCount === 1;
@@ -64,7 +62,7 @@ export class UserRepository {
     passwordHash,
   }: ChangeUserPasswordArgs): Promise<boolean> {
     const result = await this.UserModel.updateOne(
-      { _id: userId },
+      { id: userId },
       {
         $set: {
           'accountData.passwordHash': passwordHash,
@@ -80,7 +78,7 @@ export class UserRepository {
     recoveryData,
   }: SetUserRecoveryDataInputType): Promise<boolean> {
     const result = await this.UserModel.updateOne(
-      { _id: userId },
+      { id: userId },
       { $set: { recoveryData } },
     );
     return result.matchedCount === 1;
@@ -91,7 +89,7 @@ export class UserRepository {
     newCode,
   }: UpdateUserConfirmationCodeInputType): Promise<boolean> {
     const result = await this.UserModel.updateOne(
-      { _id: userId },
+      { id: userId },
       { $set: { 'emailConfirmation.confirmationCode': newCode } },
     );
     return result.matchedCount === 1;

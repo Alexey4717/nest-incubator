@@ -4,15 +4,8 @@ import { Model } from 'mongoose';
 import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { LikeStatus } from '../../../types/common';
-import {
-  GetMappedPostOutputModel,
-  GetPostOutputModel,
-  GetPostOutputModelFromMongoDB,
-  TPostDb,
-  TReactions,
-} from '../models/GetPostOutputModel';
+import { TPostDb, TReactions } from '../models/GetPostOutputModel';
 import { PostQueryRepository } from './post-query.repository';
-import { ObjectId } from 'mongodb';
 
 interface UpdatePostArgs {
   id: string;
@@ -47,10 +40,7 @@ export class PostRepository {
 
   async updatePost({ id, input }: UpdatePostArgs): Promise<boolean> {
     try {
-      const response = await this.PostModel.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: input },
-      );
+      const response = await this.PostModel.updateOne({ id }, { $set: input });
       return response.matchedCount === 1;
     } catch (error) {
       console.log(`postsRepository.updatePost error is occurred: ${error}`);
@@ -65,7 +55,7 @@ export class PostRepository {
     likeStatus,
   }: UpdateLikeStatusPostArgs): Promise<boolean> {
     try {
-      const filter = { _id: new ObjectId(postId) };
+      const filter = { id: postId };
       const foundPost = await this.postQueryRepository.findPostById(postId);
 
       if (!foundPost) return false;
@@ -112,9 +102,7 @@ export class PostRepository {
 
   async deletePostById(id: string): Promise<boolean> {
     try {
-      const result = await this.PostModel.deleteOne({
-        _id: new ObjectId(id),
-      });
+      const result = await this.PostModel.deleteOne({ id });
       return result.deletedCount === 1;
     } catch (error) {
       console.log(`postsRepository.deletePostById error is occurred: ${error}`);

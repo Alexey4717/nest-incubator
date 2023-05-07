@@ -32,7 +32,7 @@
 //     };
 //
 //     const result = await this.userRepository.setUserRecoveryData({
-//       userId: new ObjectId(foundUser._id),
+//       userId: foundUser?.id,
 //       recoveryData,
 //     });
 //     // Even if current email is not registered (for prevent user's email detection)
@@ -58,7 +58,7 @@
 //   }: SendEmailConfirmationMessageInputType): Promise<boolean> {
 //     if (confirmationCode) {
 //       const result = await this.userRepository.updateUserConfirmationCode({
-//         userId: new ObjectId(user._id),
+//         userId: user?.id,
 //         newCode: confirmationCode,
 //       });
 //       if (!result) return false;

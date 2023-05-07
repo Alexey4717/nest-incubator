@@ -8,10 +8,8 @@ import {
   Body,
   Query,
   HttpCode,
-  Inject,
   NotFoundException,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
 import { constants } from 'http2';
 import { getMappedPostViewModel } from '../helpers';
 import { Paginator, SortDirections } from '../../../types/common';
@@ -44,9 +42,7 @@ export class PostController {
     @Query()
     { sortBy, sortDirection, pageNumber, pageSize }: GetPostsInputModel,
   ) {
-    // const currentUserId = req?.context?.user?._id
-    //   ? new ObjectId(req.context.user?._id).toString()
-    //   : undefined;
+    // const currentUserId = req?.context?.user?.id;
 
     const resData = await this.postQueryRepository.getPosts({
       sortBy: (sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
@@ -79,9 +75,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPost(@Param() params: GetPostInputModel) {
     const resData = await this.postQueryRepository.findPostById(params.id);
-    // const currentUserId = req?.context?.user?._id
-    //   ? new ObjectId(req.context.user?._id).toString()
-    //   : undefined;
+    // const currentUserId = req?.context?.user?.id
 
     if (!resData) throw new NotFoundException();
     return getMappedPostViewModel({
@@ -112,9 +106,7 @@ export class PostController {
 
     const { pagesCount, page, pageSize, totalCount, items } = resData || {};
 
-    // const currentUserId = req?.context?.user?._id
-    //   ? new ObjectId(req?.context?.user?._id)?.toString()
-    //   : undefined;
+    // const currentUserId = req?.context?.user?.id;
 
     // const itemsWithCurrentUserID = items.map((item) => ({
     //   ...item,
@@ -135,9 +127,7 @@ export class PostController {
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPost(@Body() body: CreatePostInputModel) {
-    // const currentUserId = req.context?.user?._id
-    //   ? new ObjectId(req.context.user._id).toString()
-    //   : undefined;
+    // const currentUserId = req.context?.user?.id;
 
     const createdPost = await this.postService.createPost(body);
 
@@ -157,7 +147,7 @@ export class PostController {
     //   return;
     // }
 
-    // const currentUserId = req.context.user._id.toString();
+    // const currentUserId = req.context.user.id;
     const createdCommentInPost = await this.commentService.createCommentInPost({
       postId: params.postId,
       content: body.content,
@@ -194,7 +184,7 @@ export class PostController {
     @Param() params: GetPostLikeStatusInputModel,
     @Body() body: UpdatePostLikeStatusInputModel,
   ) {
-    // const userId = new ObjectId(req.context.user!._id).toString();
+    // const userId = req.context.user!.id;
     // const userLogin = req.context.user!.accountData.login;
 
     const isPostUpdated = await this.postService.updatePostLikeStatus({

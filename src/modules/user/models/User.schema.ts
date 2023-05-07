@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { ObjectId } from 'mongodb';
 
 @Schema({ _id: false, id: false, versionKey: false })
 class AccountData {
@@ -48,12 +47,10 @@ class RecoveryData {
 
 const RecoveryDataSchema = SchemaFactory.createForClass(RecoveryData);
 
-@Schema()
+@Schema({ id: false, _id: false, versionKey: false })
 export class User {
-  @Prop({
-    type: ObjectId,
-  })
-  _id: ObjectId;
+  @Prop({ type: String, unique: true, required: true })
+  id: string;
 
   @Prop(AccountDataSchema)
   accountData: AccountData;

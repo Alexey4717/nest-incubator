@@ -7,7 +7,7 @@ import {
 import { LikeStatus } from '../../types/common';
 
 export const getMappedCommentViewModel = ({
-  _id,
+  id,
   content,
   commentatorInfo,
   createdAt,
@@ -41,7 +41,7 @@ export const getMappedCommentViewModel = ({
         };
 
   return {
-    id: _id?.toString(),
+    id,
     content,
     commentatorInfo: {
       userId,

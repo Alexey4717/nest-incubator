@@ -1,4 +1,3 @@
-import { ObjectId } from 'mongodb';
 import { LikeStatus } from '../../../types/common';
 
 export type NewestLikeType = {
@@ -50,7 +49,7 @@ export type GetPostOutputModelFromMongoDB = GetPostOutputModel & {
   /**
    * Id of post from mongoDB.
    */
-  _id: ObjectId;
+  id: string;
 };
 
 export type GetMappedPostOutputModel = GetPostOutputModel & {
@@ -68,7 +67,7 @@ export type TReactions = {
 };
 
 export type TPostDb = {
-  _id: ObjectId;
+  id: string;
   title: string;
   shortDescription: string;
   content: string;

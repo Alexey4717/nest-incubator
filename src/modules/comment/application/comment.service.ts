@@ -1,6 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { randomUUID } from 'crypto';
 import { LikeStatus } from '../../../types/common';
 import {
   GetMappedCommentOutputModel,
@@ -9,7 +10,6 @@ import {
 import { CommentManageStatuses } from '../types';
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
 import { Post, PostDocument } from '../../post/models/Post.schema';
-import { ObjectId } from 'mongodb';
 import { CommentRepository } from '../infrastructure/comment.repository';
 
 interface CreateCommentInput {
@@ -45,7 +45,7 @@ export class CommentService {
 
   _mapCommentToViewType(comment: TCommentDb): GetMappedCommentOutputModel {
     return {
-      id: comment._id.toString(),
+      id: comment.id,
       content: comment.content,
       commentatorInfo: comment.commentatorInfo,
       createdAt: comment.createdAt,
@@ -62,15 +62,13 @@ export class CommentService {
   ): Promise<GetMappedCommentOutputModel | null> {
     const { postId, content, userId, userLogin } = input;
 
-    const foundPost = await this.PostModel.findOne({
-      _id: new ObjectId(postId),
-    });
+    const foundPost = await this.PostModel.findOne({ id: postId });
 
     if (!foundPost) return null;
 
     // TODO add dto
     const newComment: TCommentDb = {
-      _id: new ObjectId(),
+      id: randomUUID(),
       postId,
       content,
       commentatorInfo: { userId, userLogin },

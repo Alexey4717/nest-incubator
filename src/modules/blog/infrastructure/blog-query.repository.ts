@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { SortPostsBy } from '../../post/models/GetPostsInputModel';
 import {
   CommonQueryParamsTypes,
@@ -11,7 +11,6 @@ import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
 import { Post, PostDocument } from '../../post/models/Post.schema';
 import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
-import { ObjectId } from 'mongodb';
 import { Blog, BlogDocument } from '../models/Blog.schema';
 import { SortBlogsBy } from '../models/GetBlogsInputModel';
 
@@ -75,9 +74,7 @@ export class BlogQueryRepository {
     pageSize,
   }: GetPostsInBlogArgs): Promise<Paginator<TPostDb[]> | null> {
     try {
-      const foundBlog = await this.BlogModel.findOne({
-        _id: new ObjectId(blogId),
-      }).lean();
+      const foundBlog = await this.BlogModel.findOne({ id: blogId }).lean();
       if (!foundBlog) return null;
       const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
       const filter = { blogId: { $regex: blogId } };
@@ -107,9 +104,7 @@ export class BlogQueryRepository {
     id: string,
   ): Promise<GetBlogOutputModelFromMongoDB | null> {
     try {
-      const foundBlog = await this.BlogModel.findOne({
-        _id: new ObjectId(id),
-      }).lean();
+      const foundBlog = await this.BlogModel.findOne({ id }).lean();
       return foundBlog ?? null;
     } catch (error) {
       console.log(

@@ -1,14 +1,11 @@
 import {
   Controller,
   Get,
-  Post,
   Put,
   Delete,
   Param,
   Body,
-  Query,
   HttpCode,
-  Inject,
   NotFoundException,
 } from '@nestjs/common';
 import { constants } from 'http2';
@@ -36,7 +33,7 @@ export class CommentController {
 
     if (!foundComment) throw new NotFoundException();
 
-    // const currentUserId = req?.context?.user?._id ? new ObjectId(req?.context?.user?._id).toString() : undefined;
+    // const currentUserId = req?.context?.user?.id;
     // const foundReactionByUserId = foundComment.reactions.find((reaction) => reaction.userId === currentUserId);
     // const myStatus = foundReactionByUserId?.likeStatus ?? LikeStatus.None;
 
@@ -58,7 +55,7 @@ export class CommentController {
     // }
 
     const result = await this.commentService.updateCommentById({
-      // userId: context.user._id.toString(),
+      // userId: context.user.id,
       userId: undefined,
       id: params.commentId,
       content: body.content,
@@ -85,7 +82,7 @@ export class CommentController {
 
     const result = await this.commentService.deleteCommentById({
       commentId: params.commentId,
-      // userId: context.user._id.toString(),
+      // userId: context.user.id,
       userId: undefined,
     });
 
@@ -114,7 +111,7 @@ export class CommentController {
     const likeStatusIsUpdated =
       await this.commentService.updateCommentLikeStatus({
         commentId: params.commentId,
-        // userId: context.user._id.toString(),
+        // userId: context.user.id,
         userId: undefined,
         likeStatus: body.likeStatus,
       });

@@ -1,6 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { Model, Types } from 'mongoose';
+import { Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { randomUUID } from 'crypto';
 import {
   GetMappedPostOutputModel,
   TPostDb,
@@ -11,7 +12,6 @@ import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostRepository } from '../infrastructure/post.repository';
 import { Blog, BlogDocument } from '../../blog/models/Blog.schema';
-import { ObjectId } from 'mongodb';
 
 interface UpdatePostArgs {
   id: string;
@@ -34,8 +34,12 @@ export class PostService {
   ) {}
 
   _mapPostToViewType(post: TPostDb): GetMappedPostOutputModel {
+    if (!post?.id) {
+      throw new Error('PostService._mapPostToViewType have no id created post');
+    }
+
     return {
-      id: post?._id?.toString(),
+      id: post?.id,
       title: post?.title,
       shortDescription: post?.shortDescription,
       content: post?.content,
@@ -56,15 +60,13 @@ export class PostService {
   ): Promise<GetMappedPostOutputModel | null> {
     const { title, shortDescription, blogId, content } = input || {};
 
-    const foundBlog = await this.BlogModel.findOne({
-      _id: new ObjectId(blogId),
-    });
+    const foundBlog = await this.BlogModel.findOne({ id: blogId });
 
     if (!foundBlog) return null;
 
     // TODO add DTO
     const newPost: TPostDb = {
-      _id: new ObjectId(),
+      id: randomUUID(),
       title,
       shortDescription,
       blogId,

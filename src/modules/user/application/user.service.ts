@@ -2,14 +2,11 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { add } from 'date-fns';
-import {
-  CreateUserInsertToDBModel,
-  RecoveryDataType,
-} from '../models/CreateUserInsertToDBModel';
+import { CreateUserInsertToDBModel } from '../models/CreateUserInsertToDBModel';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { UserRepository } from '../infrastructure/user.repository';
 import { UserQueryRepository } from '../infrastructure/user-query.repository';
-import { ObjectId } from 'mongodb';
+import { randomUUID } from 'crypto';
 // import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
@@ -71,7 +68,7 @@ export class UserService {
   //     });
   //   } catch (error) {
   //     console.error(`authService.registerUser error is occurred: ${error}`);
-  //     await this.userRepository.deleteUserById(createdUser._id.toString());
+  //     await this.userRepository.deleteUserById(createdUser.id);
   //     return false;
   //   }
   //   return Boolean(createdUser);
@@ -100,9 +97,7 @@ export class UserService {
       user.emailConfirmation.expirationDate <= new Date()
     )
       return false;
-    return await this.userRepository.updateConfirmation(
-      new ObjectId(user._id as ObjectId),
-    );
+    return await this.userRepository.updateConfirmation(user.id);
   }
 
   async changeUserPassword({
@@ -121,7 +116,7 @@ export class UserService {
       return false;
     const passwordHash = await this._generateHash(newPassword);
     return await this.userRepository.changeUserPasswordAndNullifyRecoveryData({
-      userId: new ObjectId(user._id),
+      userId: user?.id,
       passwordHash,
     });
   }
@@ -160,7 +155,7 @@ export class UserService {
   }: CreateUserInputType): Promise<CreateUserInsertToDBModel> {
     const passwordHash = await this._generateHash(password);
     return {
-      _id: new ObjectId(),
+      id: randomUUID(),
       accountData: {
         login,
         email,

@@ -65,7 +65,7 @@ export class UserQueryRepository {
       //   { $limit: pageSize },
       //   {
       //     $project: {
-      //       _id: true,
+      //       id: true,
       //       accountData: '$accountData',
       //     },
       //   },
@@ -90,9 +90,7 @@ export class UserQueryRepository {
     id: ObjectId,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
     try {
-      return await this.UserModel.findOne({
-        _id: new ObjectId(id),
-      }).lean();
+      return await this.UserModel.findOne({ id }).lean();
     } catch (error) {
       console.log(
         `usersQueryRepository.findUserById error is occurred: ${error}`,

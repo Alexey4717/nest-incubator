@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Post, PostDocument } from '../../post/models/Post.schema';
 import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import {
@@ -8,7 +8,6 @@ import {
   GetBlogOutputModelFromMongoDB,
 } from '../models/GetBlogOutputModel';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
-import { ObjectId } from 'mongodb';
 import { Blog, BlogDocument } from '../models/Blog.schema';
 
 interface UpdateBlogArgs {
@@ -48,10 +47,7 @@ export class BlogRepository {
 
   async updateBlog({ id, input }: UpdateBlogArgs): Promise<boolean> {
     try {
-      const result = await this.BlogModel.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: input },
-      );
+      const result = await this.BlogModel.updateOne({ id }, { $set: input });
       return result?.matchedCount === 1;
       // смотрим matchedCount, а не modifiedCount, т.к. при полном соответствии
       // данных mongo не производит операцию обновления и не вернет ничего
@@ -63,7 +59,7 @@ export class BlogRepository {
 
   async deleteBlogById(id: string): Promise<boolean> {
     try {
-      const result = await this.BlogModel.deleteOne({ _id: new ObjectId(id) });
+      const result = await this.BlogModel.deleteOne({ id });
       return result.deletedCount === 1;
     } catch (error) {
       console.log(`blogsRepository.deleteBlogById error is occurred: ${error}`);

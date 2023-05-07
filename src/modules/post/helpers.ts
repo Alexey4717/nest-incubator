@@ -8,7 +8,7 @@ import {
 import { LikeStatus } from '../../types/common';
 
 export const getMappedPostViewModel = ({
-  _id,
+  id,
   title,
   content,
   shortDescription,
@@ -77,7 +77,7 @@ export const getMappedPostViewModel = ({
         };
 
   return {
-    id: _id.toString(),
+    id,
     title,
     shortDescription,
     content,

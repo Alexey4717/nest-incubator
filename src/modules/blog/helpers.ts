@@ -4,14 +4,14 @@ import {
 } from './models/GetBlogOutputModel';
 
 export const getMappedBlogViewModel = ({
-  _id,
+  id,
   name,
   description,
   websiteUrl,
   isMembership,
   createdAt,
 }: GetBlogOutputModelFromMongoDB): GetMappedBlogOutputModel => ({
-  id: _id?.toString(),
+  id,
   name,
   description,
   websiteUrl,

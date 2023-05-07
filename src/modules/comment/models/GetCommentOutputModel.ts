@@ -1,4 +1,3 @@
-import { ObjectId, WithId } from 'mongodb';
 import { LikeStatus } from '../../../types/common';
 
 type CommentatorInfoType = {
@@ -30,7 +29,7 @@ export type TReactions = {
 };
 
 export type TCommentDb = {
-  _id: ObjectId;
+  id: string;
   postId: string;
   content: string;
   commentatorInfo: CommentatorInfoType;
