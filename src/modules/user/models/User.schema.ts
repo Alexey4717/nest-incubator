@@ -47,7 +47,7 @@ class RecoveryData {
 
 const RecoveryDataSchema = SchemaFactory.createForClass(RecoveryData);
 
-@Schema({ id: false, _id: false, versionKey: false })
+@Schema({ id: false, versionKey: false })
 export class User {
   @Prop({ type: String, unique: true, required: true })
   id: string;

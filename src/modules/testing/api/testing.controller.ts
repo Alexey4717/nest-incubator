@@ -1,7 +1,9 @@
 import { Controller, Delete, HttpCode } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 import { TestingRepository } from '../infrastructure/testing.repository';
 
+@SkipThrottle()
 @Controller('testing')
 export class TestingController {
   constructor(private testingRepository: TestingRepository) {}
@@ -9,11 +11,6 @@ export class TestingController {
   @Delete('all-data')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteAllData() {
-    const isAllDataDeleted = await this.testingRepository.deleteAllData();
-    // if (!resData) {
-    //   res.sendStatus(constants.HTTP_STATUS_NOT_FOUND);
-    //   return;
-    // }
-    return isAllDataDeleted;
+    return await this.testingRepository.deleteAllData();
   }
 }

@@ -1,9 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-@Schema({ id: false, _id: false, versionKey: false })
+@Schema({ id: false, versionKey: false })
 export class Blog {
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({ required: true, unique: true, type: String })
   id: string;
 
   @Prop({ type: String, required: true })

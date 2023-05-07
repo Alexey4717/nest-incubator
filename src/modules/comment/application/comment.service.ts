@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { randomUUID } from 'crypto';
+// import { randomUUID } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import { LikeStatus } from '../../../types/common';
 import {
   GetMappedCommentOutputModel,
@@ -68,7 +69,7 @@ export class CommentService {
 
     // TODO add dto
     const newComment: TCommentDb = {
-      id: randomUUID(),
+      id: uuidv4(),
       postId,
       content,
       commentatorInfo: { userId, userLogin },

@@ -31,7 +31,7 @@ class Reaction {
 
 const ReactionSchema = SchemaFactory.createForClass(Reaction);
 
-@Schema()
+@Schema({ id: false, versionKey: false })
 export class Comment {
   @Prop({ type: String, unique: true, required: true })
   id: string;

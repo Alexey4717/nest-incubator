@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { randomUUID } from 'crypto';
+// import { randomUUID } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import {
   GetMappedPostOutputModel,
   TPostDb,
@@ -66,7 +67,7 @@ export class PostService {
 
     // TODO add DTO
     const newPost: TPostDb = {
-      id: randomUUID(),
+      id: uuidv4(),
       title,
       shortDescription,
       blogId,
@@ -77,6 +78,7 @@ export class PostService {
     };
 
     const postFromDB = await this.postRepository.createPost(newPost);
+    console.log({ postFromDB });
     return this._mapPostToViewType(postFromDB);
   }
 

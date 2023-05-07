@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
-import { randomUUID } from 'crypto';
+// import { randomUUID } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import { InjectModel } from '@nestjs/mongoose';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { LikeStatus } from '../../../types/common';
@@ -31,7 +32,7 @@ export class BlogService {
     const { name, websiteUrl, description } = input || {};
 
     const newBlog = {
-      id: randomUUID(),
+      id: uuidv4(),
       name,
       websiteUrl,
       description,
@@ -55,7 +56,7 @@ export class BlogService {
     if (!foundBlog) return null;
 
     const newPost: TPostDb = {
-      id: randomUUID(),
+      id: uuidv4(),
       title,
       shortDescription,
       blogId,

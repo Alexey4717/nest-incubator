@@ -7,6 +7,9 @@ import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { UserRepository } from '../infrastructure/user.repository';
 import { UserQueryRepository } from '../infrastructure/user-query.repository';
 import { randomUUID } from 'crypto';
+import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from '../models/User.schema';
+import { Model } from 'mongoose';
 // import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
@@ -47,7 +50,9 @@ export class UserService {
       password,
       isConfirmed: true,
     });
-    return await this.userRepository.createUser(newUser);
+
+    console.log({ newUser });
+    return await this.userRepository.createUser({ ...newUser });
   }
 
   // async createUserAndSendConfirmationMessage({
@@ -155,7 +160,7 @@ export class UserService {
   }: CreateUserInputType): Promise<CreateUserInsertToDBModel> {
     const passwordHash = await this._generateHash(password);
     return {
-      id: randomUUID(),
+      id: uuidv4(),
       accountData: {
         login,
         email,
@@ -163,7 +168,7 @@ export class UserService {
         createdAt: new Date().toISOString(),
       },
       emailConfirmation: {
-        confirmationCode: uuidv4(), // generate unique id
+        confirmationCode: randomUUID(), // generate unique id
         expirationDate: add(new Date(), { hours: 1 }),
         isConfirmed,
       },

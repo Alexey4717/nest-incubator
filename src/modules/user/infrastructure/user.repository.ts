@@ -28,11 +28,9 @@ type SetUserRecoveryDataInputType = {
 export class UserRepository {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
-  async createUser(
-    newUser: CreateUserInsertToDBModel,
-  ): Promise<GetUserOutputModelFromMongoDB> {
+  async createUser(newUser: User): Promise<GetUserOutputModelFromMongoDB> {
     try {
-      return await this.UserModel.create(newUser);
+      return await this.UserModel.create({ ...newUser });
     } catch (error) {
       console.log(`usersRepository.createUser error is occurred: ${error}`);
       return {} as GetUserOutputModelFromMongoDB;
