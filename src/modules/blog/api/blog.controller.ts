@@ -19,11 +19,11 @@ import {
 } from '../../post/models/GetPostsInputModel';
 import { getMappedPostViewModel } from '../../post/helpers';
 import { GetBlogsInputModel, SortBlogsBy } from '../models/GetBlogsInputModel';
-import { CreateBlogInputModel } from '../models/CreateBlogInputModel';
-import { CreatePostInBlogInputModel } from '../models/CreatePostInBlogInputModel';
-import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import { BlogService } from '../application/blog.service';
 import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
+import { CreateBlogDTO } from '../dto/create-blog.dto';
+import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
+import { UpdateBlogDto } from '../dto/update-blog.dto';
 
 @Controller('blogs')
 export class BlogController {
@@ -97,7 +97,7 @@ export class BlogController {
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createBlog(@Body() body: CreateBlogInputModel) {
+  async createBlog(@Body() body: CreateBlogDTO) {
     const createdBlog = await this.blogService.createBlog(body);
     return getMappedBlogViewModel(createdBlog);
   }
@@ -106,7 +106,7 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPostInBlog(
     @Param() params: { blogId: string },
-    @Body() body: CreatePostInBlogInputModel,
+    @Body() body: CreatePostInBlogDTO,
   ) {
     // const currentUserId = req?.context?.user?.id
 
@@ -128,7 +128,7 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateBlog(
     @Param() params: { id: string },
-    @Body() body: UpdateBlogInputModel,
+    @Body() body: UpdateBlogDto,
   ) {
     const isBlogUpdated = await this.blogService.updateBlog({
       id: params.id,
@@ -148,6 +148,3 @@ export class BlogController {
     return isBlogDeleted;
   }
 }
-
-// TODO comments
-// add to main module

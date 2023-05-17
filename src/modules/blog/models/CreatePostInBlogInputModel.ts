@@ -1,4 +1,5 @@
 import { GetPostOutputModel } from '../../post/models/GetPostOutputModel';
+import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 
 export type CreatePostInBlogInputModel = {
   /**
@@ -19,5 +20,5 @@ export type CreatePostInBlogInputModel = {
 
 export type CreatePostInBlogInputAndQueryModel = {
   blogId: string;
-  input: CreatePostInBlogInputModel;
+  input: CreatePostInBlogDTO;
 };

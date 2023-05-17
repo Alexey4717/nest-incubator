@@ -6,16 +6,19 @@ import { InjectModel } from '@nestjs/mongoose';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { LikeStatus } from '../../../types/common';
 import { Post, PostDocument } from '../../post/models/Post.schema';
-import { CreateBlogInputModel } from '../models/CreateBlogInputModel';
 import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
 import { CreatePostInBlogInputAndQueryModel } from '../models/CreatePostInBlogInputModel';
 import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
 import { BlogRepository } from '../infrastructure/blog.repository';
+import { CreateBlogDTO } from '../dto/create-blog.dto';
+import { validateOrRejectModel } from '../../../helpers';
+import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
+import { UpdateBlogDto } from '../dto/update-blog.dto';
 
 interface UpdateBlogArgs {
   id: string;
-  input: UpdateBlogInputModel;
+  input: UpdateBlogDto;
 }
 
 @Injectable()
@@ -27,8 +30,9 @@ export class BlogService {
   ) {}
 
   async createBlog(
-    input: CreateBlogInputModel,
+    input: CreateBlogDTO,
   ): Promise<GetBlogOutputModelFromMongoDB> {
+    await validateOrRejectModel(input, CreateBlogDTO, 'BlogService.createBlog');
     const { name, websiteUrl, description } = input || {};
 
     const newBlog = {
@@ -49,6 +53,11 @@ export class BlogService {
     blogId,
     input,
   }: CreatePostInBlogInputAndQueryModel): Promise<TPostDb | null> {
+    await validateOrRejectModel(
+      input,
+      CreatePostInBlogDTO,
+      'BlogService.createPostInBlog',
+    );
     const { title, shortDescription, content } = input || {};
 
     const foundBlog = await this.blogQueryRepository.findBlogById(blogId);
@@ -71,6 +80,7 @@ export class BlogService {
   }
 
   async updateBlog({ id, input }: UpdateBlogArgs): Promise<boolean> {
+    await validateOrRejectModel(input, UpdateBlogDto, 'BlogService.updateBlog');
     return await this.blogRepository.updateBlog({ id, input });
   }
 

@@ -12,10 +12,10 @@ import { constants } from 'http2';
 import { getMappedCommentViewModel } from '../helpers';
 import { LikeStatus } from '../../../types/common';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
-import { UpdateCommentInputModel } from '../models/UpdateCommentInputModel';
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
 import { CommentService } from '../application/comment.service';
 import { CommentManageStatuses } from '../types';
+import { UpdateCommentDTO } from '../dto/update-comment.dto';
 
 @Controller('comments')
 export class CommentController {
@@ -47,7 +47,7 @@ export class CommentController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateComment(
     @Param() params: GetCommentInputModel,
-    @Body() body: UpdateCommentInputModel,
+    @Body() body: UpdateCommentDTO,
   ) {
     // if (!req.context.user) {
     //   res.sendStatus(constants.HTTP_STATUS_UNAUTHORIZED)
@@ -101,6 +101,7 @@ export class CommentController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async changeLikeStatus(
     @Param() params: GetCommentInputModel,
+    // TODO add DTO
     @Body() body: { likeStatus: LikeStatus },
   ) {
     // if (!req.context.user) {
