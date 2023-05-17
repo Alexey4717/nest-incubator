@@ -13,10 +13,14 @@ import { Post, PostDocument } from '../models/Post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostRepository } from '../infrastructure/post.repository';
 import { Blog, BlogDocument } from '../../blog/models/Blog.schema';
+import { UpdatePostDto } from '../dto/update-post.dto';
+import { validateOrRejectModel } from '../../../helpers';
+import { CreateUserDTO } from '../../user/dto/create-user.dto';
+import { CreatePostDto } from '../dto/create-post.dto';
 
 interface UpdatePostArgs {
   id: string;
-  input: UpdatePostInputModel;
+  input: UpdatePostDto;
 }
 
 interface UpdateLikeStatusPostArgs {
@@ -57,8 +61,9 @@ export class PostService {
   }
 
   async createPost(
-    input: CreatePostInputModel,
+    input: CreatePostDto,
   ): Promise<GetMappedPostOutputModel | null> {
+    await validateOrRejectModel(input, CreatePostDto, 'PostService.createPost');
     const { title, shortDescription, blogId, content } = input || {};
 
     const foundBlog = await this.BlogModel.findOne({ id: blogId });
@@ -83,6 +88,7 @@ export class PostService {
   }
 
   async updatePost({ id, input }: UpdatePostArgs): Promise<boolean> {
+    await validateOrRejectModel(input, UpdatePostDto, 'PostService.updatePost');
     return await this.postRepository.updatePost({ id, input });
   }
 

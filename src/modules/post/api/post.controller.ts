@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { getMappedPostViewModel } from '../helpers';
@@ -26,6 +27,9 @@ import { SortPostCommentsBy } from '../../comment/models/GetPostCommentsInputMod
 import { CreateCommentInputModel } from '../../comment/models/CreateCommentInputModel';
 import { CommentService } from '../../comment/application/comment.service';
 import { getMappedCommentViewModel } from '../../comment/helpers';
+import { CreatePostDto } from '../dto/create-post.dto';
+import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
 
 @Controller('posts')
 export class PostController {
@@ -126,13 +130,20 @@ export class PostController {
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createPost(@Body() body: CreatePostInputModel) {
+  async createPost(@Body() body: CreatePostDto) {
     // const currentUserId = req.context?.user?.id;
 
     const createdPost = await this.postService.createPost(body);
 
     // Если указан невалидный blogId
     if (!createdPost) throw new NotFoundException();
+    // if (!createdPost)
+    //   throw new BadRequestException([
+    //     {
+    //       field: 'blogId',
+    //       message: 'not valid blogId',
+    //     },
+    //   ]);
     return createdPost;
   }
 
@@ -140,7 +151,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createCommentInPost(
     @Param() params: { postId: string },
-    @Body() body: CreateCommentInputModel,
+    @Body() body: CreateCommentInPostDto,
   ) {
     // if (!req.context.user) {
     //   res.sendStatus(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -167,7 +178,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePost(
     @Param() params: GetPostInputModel,
-    @Body() body: UpdatePostInputModel,
+    @Body() body: UpdatePostDto,
   ) {
     const isPostUpdated = await this.postService.updatePost({
       id: params.id,
@@ -182,6 +193,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePostLikeStatus(
     @Param() params: GetPostLikeStatusInputModel,
+    // TODO add DTO
     @Body() body: UpdatePostLikeStatusInputModel,
   ) {
     // const userId = req.context.user!.id;

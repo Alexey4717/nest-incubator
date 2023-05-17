@@ -19,6 +19,7 @@ import { getMappedUserViewModel } from '../helpers';
 import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';
 import { SortDirections } from '../../../types/common';
 import { CreateUserInputModel } from '../models/CreateUserInputModel';
+import { CreateUserDTO } from '../dto/create-user.dto';
 
 @Controller('users')
 export class UserController {
@@ -66,7 +67,7 @@ export class UserController {
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createUser(@Body() inputModel: CreateUserInputModel) {
+  async createUser(@Body() inputModel: CreateUserDTO) {
     // const createdUser = this.authService.createUser(inputModel);
     const createdUser = await this.userService.createUser(inputModel);
     return getMappedUserViewModel(createdUser);

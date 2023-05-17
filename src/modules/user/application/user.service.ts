@@ -10,6 +10,9 @@ import { randomUUID } from 'crypto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../models/User.schema';
 import { Model } from 'mongoose';
+import { CreateUserDTO } from '../dto/create-user.dto';
+import { validateOrReject } from 'class-validator';
+import { validateOrRejectModel } from '../../../helpers';
 // import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
@@ -39,11 +42,16 @@ export class UserService {
     private userQueryRepository: UserQueryRepository, // private emailManager: EmailManager,
   ) {}
 
-  async createUser({
-    login,
-    email,
-    password,
-  }: CreateUserInputModel): Promise<GetUserOutputModelFromMongoDB> {
+  async createUser(
+    inputModel: CreateUserDTO,
+  ): Promise<GetUserOutputModelFromMongoDB> {
+    await validateOrRejectModel(
+      inputModel,
+      CreateUserDTO,
+      'UserService.createUser',
+    );
+
+    const { login, email, password } = inputModel;
     const newUser = await this._getNewUser({
       login,
       email,
@@ -51,7 +59,6 @@ export class UserService {
       isConfirmed: true,
     });
 
-    console.log({ newUser });
     return await this.userRepository.createUser({ ...newUser });
   }
 
