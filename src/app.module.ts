@@ -1,5 +1,6 @@
 // configs defined first, for get correct access to dotenv in different modules
 import { ConfigModule } from '@nestjs/config';
+import { join } from 'path';
 import configurations from './configs/nest.config';
 
 const configModule = ConfigModule.forRoot({
@@ -61,6 +62,7 @@ import {
 } from './modules/comment/models/Comment.schema';
 import { Blog, BlogSchema } from './modules/blog/models/Blog.schema';
 import { Post, PostSchema } from './modules/post/models/Post.schema';
+import { ServeStaticModule } from '@nestjs/serve-static';
 // import { EmailModule } from './modules/email/email.module';
 
 const modules = [
@@ -117,6 +119,10 @@ const mongooseModels = [
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'swagger-static'),
+      serveRoot: process.env.NODE_ENV === 'development' ? '/' : '/swagger',
+    }),
     configModule,
     MongooseModule.forRootAsync({ useClass: MongooseConfig }),
     MongooseModule.forFeature(mongooseModels),

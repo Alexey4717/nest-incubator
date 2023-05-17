@@ -1,11 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { createWriteStream } from 'fs';
+import { get } from 'http';
 import { AppModule } from './app.module';
 import {
   ErrorExceptionFilter,
   HttpExceptionFilter,
 } from './exception-filters/http.exception-filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+const serverUrl = 'http://localhost:4000';
 
 async function bootstrap() {
   const startInit = +new Date();
@@ -47,6 +51,31 @@ async function bootstrap() {
     console.log(`App successfully started at ${port} port.`);
     console.log(`Time to init: ${finishInit} seconds`);
   });
+
+  // get the swagger json file (if app is running in development mode)
+  if (process.env.NODE_ENV === 'development') {
+    // write swagger ui files
+    get(`${serverUrl}/swagger/swagger-ui-bundle.js`, function (response) {
+      response.pipe(createWriteStream('swagger-static/swagger-ui-bundle.js'));
+    });
+
+    get(`${serverUrl}/swagger/swagger-ui-init.js`, function (response) {
+      response.pipe(createWriteStream('swagger-static/swagger-ui-init.js'));
+    });
+
+    get(
+      `${serverUrl}/swagger/swagger-ui-standalone-preset.js`,
+      function (response) {
+        response.pipe(
+          createWriteStream('swagger-static/swagger-ui-standalone-preset.js'),
+        );
+      },
+    );
+
+    get(`${serverUrl}/swagger/swagger-ui.css`, function (response) {
+      response.pipe(createWriteStream('swagger-static/swagger-ui.css'));
+    });
+  }
 }
 
 bootstrap();
