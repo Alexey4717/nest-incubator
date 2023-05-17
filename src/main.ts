@@ -5,6 +5,7 @@ import {
   ErrorExceptionFilter,
   HttpExceptionFilter,
 } from './exception-filters/http.exception-filter';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const startInit = +new Date();
@@ -32,6 +33,16 @@ async function bootstrap() {
   const port = 4000;
   const finishInit = (+new Date() - startInit) / 1000;
   app.useGlobalFilters(new ErrorExceptionFilter(), new HttpExceptionFilter());
+
+  const config = new DocumentBuilder()
+    .setTitle('nestjs app example')
+    .setDescription('API description')
+    .setVersion('1.0')
+    .addTag('nestjs it-incubator app')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('swagger', app, document);
+
   await app.listen(port, () => {
     console.log(`App successfully started at ${port} port.`);
     console.log(`Time to init: ${finishInit} seconds`);
