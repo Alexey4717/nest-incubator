@@ -17,7 +17,7 @@ export class ErrorExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<Request>();
 
     // catching all internal server errors (500)
-    if (process.env.NODE_ENV !== 'prod') {
+    if (process.env.NODE_ENV !== 'production') {
       response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
         error: exception.toString(),
         stack: exception.stack,
