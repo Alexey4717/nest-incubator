@@ -74,6 +74,10 @@ import { SessionModule } from './modules/session/session.module';
 import { SessionService } from './modules/session/application/session.service';
 import { SessionRepository } from './modules/session/infrastructure/session.repository';
 import { SessionQueryRepository } from './modules/session/infrastructure/session-query.repository';
+import {
+  Session,
+  SessionSchema,
+} from './modules/session/models/session.schema';
 
 const modules = [
   TestingModule,
@@ -133,6 +137,7 @@ const mongooseModels = [
   { name: Blog.name, schema: BlogSchema },
   { name: Post.name, schema: PostSchema },
   { name: Comment.name, schema: CommentSchema },
+  { name: Session.name, schema: SessionSchema },
 ];
 
 @Module({
