@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { add } from 'date-fns';
@@ -96,9 +96,11 @@ export class UserService {
   //   });
   // }
   //
-  // async recoveryPassword(email: string): Promise<boolean> {
-  //   return await this.emailManager.sendPasswordRecoveryMessage(email);
-  // }
+  async recoveryPassword(userId) {
+    const recoveryCode = randomUUID();
+    await this.userRepository.updateRecoveryPasswordInfo(userId, recoveryCode);
+    return recoveryCode;
+  }
 
   async confirmEmail(code: string): Promise<boolean> {
     const user = await this.userQueryRepository.findByConfirmationCode(code);
@@ -125,7 +127,7 @@ export class UserService {
       user.recoveryData?.recoveryCode !== recoveryCode ||
       user.recoveryData?.expirationDate <= new Date()
     )
-      return false;
+      throw new BadRequestException();
     const passwordHash = await this._generateHash(newPassword);
     return await this.userRepository.changeUserPasswordAndNullifyRecoveryData({
       userId: user?.id,

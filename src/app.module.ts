@@ -28,6 +28,7 @@ const configModule = ConfigModule.forRoot({
 
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -63,19 +64,31 @@ import {
 import { Blog, BlogSchema } from './modules/blog/models/Blog.schema';
 import { Post, PostSchema } from './modules/post/models/Post.schema';
 import { ServeStaticModule } from '@nestjs/serve-static';
-// import { EmailModule } from './modules/email/email.module';
+import { MailerConfig } from './configs/mailer.config';
+import { AuthController } from './modules/auth/api/auth.controller';
+import { AuthModule } from './modules/auth/auth.module';
+import { EmailModule } from './modules/email/email.module';
+import { AuthService } from './modules/auth/application/auth.service';
+import { EmailService } from './modules/email/email.service';
+import { SessionModule } from './modules/session/session.module';
+import { SessionService } from './modules/session/application/session.service';
+import { SessionRepository } from './modules/session/infrastructure/session.repository';
+import { SessionQueryRepository } from './modules/session/infrastructure/session-query.repository';
 
 const modules = [
   TestingModule,
+  AuthModule,
+  SessionModule,
   UserModule,
   PostModule,
   BlogModule,
   CommentModule,
-  // EmailModule,
+  EmailModule,
 ];
 
 const controllers = [
   AppController,
+  AuthController,
   TestingController,
   UserController,
   BlogController,
@@ -88,6 +101,9 @@ const validators = [];
 
 const services = [
   AppService,
+  AuthService,
+  SessionService,
+  EmailService,
   UserService,
   BlogService,
   CommentService,
@@ -96,6 +112,7 @@ const services = [
 
 const queryRepositories = [
   UserQueryRepository,
+  SessionQueryRepository,
   BlogQueryRepository,
   CommentQueryRepository,
   PostQueryRepository,
@@ -104,6 +121,7 @@ const queryRepositories = [
 const repositories = [
   TestingRepository,
   UserRepository,
+  SessionRepository,
   BlogRepository,
   CommentRepository,
   PostRepository,
@@ -126,6 +144,7 @@ const mongooseModels = [
     configModule,
     MongooseModule.forRootAsync({ useClass: MongooseConfig }),
     MongooseModule.forFeature(mongooseModels),
+    MailerModule.forRootAsync({ useClass: MailerConfig }),
     // MongooseModule.forRoot(process.env.MONGO_URI),
     ...modules,
   ],

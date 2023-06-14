@@ -10,7 +10,7 @@ import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { ObjectId } from 'mongodb';
 
 type UpdateUserConfirmationCodeInputType = {
-  userId: ObjectId;
+  userId: string;
   newCode: string;
 };
 
@@ -91,5 +91,17 @@ export class UserRepository {
       { $set: { 'emailConfirmation.confirmationCode': newCode } },
     );
     return result.matchedCount === 1;
+  }
+
+  async updateRecoveryPasswordInfo(userId: string, recoveryCode: string) {
+    return this.UserModel.updateOne(
+      { id: userId },
+      {
+        $set: {
+          'recoveryData.expirationDate': new Date().toISOString(),
+          'recoveryData.recoveryCode': recoveryCode,
+        },
+      },
+    );
   }
 }

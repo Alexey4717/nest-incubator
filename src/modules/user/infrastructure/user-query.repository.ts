@@ -30,114 +30,102 @@ export class UserQueryRepository {
     pageNumber,
     pageSize,
   }: GetUsersArgs): Promise<Paginator<GetUserOutputModelFromMongoDB[]>> {
-    try {
-      let filter = {} as any;
+    let filter = {} as any;
 
-      if (searchLoginTerm && !searchEmailTerm) {
-        filter['accountData.login'] = {
-          $regex: searchLoginTerm,
-          $options: 'i',
-        };
-      } else if (searchEmailTerm && !searchLoginTerm) {
-        filter['accountData.email'] = {
-          $regex: searchEmailTerm,
-          $options: 'i',
-        };
-      } else if (searchLoginTerm && searchLoginTerm) {
-        filter = {
-          $or: [
-            {
-              [`accountData.login`]: {
-                $regex: searchLoginTerm,
-                $options: 'i',
-              },
-            },
-            {
-              [`accountData.email`]: { $regex: searchEmailTerm, $options: 'i' },
-            },
-          ],
-        };
-      }
-
-      const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-      const items = await this.UserModel.find(filter)
-        .sort({ [`accountData.${sortBy}`]: sortDirection === 'asc' ? 1 : -1 })
-        .skip(skipValue)
-        .limit(pageSize)
-        .lean();
-
-      // const items = await this.UserModel.aggregate([
-      //   { $match: filter },
-      //   { $sort: { [sortBy]: sortDirection === 'asc' ? 1 : -1 } },
-      //   { $skip: skipValue },
-      //   { $limit: pageSize },
-      //   {
-      //     $project: {
-      //       id: true,
-      //       accountData: '$accountData',
-      //     },
-      //   },
-      // ]);
-
-      const totalCount = await this.UserModel.count(filter);
-      const pagesCount = Math.ceil(totalCount / pageSize);
-      return {
-        page: pageNumber,
-        pageSize,
-        totalCount,
-        pagesCount,
-        items,
+    if (searchLoginTerm && !searchEmailTerm) {
+      filter['accountData.login'] = {
+        $regex: searchLoginTerm,
+        $options: 'i',
       };
-    } catch (error) {
-      console.log(`usersQueryRepository.getUsers error is occurred: ${error}`);
-      return {} as Paginator<GetUserOutputModelFromMongoDB[]>;
+    } else if (searchEmailTerm && !searchLoginTerm) {
+      filter['accountData.email'] = {
+        $regex: searchEmailTerm,
+        $options: 'i',
+      };
+    } else if (searchLoginTerm && searchLoginTerm) {
+      filter = {
+        $or: [
+          {
+            [`accountData.login`]: {
+              $regex: searchLoginTerm,
+              $options: 'i',
+            },
+          },
+          {
+            [`accountData.email`]: { $regex: searchEmailTerm, $options: 'i' },
+          },
+        ],
+      };
     }
+
+    const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
+    const items = await this.UserModel.find(filter)
+      .sort({ [`accountData.${sortBy}`]: sortDirection === 'asc' ? 1 : -1 })
+      .skip(skipValue)
+      .limit(pageSize)
+      .lean();
+
+    // const items = await this.UserModel.aggregate([
+    //   { $match: filter },
+    //   { $sort: { [sortBy]: sortDirection === 'asc' ? 1 : -1 } },
+    //   { $skip: skipValue },
+    //   { $limit: pageSize },
+    //   {
+    //     $project: {
+    //       id: true,
+    //       accountData: '$accountData',
+    //     },
+    //   },
+    // ]);
+
+    const totalCount = await this.UserModel.count(filter);
+    const pagesCount = Math.ceil(totalCount / pageSize);
+    return {
+      page: pageNumber,
+      pageSize,
+      totalCount,
+      pagesCount,
+      items,
+    };
   }
 
   async findUserById(
     id: ObjectId,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
-    try {
-      return await this.UserModel.findOne({ id }).lean();
-    } catch (error) {
-      console.log(
-        `usersQueryRepository.findUserById error is occurred: ${error}`,
-      );
-      return {} as GetUserOutputModelFromMongoDB;
-    }
+    return this.UserModel.findOne({ id }).lean();
+  }
+
+  async findUserByLogin(login: string): Promise<User | null> {
+    return this.UserModel.findOne(
+      { 'accountData.login': login },
+      { _id: false },
+    );
+  }
+
+  async findUserByEmail(email: string): Promise<User | null> {
+    return this.UserModel.findOne(
+      { 'accountData.email': email },
+      { _id: false },
+    );
   }
 
   async findByLoginOrEmail(
     loginOrEmail: string,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
-    try {
-      return await this.UserModel.findOne({
-        $or: [
-          { 'accountData.login': loginOrEmail },
-          { 'accountData.email': loginOrEmail },
-        ],
-      }).lean();
-    } catch (error) {
-      console.log(
-        `usersQueryRepository.findByLoginOrEmail error is occurred: ${error}`,
-      );
-      return {} as GetUserOutputModelFromMongoDB;
-    }
+    return this.UserModel.findOne({
+      $or: [
+        { 'accountData.login': loginOrEmail },
+        { 'accountData.email': loginOrEmail },
+      ],
+    }).lean();
   }
 
   async findByConfirmationCode(
     code: string,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
-    try {
-      return this.UserModel.findOne({
-        'emailConfirmation.confirmationCode': code,
-      }).lean();
-    } catch (error) {
-      console.log(
-        `usersQueryRepository.findByConfirmationCode error is occurred: ${error}`,
-      );
-      return {} as GetUserOutputModelFromMongoDB;
-    }
+    return this.UserModel.findOne({
+      'emailConfirmation.confirmationCode': code,
+    }).lean();
   }
 
   async findUserByRecoveryCode(

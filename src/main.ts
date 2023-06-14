@@ -8,6 +8,7 @@ import {
   HttpExceptionFilter,
 } from './exception-filters/http.exception-filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { BasicAuthGuard } from './guards/basic-auth.guard';
 
 const serverUrl = 'http://localhost:4000';
 
@@ -15,6 +16,8 @@ async function bootstrap() {
   const startInit = +new Date();
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  // если глобально нужно защитить
+  // app.useGlobalGuards(AuthGuard);
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

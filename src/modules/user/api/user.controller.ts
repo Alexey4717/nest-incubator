@@ -10,6 +10,7 @@ import {
   HttpCode,
   Inject,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { UserService } from '../application/user.service';
@@ -20,7 +21,9 @@ import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';
 import { SortDirections } from '../../../types/common';
 import { CreateUserInputModel } from '../models/CreateUserInputModel';
 import { CreateUserDTO } from '../dto/create-user.dto';
+import { BasicAuthGuard } from '../../../guards/basic-auth.guard';
 
+@UseGuards(BasicAuthGuard)
 @Controller('users')
 export class UserController {
   constructor(

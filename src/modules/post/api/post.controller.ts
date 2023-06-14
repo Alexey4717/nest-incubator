@@ -10,6 +10,7 @@ import {
   HttpCode,
   NotFoundException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { getMappedPostViewModel } from '../helpers';
@@ -30,6 +31,9 @@ import { getMappedCommentViewModel } from '../../comment/helpers';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
+import { GetUserIdFromBearerToken } from '../../../guards/get-userId-from-bearer-token';
+import { BasicAuthGuard } from '../../../guards/basic-auth.guard';
+import { BearerAuthGuard } from '../../../guards/bearer-auth.guard';
 
 @Controller('posts')
 export class PostController {
@@ -40,6 +44,7 @@ export class PostController {
     protected commentService: CommentService,
   ) {}
 
+  @UseGuards(GetUserIdFromBearerToken)
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPosts(
@@ -75,6 +80,7 @@ export class PostController {
     };
   }
 
+  @UseGuards(GetUserIdFromBearerToken)
   @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPost(@Param() params: GetPostInputModel) {
@@ -88,6 +94,7 @@ export class PostController {
     });
   }
 
+  @UseGuards(GetUserIdFromBearerToken)
   @Get(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getCommentsOfPost(
@@ -128,6 +135,7 @@ export class PostController {
     };
   }
 
+  @UseGuards(BearerAuthGuard)
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPost(@Body() body: CreatePostDto) {
@@ -147,6 +155,7 @@ export class PostController {
     return createdPost;
   }
 
+  @UseGuards(BearerAuthGuard)
   @Post(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createCommentInPost(
@@ -174,6 +183,7 @@ export class PostController {
     return createdCommentInPost;
   }
 
+  @UseGuards(BearerAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePost(
@@ -189,6 +199,7 @@ export class PostController {
     return isPostUpdated;
   }
 
+  @UseGuards(BearerAuthGuard)
   @Put(':postId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePostLikeStatus(
@@ -213,6 +224,7 @@ export class PostController {
     return isPostUpdated;
   }
 
+  @UseGuards(BasicAuthGuard)
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deletePost(@Param() params: GetPostInputModel) {

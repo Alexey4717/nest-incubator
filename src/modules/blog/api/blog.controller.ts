@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { getMappedBlogViewModel } from '../helpers';
@@ -24,6 +25,7 @@ import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
+import { GetUserIdFromBearerToken } from '../../../guards/get-userId-from-bearer-token';
 
 @Controller('blogs')
 export class BlogController {
@@ -61,6 +63,7 @@ export class BlogController {
     return getMappedBlogViewModel(resData);
   }
 
+  @UseGuards(GetUserIdFromBearerToken)
   @Get(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPostsOfBlog(
