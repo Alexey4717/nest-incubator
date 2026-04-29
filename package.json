@@ -1,6 +1,9 @@
 {
   "name": "it-incubator",
   "version": "0.0.1",
+  "engines": {
+    "node": "24.x"
+  },
   "description": "",
   "author": "",
   "private": true,
