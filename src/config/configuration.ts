@@ -1,4 +1,4 @@
-const getConfig = () => {
+const configuration = () => {
   const PORT = parseInt(process.env.PORT, 10) || 4000;
   // const POSTGRES_URI = process.env.POSTGRES_URI;
   const MONGO_URI = process.env.MONGO_URI;
@@ -36,7 +36,4 @@ const getConfig = () => {
   };
 };
 
-type ConfigType = ReturnType<typeof getConfig>;
-
-// export AdditionalConfigType = ConfigType & { ...some variables }
-export default getConfig;
+export default configuration;

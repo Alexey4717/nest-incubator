@@ -1,32 +1,24 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Post, PostSchema } from './models/Post.schema';
 import { PostController } from './api/post.controller';
 import { PostService } from './application/post.service';
-import { PostRepository } from './infrastructure/post.repository';
-import { PostQueryRepository } from './infrastructure/post-query.repository';
-import { CommentQueryRepository } from '../comment/infrastructure/comment-query.repository';
+import { PostRepository } from './infrastructure/post.repository.mongodb';
+import { PostQueryRepository } from './infrastructure/post-query.repository.mongodb';
+import { CommentQueryRepository } from '../comment/infrastructure/comment-query.repository.mongodb';
 import { CommentService } from '../comment/application/comment.service';
-import { Blog, BlogSchema } from '../blog/models/Blog.schema';
-import { CommentRepository } from '../comment/infrastructure/comment.repository';
-import { Comment, CommentSchema } from '../comment/models/Comment.schema';
-
-const schemas = [
-  { name: Post.name, schema: PostSchema },
-  { name: Blog.name, schema: BlogSchema },
-  { name: Comment.name, schema: CommentSchema },
-];
+import { CommentRepository } from '../comment/infrastructure/comment.repository.mongodb';
+import { MongooseModelsModule } from '../database/mongoose-models.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [MongooseModule.forFeature(schemas)],
+  imports: [MongooseModelsModule, AuthModule],
   controllers: [PostController],
   providers: [
-    CommentRepository,
-    CommentQueryRepository,
-    CommentService,
-    PostService,
-    PostRepository,
-    PostQueryRepository,
+    CommentRepository as any,
+    CommentQueryRepository as any,
+    CommentService as any,
+    PostService as any,
+    PostRepository as any,
+    PostQueryRepository as any,
   ],
 })
 export class PostModule {}

@@ -4,7 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { UserQueryRepository } from '../modules/user/infrastructure/user-query.repository';
+import { UserQueryRepository } from '../modules/user/infrastructure/user-query.repository.mongodb';
 
 @ValidatorConstraint({ name: 'UserEmailExists', async: true })
 @Injectable()

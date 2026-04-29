@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Post, PostDocument } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { LikeStatus } from '../../../types/common';
 import { TPostDb, TReactions } from '../models/GetPostOutputModel';
-import { PostQueryRepository } from './post-query.repository';
+import { PostQueryRepository } from './post-query.repository.mongodb';
 
 interface UpdatePostArgs {
   id: string;

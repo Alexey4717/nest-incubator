@@ -33,6 +33,165 @@ window.onload = function() {
           }
         }
       },
+      "/auth/login": {
+        "post": {
+          "operationId": "AuthController_login",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/password-recovery": {
+        "post": {
+          "operationId": "AuthController_passwordRecovery",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryPasswordDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/new-password": {
+        "post": {
+          "operationId": "AuthController_newPassword",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewPasswordDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/refresh-token": {
+        "post": {
+          "operationId": "AuthController_refreshToken",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/registration": {
+        "post": {
+          "operationId": "AuthController_registration",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/registration-email-resending": {
+        "post": {
+          "operationId": "AuthController_registrationEmailResending",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationEmailResendingDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/registration-confirmation": {
+        "post": {
+          "operationId": "AuthController_registrationConfirmation",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationConfirmationDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/logout": {
+        "post": {
+          "operationId": "AuthController_logout",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/auth/me": {
+        "get": {
+          "operationId": "AuthController_aboutMe",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
       "/users": {
         "get": {
           "operationId": "UserController_getUsers",
@@ -66,6 +225,116 @@ window.onload = function() {
       "/users/{id}": {
         "delete": {
           "operationId": "UserController_deleteUser",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/posts": {
+        "get": {
+          "operationId": "PostController_getPosts",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "post": {
+          "operationId": "PostController_createPost",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/posts/{id}": {
+        "get": {
+          "operationId": "PostController_getPost",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "put": {
+          "operationId": "PostController_updatePost",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdatePostDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        },
+        "delete": {
+          "operationId": "PostController_deletePost",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/posts/{postId}/comments": {
+        "get": {
+          "operationId": "PostController_getCommentsOfPost",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "post": {
+          "operationId": "PostController_createCommentInPost",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCommentInPostDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/posts/{postId}": {
+        "put": {
+          "operationId": "PostController_updatePostLikeStatus",
           "parameters": [],
           "responses": {
             "204": {
@@ -203,116 +472,6 @@ window.onload = function() {
             }
           }
         }
-      },
-      "/posts": {
-        "get": {
-          "operationId": "PostController_getPosts",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
-        "post": {
-          "operationId": "PostController_createPost",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostDto"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/posts/{id}": {
-        "get": {
-          "operationId": "PostController_getPost",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
-        "put": {
-          "operationId": "PostController_updatePost",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdatePostDto"
-                }
-              }
-            }
-          },
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        },
-        "delete": {
-          "operationId": "PostController_deletePost",
-          "parameters": [],
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/posts/{postId}/comments": {
-        "get": {
-          "operationId": "PostController_getCommentsOfPost",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
-        "post": {
-          "operationId": "PostController_createCommentInPost",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateCommentInPostDto"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/posts/{postId}": {
-        "put": {
-          "operationId": "PostController_updatePostLikeStatus",
-          "parameters": [],
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        }
       }
     },
     "info": {
@@ -330,7 +489,43 @@ window.onload = function() {
     "servers": [],
     "components": {
       "schemas": {
+        "LoginDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "RecoveryPasswordDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "NewPasswordDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "RegistrationDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "RegistrationEmailResendingDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "RegistrationConfirmationDto": {
+          "type": "object",
+          "properties": {}
+        },
         "CreateUserDTO": {
+          "type": "object",
+          "properties": {}
+        },
+        "CreatePostDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "CreateCommentInPostDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "UpdatePostDto": {
           "type": "object",
           "properties": {}
         },
@@ -347,18 +542,6 @@ window.onload = function() {
           "properties": {}
         },
         "UpdateCommentDTO": {
-          "type": "object",
-          "properties": {}
-        },
-        "CreatePostDto": {
-          "type": "object",
-          "properties": {}
-        },
-        "CreateCommentInPostDto": {
-          "type": "object",
-          "properties": {}
-        },
-        "UpdatePostDto": {
           "type": "object",
           "properties": {}
         }

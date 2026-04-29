@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserQueryRepository } from '../modules/user/infrastructure/user-query.repository';
+import { UserQueryRepository } from '../modules/user/infrastructure/user-query.repository.mongodb';
 import { JwtService } from '../modules/auth/application/jwt.service';
 
 @Injectable()

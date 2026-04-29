@@ -8,7 +8,7 @@ import {
 import { TPostDb } from '../models/GetPostOutputModel';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/post.schema';
 import { Model } from 'mongoose';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
@@ -33,7 +33,7 @@ export class PostQueryRepository {
         .skip(skipValue)
         .limit(pageSize)
         .lean();
-      const totalCount = await this.PostModel.count(filter);
+      const totalCount = await this.PostModel.countDocuments(filter);
       const pagesCount = Math.ceil(totalCount / pageSize);
       return {
         page: pageNumber,

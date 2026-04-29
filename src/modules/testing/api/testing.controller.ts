@@ -1,7 +1,7 @@
 import { Controller, Delete, HttpCode } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
-import { TestingRepository } from '../infrastructure/testing.repository';
+import { TestingRepository } from '../infrastructure/testing.repository.mongodb';
 
 @SkipThrottle()
 @Controller('testing')

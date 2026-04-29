@@ -3,9 +3,9 @@ import { Model } from 'mongoose';
 import { Paginator, SortDirections } from '../../../types/common';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/post.schema';
 import { GetPostsInputModel } from '../models/GetPostCommentsInputModel';
-import { Comment, CommentDocument } from '../models/Comment.schema';
+import { Comment, CommentDocument } from '../models/comment.schema';
 import { TCommentDb } from '../models/GetCommentOutputModel';
 
 Injectable();

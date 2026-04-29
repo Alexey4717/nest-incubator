@@ -1,20 +1,17 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Comment, CommentSchema } from './models/Comment.schema';
 import { CommentController } from './api/comment.controller';
 import { CommentService } from './application/comment.service';
-import { CommentQueryRepository } from './infrastructure/comment-query.repository';
-import { CommentRepository } from './infrastructure/comment.repository';
-import { Post, PostSchema } from '../post/models/Post.schema';
-
-const schemas = [
-  { name: Comment.name, schema: CommentSchema },
-  { name: Post.name, schema: PostSchema },
-];
+import { CommentQueryRepository } from './infrastructure/comment-query.repository.mongodb';
+import { CommentRepository } from './infrastructure/comment.repository.mongodb';
+import { MongooseModelsModule } from '../database/mongoose-models.module';
 
 @Module({
-  imports: [MongooseModule.forFeature(schemas)],
+  imports: [MongooseModelsModule],
   controllers: [CommentController],
-  providers: [CommentService, CommentQueryRepository, CommentRepository],
+  providers: [
+    CommentService as any,
+    CommentQueryRepository as any,
+    CommentRepository as any,
+  ],
 })
 export class CommentModule {}

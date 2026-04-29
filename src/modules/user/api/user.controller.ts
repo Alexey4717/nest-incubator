@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { constants } from 'http2';
 import { UserService } from '../application/user.service';
-import { UserQueryRepository } from '../infrastructure/user-query.repository';
+import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
 import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
 import { getMappedUserViewModel } from '../helpers';
 import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';

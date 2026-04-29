@@ -21,7 +21,7 @@ import {
 import { getMappedPostViewModel } from '../../post/helpers';
 import { GetBlogsInputModel, SortBlogsBy } from '../models/GetBlogsInputModel';
 import { BlogService } from '../application/blog.service';
-import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
+import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mongodb';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';

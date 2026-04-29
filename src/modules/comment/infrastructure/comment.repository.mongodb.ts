@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
-import { Comment, CommentDocument } from '../models/Comment.schema';
+import { Comment, CommentDocument } from '../models/comment.schema';
 import { LikeStatus } from '../../../types/common';
-import { CommentQueryRepository } from './comment-query.repository';
+import { CommentQueryRepository } from './comment-query.repository.mongodb';
 
 @Injectable()
 export class CommentRepository {

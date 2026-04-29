@@ -12,7 +12,7 @@ import { constants } from 'http2';
 import { getMappedCommentViewModel } from '../helpers';
 import { LikeStatus } from '../../../types/common';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
-import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
+import { CommentQueryRepository } from '../infrastructure/comment-query.repository.mongodb';
 import { CommentService } from '../application/comment.service';
 import { CommentManageStatuses } from '../types';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';

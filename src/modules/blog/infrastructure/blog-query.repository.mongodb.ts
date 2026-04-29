@@ -9,9 +9,9 @@ import {
 import { TPostDb } from '../../post/models/GetPostOutputModel';
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/post.schema';
 import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
-import { Blog, BlogDocument } from '../models/Blog.schema';
+import { Blog, BlogDocument } from '../models/blog.schema';
 import { SortBlogsBy } from '../models/GetBlogsInputModel';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
@@ -27,7 +27,7 @@ type GetBlogsArgs = CommonQueryParamsTypes & {
   sortBy: SortBlogsBy;
 };
 
-Injectable();
+@Injectable()
 export class BlogQueryRepository {
   constructor(
     @InjectModel(Post.name) private PostModel: Model<PostDocument>,
@@ -51,7 +51,7 @@ export class BlogQueryRepository {
         .skip(skipValue)
         .limit(pageSize)
         .lean();
-      const totalCount = await this.BlogModel.count(filter);
+      const totalCount = await this.BlogModel.countDocuments(filter);
       const pagesCount = Math.ceil(totalCount / pageSize);
       return {
         page: pageNumber,
@@ -83,7 +83,7 @@ export class BlogQueryRepository {
         .skip(skipValue)
         .limit(pageSize)
         .lean();
-      const totalCount = await this.PostModel.count(filter);
+      const totalCount = await this.PostModel.countDocuments(filter);
       const pagesCount = Math.ceil(totalCount / pageSize);
       return {
         page: pageNumber,

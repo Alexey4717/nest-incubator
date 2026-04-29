@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { SessionRepository } from '../infrastructure/session.repository';
-import { SessionQueryRepository } from '../infrastructure/session-query.repository';
+import { SessionRepository } from '../infrastructure/session.repository.mongodb';
+import { SessionQueryRepository } from '../infrastructure/session-query.repository.mongodb';
 import { Session } from '../models/session.schema';
 import { RefreshTokenJwtPayloadDto } from '../../auth/dto/refresh-token-jwt-payload.dto';
 

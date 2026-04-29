@@ -52,14 +52,13 @@ export class User {
   @Prop({ type: String, unique: true, required: true })
   id: string;
 
-  @Prop(AccountDataSchema)
+  @Prop({ type: AccountDataSchema })
   accountData: AccountData;
 
-  // @ts-ignore
-  @Prop(EmailConfirmationSchema)
+  @Prop({ type: EmailConfirmationSchema })
   emailConfirmation: EmailConfirmation;
 
-  @Prop(RecoveryDataSchema)
+  @Prop({ type: RecoveryDataSchema })
   recoveryData: RecoveryData;
 }
 

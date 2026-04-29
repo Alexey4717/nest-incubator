@@ -8,15 +8,15 @@ import { UserService } from '../../user/application/user.service';
 import { JwtService } from './jwt.service';
 import { RegistrationDto } from '../dto/registration.dto';
 import { EmailService } from '../../email/email.service';
-import { UserQueryRepository } from '../../user/infrastructure/user-query.repository';
-import { UserRepository } from '../../user/infrastructure/user.repository';
+import { UserQueryRepository } from '../../user/infrastructure/user-query.repository.mongodb';
+import { UserRepository } from '../../user/infrastructure/user.repository.mongodb';
 import { randomUUID } from 'crypto';
 import { SessionService } from '../../session/application/session.service';
 import { SessionInfoDto } from '../../session/dto/sessionInfoDto';
 import { Session } from '../../session/models/session.schema';
-import { SessionQueryRepository } from '../../session/infrastructure/session-query.repository';
+import { SessionQueryRepository } from '../../session/infrastructure/session-query.repository.mongodb';
 import { RefreshTokenJwtPayloadDto } from '../dto/refresh-token-jwt-payload.dto';
-import { SessionRepository } from '../../session/infrastructure/session.repository';
+import { SessionRepository } from '../../session/infrastructure/session.repository.mongodb';
 import { NewPasswordDto } from '../dto/new-password.dto';
 
 @Injectable()

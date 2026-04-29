@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from '../models/User.schema';
+import { User, UserDocument } from '../models/user.schema';
 import {
   CommonQueryParamsTypes,
   Paginator,
@@ -10,7 +10,6 @@ import {
 import { calculateAndGetSkipValue } from '../../../helpers';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { SortUsersBy } from '../models/GetUsersInputModel';
-import { ObjectId } from 'mongodb';
 
 type GetUsersArgs = CommonQueryParamsTypes & {
   searchLoginTerm: string | null;
@@ -78,7 +77,7 @@ export class UserQueryRepository {
     //   },
     // ]);
 
-    const totalCount = await this.UserModel.count(filter);
+    const totalCount = await this.UserModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / pageSize);
     return {
       page: pageNumber,
@@ -90,7 +89,7 @@ export class UserQueryRepository {
   }
 
   async findUserById(
-    id: ObjectId,
+    id: string,
   ): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.UserModel.findOne({ id }).lean();
   }

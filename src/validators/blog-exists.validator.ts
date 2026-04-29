@@ -4,7 +4,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { BlogQueryRepository } from '../modules/blog/infrastructure/blog-query.repository';
+import { BlogQueryRepository } from '../modules/blog/infrastructure/blog-query.repository.mongodb';
 
 @ValidatorConstraint({ name: 'BlogExists', async: true })
 @Injectable()

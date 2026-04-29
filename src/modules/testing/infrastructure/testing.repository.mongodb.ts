@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Post, PostDocument } from '../../post/models/Post.schema';
-import { Blog, BlogDocument } from '../../blog/models/Blog.schema';
-import { User, UserDocument } from '../../user/models/User.schema';
-import { Comment, CommentDocument } from '../../comment/models/Comment.schema';
+import { Post, PostDocument } from '../../post/models/post.schema';
+import { Blog, BlogDocument } from '../../blog/models/blog.schema';
+import { User, UserDocument } from '../../user/models/user.schema';
+import { Comment, CommentDocument } from '../../comment/models/comment.schema';
 import { Session, SessionDocument } from '../../session/models/session.schema';
 
 @Injectable()

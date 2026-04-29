@@ -1,19 +1,13 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
-import { Blog, BlogSchema } from './models/Blog.schema';
 import { BlogController } from './api/blog.controller';
 import { BlogService } from './application/blog.service';
-import { BlogRepository } from './infrastructure/blog.repository';
-import { BlogQueryRepository } from './infrastructure/blog-query.repository';
-import { Post, PostSchema } from '../post/models/Post.schema';
-
-const schemas = [
-  { name: Blog.name, schema: BlogSchema },
-  { name: Post.name, schema: PostSchema },
-];
+import { BlogRepository } from './infrastructure/blog.repository.mongodb';
+import { BlogQueryRepository } from './infrastructure/blog-query.repository.mongodb';
+import { MongooseModelsModule } from '../database/mongoose-models.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [MongooseModule.forFeature(schemas)],
+  imports: [MongooseModelsModule, AuthModule],
   controllers: [BlogController],
   providers: [BlogService, BlogRepository, BlogQueryRepository],
 })

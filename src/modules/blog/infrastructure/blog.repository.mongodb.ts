@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Post, PostDocument } from '../../post/models/Post.schema';
+import { Post, PostDocument } from '../../post/models/post.schema';
 import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 import {
   GetBlogOutputModel,
   GetBlogOutputModelFromMongoDB,
 } from '../models/GetBlogOutputModel';
 import { TPostDb } from '../../post/models/GetPostOutputModel';
-import { Blog, BlogDocument } from '../models/Blog.schema';
+import { Blog, BlogDocument } from '../models/blog.schema';
 
 interface UpdateBlogArgs {
   id: string;

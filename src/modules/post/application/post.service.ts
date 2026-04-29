@@ -9,10 +9,10 @@ import {
 } from '../models/GetPostOutputModel';
 import { CreatePostInputModel } from '../models/CreatePostInputModel';
 import { LikeStatus } from '../../../types/common';
-import { Post, PostDocument } from '../models/Post.schema';
+import { Post, PostDocument } from '../models/post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
-import { PostRepository } from '../infrastructure/post.repository';
-import { Blog, BlogDocument } from '../../blog/models/Blog.schema';
+import { PostRepository } from '../infrastructure/post.repository.mongodb';
+import { Blog, BlogDocument } from '../../blog/models/blog.schema';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { validateOrRejectModel } from '../../../helpers';
 import { CreateUserDTO } from '../../user/dto/create-user.dto';

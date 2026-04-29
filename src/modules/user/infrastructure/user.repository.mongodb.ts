@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from '../models/User.schema';
+import { User, UserDocument } from '../models/user.schema';
 import {
   CreateUserInsertToDBModel,
   RecoveryDataType,
 } from '../models/CreateUserInsertToDBModel';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
-import { ObjectId } from 'mongodb';
 
 type UpdateUserConfirmationCodeInputType = {
   userId: string;
@@ -20,7 +19,7 @@ type ChangeUserPasswordArgs = {
 };
 
 type SetUserRecoveryDataInputType = {
-  userId: ObjectId;
+  userId: string;
   recoveryData: RecoveryDataType;
 };
 

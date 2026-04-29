@@ -9,9 +9,9 @@ import {
   TCommentDb,
 } from '../models/GetCommentOutputModel';
 import { CommentManageStatuses } from '../types';
-import { CommentQueryRepository } from '../infrastructure/comment-query.repository';
-import { Post, PostDocument } from '../../post/models/Post.schema';
-import { CommentRepository } from '../infrastructure/comment.repository';
+import { CommentQueryRepository } from '../infrastructure/comment-query.repository.mongodb';
+import { Post, PostDocument } from '../../post/models/post.schema';
+import { CommentRepository } from '../infrastructure/comment.repository.mongodb';
 
 interface CreateCommentInput {
   postId: string;
