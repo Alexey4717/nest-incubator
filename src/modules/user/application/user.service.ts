@@ -7,13 +7,7 @@ import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { UserRepository } from '../infrastructure/user.repository.mongodb';
 import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
 import { randomUUID } from 'crypto';
-import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from '../models/user.schema';
-import { Model } from 'mongoose';
 import { CreateUserDTO } from '../dto/create-user.dto';
-import { validateOrReject } from 'class-validator';
-import { validateOrRejectModel } from '../../../helpers';
-// import { EmailManager } from '../../email/email.manager';
 
 type CreateUserInputModel = {
   login: string;
@@ -45,18 +39,28 @@ export class UserService {
   async createUser(
     inputModel: CreateUserDTO,
   ): Promise<GetUserOutputModelFromMongoDB> {
-    await validateOrRejectModel(
-      inputModel,
-      CreateUserDTO,
-      'UserService.createUser',
-    );
-
     const { login, email, password } = inputModel;
     const newUser = await this._getNewUser({
       login,
       email,
       password,
       isConfirmed: true,
+    });
+
+    return await this.userRepository.createUser({ ...newUser });
+  }
+
+  async registerUser(input: {
+    login: string;
+    email: string;
+    password: string;
+  }): Promise<GetUserOutputModelFromMongoDB> {
+    const { login, email, password } = input;
+    const newUser = await this._getNewUser({
+      login,
+      email,
+      password,
+      isConfirmed: false,
     });
 
     return await this.userRepository.createUser({ ...newUser });
@@ -102,16 +106,56 @@ export class UserService {
     return recoveryCode;
   }
 
-  async confirmEmail(code: string): Promise<boolean> {
+  async confirmEmail(code: string): Promise<void> {
     const user = await this.userQueryRepository.findByConfirmationCode(code);
+    if (!user) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'Confirmation code incorrect',
+            field: 'code',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
+    if (user.emailConfirmation.isConfirmed) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'Confirmation code incorrect',
+            field: 'code',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
     if (
-      !user ||
-      user.emailConfirmation.isConfirmed ||
       user.emailConfirmation.confirmationCode !== code ||
       user.emailConfirmation.expirationDate <= new Date()
-    )
-      return false;
-    return await this.userRepository.updateConfirmation(user.id);
+    ) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'Confirmation code incorrect',
+            field: 'code',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
+    const ok = await this.userRepository.updateConfirmation(user.id);
+    if (!ok) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'Confirmation failed',
+            field: 'code',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
   }
 
   async changeUserPassword({
@@ -126,8 +170,17 @@ export class UserService {
       !user?.recoveryData ||
       user.recoveryData?.recoveryCode !== recoveryCode ||
       user.recoveryData?.expirationDate <= new Date()
-    )
-      throw new BadRequestException();
+    ) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'Invalid recovery code',
+            field: 'recoveryCode',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
     const passwordHash = await this._generateHash(newPassword);
     return await this.userRepository.changeUserPasswordAndNullifyRecoveryData({
       userId: user?.id,
@@ -147,6 +200,7 @@ export class UserService {
       loginOrEmail,
     );
     if (!foundUser || !foundUser?.accountData?.passwordHash) return null;
+    if (!foundUser.emailConfirmation?.isConfirmed) return null;
     const passwordIsValid = await bcrypt.compare(
       password,
       foundUser.accountData.passwordHash,

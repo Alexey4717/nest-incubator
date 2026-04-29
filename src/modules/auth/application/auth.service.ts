@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { LoginDto } from '../dto/login.dto';
 import { UserService } from '../../user/application/user.service';
@@ -12,7 +11,6 @@ import { UserQueryRepository } from '../../user/infrastructure/user-query.reposi
 import { UserRepository } from '../../user/infrastructure/user.repository.mongodb';
 import { randomUUID } from 'crypto';
 import { SessionService } from '../../session/application/session.service';
-import { SessionInfoDto } from '../../session/dto/sessionInfoDto';
 import { Session } from '../../session/models/session.schema';
 import { SessionQueryRepository } from '../../session/infrastructure/session-query.repository.mongodb';
 import { RefreshTokenJwtPayloadDto } from '../dto/refresh-token-jwt-payload.dto';
@@ -57,7 +55,7 @@ export class AuthService {
   }
 
   async registration(registrationDto: RegistrationDto) {
-    const user = await this.userService.createUser(registrationDto);
+    const user = await this.userService.registerUser(registrationDto);
     await this.emailService.sendRegistrationEmail(
       user.accountData.email,
       user.accountData.login,
@@ -68,9 +66,28 @@ export class AuthService {
 
   async registrationEmailResending(email: string) {
     const user = await this.userQueryRepository.findUserByEmail(email);
-    if (!user) throw new BadRequestException('userNotExist');
-    if (user.emailConfirmation.isConfirmed)
-      throw new BadRequestException('codeAlreadyConfirmed');
+    if (!user) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'email not registered',
+            field: 'email',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
+    if (user.emailConfirmation.isConfirmed) {
+      throw new BadRequestException({
+        message: [
+          {
+            message: 'email already confirmed',
+            field: 'email',
+          },
+        ],
+        error: 'Bad Request',
+      });
+    }
     const newConfirmationCode = randomUUID();
     await this.userRepository.updateUserConfirmationCode({
       userId: user.id,
@@ -85,7 +102,7 @@ export class AuthService {
   }
 
   async registrationConfirmation(code: string) {
-    return this.userService.confirmEmail(code);
+    await this.userService.confirmEmail(code);
   }
 
   async refreshToken(token: string) {

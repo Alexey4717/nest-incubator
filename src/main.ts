@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { useContainer } from 'class-validator';
 import { createWriteStream } from 'fs';
 import { get } from 'http';
 import { AppModule } from './app.module';
@@ -8,13 +9,13 @@ import {
   HttpExceptionFilter,
 } from './exception-filters/http.exception-filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { BasicAuthGuard } from './guards/basic-auth.guard';
 
 const serverUrl = 'http://localhost:4000';
 
 async function bootstrap() {
   const startInit = +new Date();
   const app = await NestFactory.create(AppModule);
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.enableCors();
   // если глобально нужно защитить
   // app.useGlobalGuards(AuthGuard);
@@ -25,15 +26,14 @@ async function bootstrap() {
       transform: true,
       stopAtFirstError: true,
       exceptionFactory: (errors) => {
-        throw new BadRequestException(
-          errors.map((error) => {
-            const constraintsKeys = Object.keys(error.constraints);
-            return {
-              message: error.constraints[constraintsKeys[0]],
-              field: error.property,
-            };
-          }),
-        );
+        const message = errors.map((error) => {
+          const constraintsKeys = Object.keys(error.constraints ?? {});
+          return {
+            message: error.constraints?.[constraintsKeys[0]],
+            field: error.property,
+          };
+        });
+        throw new BadRequestException({ message, error: 'Bad Request' });
       },
     }),
   );

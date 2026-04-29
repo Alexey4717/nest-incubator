@@ -1,24 +1,16 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './application/auth.service';
 import { AuthController } from './api/auth.controller';
-import { UserRepository } from '../user/infrastructure/user.repository.mongodb';
-import { UserQueryRepository } from '../user/infrastructure/user-query.repository.mongodb';
-import { UserService } from '../user/application/user.service';
 import { JwtService } from './application/jwt.service';
 import { EmailModule } from '../email/email.module';
 import { SessionModule } from '../session/session.module';
 import { MongooseModelsModule } from '../database/mongoose-models.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [MongooseModelsModule, EmailModule, SessionModule],
+  imports: [MongooseModelsModule, EmailModule, SessionModule, UserModule],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtService,
-    UserService,
-    UserRepository,
-    UserQueryRepository,
-  ],
-  exports: [AuthService, JwtService, UserQueryRepository],
+  providers: [AuthService, JwtService],
+  exports: [AuthService, JwtService, UserModule],
 })
 export class AuthModule {}

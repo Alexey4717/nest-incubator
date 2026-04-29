@@ -1,7 +1,7 @@
-import { IsString, IsUUID } from 'class-validator';
+import { IsString, Length } from 'class-validator';
 
 export class RegistrationConfirmationDto {
   @IsString()
-  @IsUUID()
+  @Length(1, 255)
   code: string;
 }
