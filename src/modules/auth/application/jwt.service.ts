@@ -2,35 +2,46 @@ import { ConfigService } from '@nestjs/config';
 import jwt from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common';
 
+/** Минимальное время жизни access token — 5 минут (ТЗ homework). */
+const MIN_ACCESS_TOKEN_TTL_SEC = 300;
+
 @Injectable()
 export class JwtService {
-  constructor(
-    private readonly configService: ConfigService, // private readonly userQueryRepository: UserQueryRepositoryMongodb,
-  ) {}
+  private readonly accessTokenSecretKey: string;
+  private readonly accessTokenLifeTimeSec: number;
+  private readonly refreshTokenSecretKey: string;
+  private readonly refreshTokenLifeTimeSec: number;
 
-  private accessTokenSecretKey = this.configService.get<string>(
-    'ACCESS_TOKEN_SECRET',
-  );
+  constructor(private readonly configService: ConfigService) {
+    this.accessTokenSecretKey = this.configService.get<string>(
+      'ACCESS_TOKEN_SECRET',
+    );
+    this.refreshTokenSecretKey = this.configService.get<string>(
+      'REFRESH_TOKEN_SECRET',
+    );
 
-  // seconds (number)
-  private accessTokenLifeTime = parseInt(
-    this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME'),
-    10,
-  );
+    const accessParsed = parseInt(
+      this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME'),
+      10,
+    );
+    this.accessTokenLifeTimeSec =
+      Number.isFinite(accessParsed)
+        ? Math.max(MIN_ACCESS_TOKEN_TTL_SEC, accessParsed)
+        : MIN_ACCESS_TOKEN_TTL_SEC;
 
-  private refreshTokenSecretKey = this.configService.get<string>(
-    'REFRESH_TOKEN_SECRET',
-  );
-
-  // seconds (number)
-  private refreshTokenLifeTime = parseInt(
-    this.configService.get<string>('REFRESH_TOKEN_LIFE_TIME'),
-    10,
-  );
+    const refreshParsed = parseInt(
+      this.configService.get<string>('REFRESH_TOKEN_LIFE_TIME'),
+      10,
+    );
+    this.refreshTokenLifeTimeSec =
+      Number.isFinite(refreshParsed) && refreshParsed > 0
+        ? refreshParsed
+        : 20 * 60 * 60;
+  }
 
   async signAccessToken(userId: string, deviceId: string): Promise<string> {
     return jwt.sign({ userId, deviceId }, this.accessTokenSecretKey, {
-      expiresIn: this.accessTokenLifeTime,
+      expiresIn: this.accessTokenLifeTimeSec,
     });
   }
 
@@ -59,14 +70,14 @@ export class JwtService {
       { userId, deviceId },
       this.accessTokenSecretKey,
       {
-        expiresIn: this.accessTokenLifeTime,
+        expiresIn: this.accessTokenLifeTimeSec,
       },
     );
     const refreshToken = jwt.sign(
       { userId, deviceId },
       this.refreshTokenSecretKey,
       {
-        expiresIn: this.refreshTokenLifeTime,
+        expiresIn: this.refreshTokenLifeTimeSec,
       },
     );
     return { accessToken, refreshToken };

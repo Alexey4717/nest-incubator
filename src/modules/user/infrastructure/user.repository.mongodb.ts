@@ -69,6 +69,11 @@ export class UserRepository {
           message: 'This email already exists',
           field: 'email',
         });
+      } else if (normalized.includes('recoverycode')) {
+        out.push({
+          message: 'Recovery data conflict',
+          field: 'recoveryCode',
+        });
       }
     }
     if (out.length === 0) {

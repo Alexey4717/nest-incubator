@@ -38,7 +38,10 @@ const EmailConfirmationSchema = SchemaFactory.createForClass(EmailConfirmation);
 
 @Schema({ _id: false, id: false, versionKey: false })
 class RecoveryData {
-  @Prop({ type: String, required: true, unique: true })
+  @Prop({
+    type: String,
+    required: true,
+  })
   recoveryCode: string;
 
   @Prop({ type: Date, required: true })
@@ -63,4 +66,9 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+/** Несколько документов с `recoveryData: null` без sparse-индекса дают E11000 на recoveryCode. */
+UserSchema.index(
+  { 'recoveryData.recoveryCode': 1 },
+  { unique: true, sparse: true },
+);
 export type UserDocument = HydratedDocument<User>;

@@ -42,11 +42,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     try {
-      const { accessToken, refreshToken } = await this.authService.login(
-        loginDto,
-        ip,
-        userAgent,
-      );
+      const tokens = await this.authService.login(loginDto, ip, userAgent);
+      if (!tokens) throw new UnauthorizedException();
+      const { accessToken, refreshToken } = tokens;
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,

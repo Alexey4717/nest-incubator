@@ -1,84 +1,50 @@
 import { NestFactory } from '@nestjs/core';
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { useContainer } from 'class-validator';
 import { createWriteStream } from 'fs';
 import { get } from 'http';
 import { AppModule } from './app.module';
-import {
-  ErrorExceptionFilter,
-  HttpExceptionFilter,
-} from './exception-filters/http.exception-filter';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { appSettings } from './app-settings';
 
-const serverUrl = 'http://localhost:4000';
+async function downloadSwaggerStaticIfDev(port: number) {
+  if (process.env.NODE_ENV !== 'development') return;
+
+  const serverUrl = `http://127.0.0.1:${port}`;
+
+  get(`${serverUrl}/swagger/swagger-ui-bundle.js`, function (response) {
+    response.pipe(createWriteStream('swagger-static/swagger-ui-bundle.js'));
+  });
+
+  get(`${serverUrl}/swagger/swagger-ui-init.js`, function (response) {
+    response.pipe(createWriteStream('swagger-static/swagger-ui-init.js'));
+  });
+
+  get(
+    `${serverUrl}/swagger/swagger-ui-standalone-preset.js`,
+    function (response) {
+      response.pipe(
+        createWriteStream('swagger-static/swagger-ui-standalone-preset.js'),
+      );
+    },
+  );
+
+  get(`${serverUrl}/swagger/swagger-ui.css`, function (response) {
+    response.pipe(createWriteStream('swagger-static/swagger-ui.css'));
+  });
+}
 
 async function bootstrap() {
   const startInit = +new Date();
   const app = await NestFactory.create(AppModule);
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
-  app.enableCors();
-  // если глобально нужно защитить
-  // app.useGlobalGuards(AuthGuard);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      // делать трансформацию по типам, например param id из строки в number
-      transform: true,
-      stopAtFirstError: true,
-      exceptionFactory: (errors) => {
-        const message = errors.map((error) => {
-          const constraintsKeys = Object.keys(error.constraints ?? {});
-          return {
-            message: error.constraints?.[constraintsKeys[0]],
-            field: error.property,
-          };
-        });
-        throw new BadRequestException({ message, error: 'Bad Request' });
-      },
-    }),
-  );
-  const port = 4000;
-  const finishInit = (+new Date() - startInit) / 1000;
-  app.useGlobalFilters(new ErrorExceptionFilter(), new HttpExceptionFilter());
+  appSettings(app);
 
-  const config = new DocumentBuilder()
-    .setTitle('nestjs app example')
-    .setDescription('API description')
-    .setVersion('1.0')
-    .addTag('nestjs it-incubator app')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('swagger', app, document);
+  const port = parseInt(process.env.PORT, 10) || 4000;
+  const finishInit = (+new Date() - startInit) / 1000;
 
   await app.listen(port, () => {
     console.log(`App successfully started at ${port} port.`);
     console.log(`Time to init: ${finishInit} seconds`);
   });
 
-  // get the swagger json file (if app is running in development mode)
-  if (process.env.NODE_ENV === 'development') {
-    // write swagger ui files
-    get(`${serverUrl}/swagger/swagger-ui-bundle.js`, function (response) {
-      response.pipe(createWriteStream('swagger-static/swagger-ui-bundle.js'));
-    });
-
-    get(`${serverUrl}/swagger/swagger-ui-init.js`, function (response) {
-      response.pipe(createWriteStream('swagger-static/swagger-ui-init.js'));
-    });
-
-    get(
-      `${serverUrl}/swagger/swagger-ui-standalone-preset.js`,
-      function (response) {
-        response.pipe(
-          createWriteStream('swagger-static/swagger-ui-standalone-preset.js'),
-        );
-      },
-    );
-
-    get(`${serverUrl}/swagger/swagger-ui.css`, function (response) {
-      response.pipe(createWriteStream('swagger-static/swagger-ui.css'));
-    });
-  }
+  await downloadSwaggerStaticIfDev(port);
 }
 
 bootstrap();
