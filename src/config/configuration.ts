@@ -6,9 +6,8 @@ const configuration = () => {
   const DB_TYPE = process.env.DB_TYPE;
   const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
   const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-  /** Секунды; по умолчанию не менее 5 минут (совпадает с клампом в JwtService). */
-  const ACCESS_TOKEN_LIFE_TIME =
-    process.env.ACCESS_TOKEN_LIFE_TIME || '300';
+  /** Секунды; по умолчанию не менее 5 минут (совпадает с клампом в AuthModule). */
+  const ACCESS_TOKEN_LIFE_TIME = process.env.ACCESS_TOKEN_LIFE_TIME || '300';
   const REFRESH_TOKEN_LIFE_TIME = process.env.REFRESH_TOKEN_LIFE_TIME;
   const NODEMAILER_USER_TRANSPORT = process.env.NODEMAILER_USER_TRANSPORT;
   const NODEMAILER_PASSWORD_TRANSPORT =

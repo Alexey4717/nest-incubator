@@ -31,9 +31,9 @@ import { getMappedCommentViewModel } from '../../comment/helpers';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
-import { GetUserIdFromBearerToken } from '../../../guards/get-userId-from-bearer-token';
-import { BasicAuthGuard } from '../../../guards/basic-auth.guard';
-import { BearerAuthGuard } from '../../../guards/bearer-auth.guard';
+import { GetUserIdFromBearerToken } from '../../auth/guards/get-userId-from-bearer-token';
+import { BasicAuthGuard } from '../../auth/guards/basic-auth.guard';
+import { AccessJwtAuthGuard } from '../../auth/guards/access-jwt-auth.guard';
 
 @Controller('posts')
 export class PostController {
@@ -135,7 +135,7 @@ export class PostController {
     };
   }
 
-  @UseGuards(BearerAuthGuard)
+  @UseGuards(AccessJwtAuthGuard)
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPost(@Body() body: CreatePostDto) {
@@ -155,7 +155,7 @@ export class PostController {
     return createdPost;
   }
 
-  @UseGuards(BearerAuthGuard)
+  @UseGuards(AccessJwtAuthGuard)
   @Post(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createCommentInPost(
@@ -183,7 +183,7 @@ export class PostController {
     return createdCommentInPost;
   }
 
-  @UseGuards(BearerAuthGuard)
+  @UseGuards(AccessJwtAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePost(
@@ -199,7 +199,7 @@ export class PostController {
     return isPostUpdated;
   }
 
-  @UseGuards(BearerAuthGuard)
+  @UseGuards(AccessJwtAuthGuard)
   @Put(':postId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePostLikeStatus(

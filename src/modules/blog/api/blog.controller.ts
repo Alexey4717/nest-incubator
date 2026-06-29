@@ -25,7 +25,7 @@ import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mon
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
-import { GetUserIdFromBearerToken } from '../../../guards/get-userId-from-bearer-token';
+import { GetUserIdFromBearerToken } from '../../auth/guards/get-userId-from-bearer-token';
 
 @Controller('blogs')
 export class BlogController {

@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { UserService } from './application/user.service';
 import { UserController } from './api/user.controller';
 import { UserRepository } from './infrastructure/user.repository.mongodb';
@@ -8,7 +9,7 @@ import { UserLoginExistsValidator } from '../../validators/user-login-exists.val
 import { UserEmailExistsValidator } from '../../validators/user-email-exists.validator';
 
 @Module({
-  imports: [MongooseModelsModule],
+  imports: [MongooseModelsModule, forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [
     UserService,

@@ -21,7 +21,7 @@ import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';
 import { SortDirections } from '../../../types/common';
 import { CreateUserInputModel } from '../models/CreateUserInputModel';
 import { CreateUserDTO } from '../dto/create-user.dto';
-import { BasicAuthGuard } from '../../../guards/basic-auth.guard';
+import { BasicAuthGuard } from '../../auth/guards/basic-auth.guard';
 
 @UseGuards(BasicAuthGuard)
 @Controller('users')

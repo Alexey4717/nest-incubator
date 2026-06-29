@@ -37,16 +37,6 @@ window.onload = function() {
         "post": {
           "operationId": "AuthController_login",
           "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LoginDto"
-                }
-              }
-            }
-          },
           "responses": {
             "200": {
               "description": ""
@@ -489,10 +479,6 @@ window.onload = function() {
     "servers": [],
     "components": {
       "schemas": {
-        "LoginDto": {
-          "type": "object",
-          "properties": {}
-        },
         "RecoveryPasswordDto": {
           "type": "object",
           "properties": {}

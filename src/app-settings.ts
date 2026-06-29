@@ -3,6 +3,7 @@ import {
   INestApplication,
   ValidationPipe,
 } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 import { useContainer } from 'class-validator';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
@@ -18,6 +19,8 @@ export function appSettings(app: INestApplication): void {
   if (server && typeof server.set === 'function') {
     server.set('trust proxy', 1);
   }
+
+  app.use(cookieParser());
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app.enableCors();

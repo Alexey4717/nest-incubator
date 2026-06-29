@@ -5,21 +5,23 @@ import {
   HttpCode,
   Ip,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from '../application/auth.service';
 import { LoginDto } from '../dto/login.dto';
-import { BearerAuthGuard } from '../../../guards/bearer-auth.guard';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { AccessJwtAuthGuard } from '../guards/access-jwt-auth.guard';
 import { User } from '../../../decorators/param/user.decorator';
 import { User as UserEntity } from '../../user/models/user.schema';
 import { RegistrationDto } from '../dto/registration.dto';
 import { RegistrationEmailResendingDto } from '../dto/registration-email-resending.dto';
 import { RegistrationConfirmationDto } from '../dto/registration-confirmation.dto';
 import { UserAgent } from '../../../decorators/param/user-agent.decorator';
-import { RefreshTokenGuard } from '../../../guards/refresh-token.guard';
+import { RefreshJwtAuthGuard } from '../guards/refresh-jwt-auth.guard';
 import { RefreshToken } from '../../../decorators/param/refresh-token.decorator';
 import { RefreshTokenJwtPayload } from '../../../decorators/param/refresh-token-jwt-payload.decorator';
 import { RefreshTokenJwtPayloadDto } from '../dto/refresh-token-jwt-payload.dto';
@@ -33,21 +35,24 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @SkipThrottle(false)
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(200)
   async login(
-    @Body() loginDto: LoginDto,
+    @Body() _loginDto: LoginDto,
+    @User() user: UserEntity,
     @Ip() ip: string,
     @UserAgent() userAgent: string,
-    @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ) {
     try {
-      const tokens = await this.authService.login(loginDto, ip, userAgent);
+      const tokens = await this.authService.login(user, ip, userAgent);
       if (!tokens) throw new UnauthorizedException();
       const { accessToken, refreshToken } = tokens;
-      res.cookie('refreshToken', refreshToken, {
+      req.res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
+        sameSite: 'strict',
       });
       return { accessToken };
     } catch (e) {
@@ -120,7 +125,7 @@ export class AuthController {
     );
   }
 
-  @UseGuards(RefreshTokenGuard)
+  @UseGuards(RefreshJwtAuthGuard)
   @Post('logout')
   @HttpCode(204)
   async logout(
@@ -135,7 +140,7 @@ export class AuthController {
     return;
   }
 
-  @UseGuards(BearerAuthGuard)
+  @UseGuards(AccessJwtAuthGuard)
   @Get('/me')
   @HttpCode(200)
   async aboutMe(@User() user: UserEntity) {

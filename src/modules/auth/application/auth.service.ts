@@ -1,10 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
-import { LoginDto } from '../dto/login.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { JwtService as NestJwtService } from '@nestjs/jwt';
 import { UserService } from '../../user/application/user.service';
-import { JwtService } from './jwt.service';
 import { RegistrationDto } from '../dto/registration.dto';
 import { EmailService } from '../../email/email.service';
 import { UserQueryRepository } from '../../user/infrastructure/user-query.repository.mongodb';
@@ -16,33 +13,64 @@ import { SessionQueryRepository } from '../../session/infrastructure/session-que
 import { RefreshTokenJwtPayloadDto } from '../dto/refresh-token-jwt-payload.dto';
 import { SessionRepository } from '../../session/infrastructure/session.repository.mongodb';
 import { NewPasswordDto } from '../dto/new-password.dto';
+import { User as UserEntity } from '../../user/models/user.schema';
+
+/** Минимальное время жизни access token — 5 минут (ТЗ homework). */
+const MIN_ACCESS_TOKEN_TTL_SEC = parseInt(
+  process.env.ACCESS_TOKEN_LIFE_TIME,
+  10,
+);
 
 @Injectable()
 export class AuthService {
+  private readonly accessTokenSecretKey: string;
+  private readonly accessTokenLifeTimeSec: number;
+  private readonly refreshTokenSecretKey: string;
+  private readonly refreshTokenLifeTimeSec: number;
+
   constructor(
     private readonly userService: UserService,
     private readonly userQueryRepository: UserQueryRepository,
     private readonly userRepository: UserRepository,
-    private readonly jwtService: JwtService,
+    private readonly nestJwtService: NestJwtService,
+    private readonly configService: ConfigService,
     private readonly sessionService: SessionService,
     private readonly sessionRepository: SessionRepository,
     private readonly sessionQueryRepository: SessionQueryRepository,
     private readonly emailService: EmailService,
-  ) {}
-
-  async login(loginDto: LoginDto, ip: string, userAgent: string) {
-    const user = await this.userService.checkCredentials({
-      loginOrEmail: loginDto.loginOrEmail,
-      password: loginDto.password,
-    });
-    if (!user) return null;
-    // if (user.banInfo.isBanned) return null;
-    const deviceId = randomUUID();
-    const { accessToken, refreshToken } =
-      await this.jwtService.signAccessAndRefreshToken(user.id, deviceId);
-    const lastActiveDate = await this.jwtService.getIssuedAtFromRefreshToken(
-      refreshToken,
+  ) {
+    this.accessTokenSecretKey = this.configService.get<string>(
+      'ACCESS_TOKEN_SECRET',
     );
+    this.refreshTokenSecretKey = this.configService.get<string>(
+      'REFRESH_TOKEN_SECRET',
+    );
+
+    const accessParsed = parseInt(
+      this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME'),
+      10,
+    );
+    this.accessTokenLifeTimeSec = Number.isFinite(accessParsed)
+      ? Math.max(MIN_ACCESS_TOKEN_TTL_SEC, accessParsed)
+      : MIN_ACCESS_TOKEN_TTL_SEC;
+
+    const refreshParsed = parseInt(
+      this.configService.get<string>('REFRESH_TOKEN_LIFE_TIME'),
+      10,
+    );
+    this.refreshTokenLifeTimeSec =
+      Number.isFinite(refreshParsed) && refreshParsed > 0
+        ? refreshParsed
+        : 20 * 60 * 60;
+  }
+
+  async login(user: UserEntity, ip: string, userAgent: string) {
+    const deviceId = randomUUID();
+    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(
+      user.id,
+      deviceId,
+    );
+    const lastActiveDate = this.getIssuedAtFromRefreshToken(refreshToken);
     const sessionInfo: Session = {
       ip,
       title: userAgent,
@@ -106,7 +134,14 @@ export class AuthService {
   }
 
   async refreshToken(token: string) {
-    const jwtPayload = this.jwtService.verifyRefreshToken(token);
+    let jwtPayload: RefreshTokenJwtPayloadDto | null = null;
+    try {
+      jwtPayload = this.nestJwtService.verify(token, {
+        secret: this.refreshTokenSecretKey,
+      }) as RefreshTokenJwtPayloadDto;
+    } catch {
+      return null;
+    }
     if (!jwtPayload) return null;
     const userId = jwtPayload.userId;
     const deviceId = jwtPayload.deviceId;
@@ -120,11 +155,11 @@ export class AuthService {
         lastActiveDate,
       );
     if (!device) return null;
-    const { accessToken, refreshToken } =
-      await this.jwtService.signAccessAndRefreshToken(userId, deviceId);
-    const newLastActiveDate = await this.jwtService.getIssuedAtFromRefreshToken(
-      refreshToken,
+    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(
+      userId,
+      deviceId,
     );
+    const newLastActiveDate = this.getIssuedAtFromRefreshToken(refreshToken);
     await this.sessionService.updateSessionAfterRefreshToken(
       userId,
       deviceId,
@@ -163,5 +198,28 @@ export class AuthService {
       recoveryCode: newPasswordDto.recoveryCode,
       newPassword: newPasswordDto.newPassword,
     });
+  }
+
+  private signAccessAndRefreshToken(userId: string, deviceId: string) {
+    const accessToken = this.nestJwtService.sign(
+      { userId, deviceId },
+      {
+        secret: this.accessTokenSecretKey,
+        expiresIn: this.accessTokenLifeTimeSec,
+      },
+    );
+    const refreshToken = this.nestJwtService.sign(
+      { userId, deviceId },
+      {
+        secret: this.refreshTokenSecretKey,
+        expiresIn: this.refreshTokenLifeTimeSec,
+      },
+    );
+    return { accessToken, refreshToken };
+  }
+
+  private getIssuedAtFromRefreshToken(token: string): string {
+    const payload = this.nestJwtService.decode(token) as { iat: number } | null;
+    return new Date(payload!.iat * 1000).toISOString();
   }
 }

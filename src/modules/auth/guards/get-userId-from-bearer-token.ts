@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '../modules/auth/application/jwt.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class GetUserIdFromBearerToken implements CanActivate {
@@ -21,8 +21,10 @@ export class GetUserIdFromBearerToken implements CanActivate {
       request.userId = null;
       return true;
     }
-    const payload = this.jwtService.getPayloadFromAccessToken(accessToken);
-    if (!payload) {
+    const payload = this.jwtService.decode(accessToken) as {
+      userId?: string;
+    } | null;
+    if (!payload?.userId) {
       request.userId = null;
       return true;
     }
