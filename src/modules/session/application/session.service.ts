@@ -8,7 +8,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { SessionRepository } from '../infrastructure/session.repository.mongodb';
 import { SessionQueryRepository } from '../infrastructure/session-query.repository.mongodb';
 import { Session } from '../models/session.schema';
-import { RefreshTokenJwtPayloadDto } from '../../auth/dto/refresh-token-jwt-payload.dto';
+import { IRefreshTokenJwtPayload } from '../../auth/models/refresh-token-jwt-payload.model';
 
 @Injectable()
 export class SessionService {
@@ -49,7 +49,7 @@ export class SessionService {
   // }
   //
   async deleteAllUserSessionExceptCurrent(
-    refreshTokenJwtPayloadDto: RefreshTokenJwtPayloadDto,
+    refreshTokenJwtPayloadDto: IRefreshTokenJwtPayload,
   ) {
     return this.sessionRepository.deleteAllSessionExceptCurrent(
       refreshTokenJwtPayloadDto.userId,

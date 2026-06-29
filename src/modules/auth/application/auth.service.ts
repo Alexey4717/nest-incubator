@@ -10,23 +10,16 @@ import { randomUUID } from 'crypto';
 import { SessionService } from '../../session/application/session.service';
 import { Session } from '../../session/models/session.schema';
 import { SessionQueryRepository } from '../../session/infrastructure/session-query.repository.mongodb';
-import { RefreshTokenJwtPayloadDto } from '../dto/refresh-token-jwt-payload.dto';
+import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
 import { SessionRepository } from '../../session/infrastructure/session.repository.mongodb';
 import { NewPasswordDto } from '../dto/new-password.dto';
-import { User as UserEntity } from '../../user/models/user.schema';
-
-/** Минимальное время жизни access token — 5 минут (ТЗ homework). */
-const MIN_ACCESS_TOKEN_TTL_SEC = parseInt(
-  process.env.ACCESS_TOKEN_LIFE_TIME,
-  10,
-);
 
 @Injectable()
 export class AuthService {
   private readonly accessTokenSecretKey: string;
-  private readonly accessTokenLifeTimeSec: number;
+  private readonly accessTokenLifeTimeSec: string | number;
   private readonly refreshTokenSecretKey: string;
-  private readonly refreshTokenLifeTimeSec: number;
+  private readonly refreshTokenLifeTimeSec: string | number;
 
   constructor(
     private readonly userService: UserService,
@@ -46,28 +39,21 @@ export class AuthService {
       'REFRESH_TOKEN_SECRET',
     );
 
-    const accessParsed = parseInt(
-      this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME'),
-      10,
-    );
-    this.accessTokenLifeTimeSec = Number.isFinite(accessParsed)
-      ? Math.max(MIN_ACCESS_TOKEN_TTL_SEC, accessParsed)
-      : MIN_ACCESS_TOKEN_TTL_SEC;
+    this.accessTokenLifeTimeSec =
+      this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME') ??
+      process.env.ACCESS_TOKEN_LIFE_TIME ??
+      300;
 
-    const refreshParsed = parseInt(
-      this.configService.get<string>('REFRESH_TOKEN_LIFE_TIME'),
-      10,
-    );
     this.refreshTokenLifeTimeSec =
-      Number.isFinite(refreshParsed) && refreshParsed > 0
-        ? refreshParsed
-        : 20 * 60 * 60;
+      this.configService.get<string>('REFRESH_TOKEN_LIFE_TIME') ??
+      process.env.REFRESH_TOKEN_LIFE_TIME ??
+      20 * 60 * 60;
   }
 
-  async login(user: UserEntity, ip: string, userAgent: string) {
+  async login(userId: string, ip: string, userAgent: string) {
     const deviceId = randomUUID();
     const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(
-      user.id,
+      userId,
       deviceId,
     );
     const lastActiveDate = this.getIssuedAtFromRefreshToken(refreshToken);
@@ -76,7 +62,7 @@ export class AuthService {
       title: userAgent,
       lastActiveDate,
       deviceId,
-      userId: user.id,
+      userId,
     };
     await this.sessionService.createNewSession(sessionInfo);
     return { accessToken, refreshToken };
@@ -134,11 +120,11 @@ export class AuthService {
   }
 
   async refreshToken(token: string) {
-    let jwtPayload: RefreshTokenJwtPayloadDto | null = null;
+    let jwtPayload: IRefreshTokenJwtPayload | null = null;
     try {
       jwtPayload = this.nestJwtService.verify(token, {
         secret: this.refreshTokenSecretKey,
-      }) as RefreshTokenJwtPayloadDto;
+      }) as IRefreshTokenJwtPayload;
     } catch {
       return null;
     }
@@ -146,7 +132,7 @@ export class AuthService {
     const userId = jwtPayload.userId;
     const deviceId = jwtPayload.deviceId;
     const lastActiveDate = new Date(jwtPayload.iat * 1000).toISOString();
-    const user = await this.userQueryRepository.findUserById(userId);
+    const user = await this.userService.findUserById(userId);
     if (!user) return null;
     const device =
       await this.sessionQueryRepository.findOneByDeviceAndUserIdAndDate(
@@ -170,7 +156,7 @@ export class AuthService {
 
   async logout(
     userId: string,
-    refreshTokenJWTPayload: RefreshTokenJwtPayloadDto,
+    refreshTokenJWTPayload: IRefreshTokenJwtPayload,
   ) {
     const lastActiveDate = new Date(
       refreshTokenJWTPayload.iat * 1000,

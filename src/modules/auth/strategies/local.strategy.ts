@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { UserService } from '../../user/application/user.service';
+import { IAuthenticatedUserId } from '../models/authenticated-user.model';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -9,7 +10,10 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'loginOrEmail', passwordField: 'password' });
   }
 
-  async validate(loginOrEmail: string, password: string) {
+  async validate(
+    loginOrEmail: string,
+    password: string,
+  ): Promise<IAuthenticatedUserId> {
     const user = await this.userService.checkCredentials({
       loginOrEmail,
       password,
@@ -17,6 +21,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    return { userId: user.id };
   }
 }

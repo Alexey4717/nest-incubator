@@ -1,8 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { RefreshTokenJwtPayloadDto } from '../../modules/auth/dto/refresh-token-jwt-payload.dto';
+import { IRefreshTokenJwtPayload } from '../../modules/auth/models/refresh-token-jwt-payload.model';
 
 export const RefreshTokenJwtPayload = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): RefreshTokenJwtPayloadDto => {
+  (data: unknown, ctx: ExecutionContext): IRefreshTokenJwtPayload => {
     const request = ctx.switchToHttp().getRequest();
     return request.refreshTokenJWTPayload;
   },

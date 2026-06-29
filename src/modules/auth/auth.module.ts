@@ -18,11 +18,6 @@ import { SessionModule } from '../session/session.module';
 import { MongooseModelsModule } from '../database/mongoose-models.module';
 import { UserModule } from '../user/user.module';
 
-const MIN_ACCESS_TOKEN_TTL_SEC = parseInt(
-  process.env.ACCESS_TOKEN_LIFE_TIME,
-  10,
-);
-
 @Module({
   imports: [
     MongooseModelsModule,
@@ -32,17 +27,13 @@ const MIN_ACCESS_TOKEN_TTL_SEC = parseInt(
     PassportModule.register({ defaultStrategy: 'jwt-access' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => {
-        const accessParsed = parseInt(
-          configService.get<string>('ACCESS_TOKEN_LIFE_TIME'),
-          10,
-        );
-        const expiresIn = Number.isFinite(accessParsed)
-          ? Math.max(MIN_ACCESS_TOKEN_TTL_SEC, accessParsed)
-          : MIN_ACCESS_TOKEN_TTL_SEC;
-
         return {
           secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
-          signOptions: { expiresIn },
+          signOptions: {
+            expiresIn:
+              configService.get<string>('ACCESS_TOKEN_LIFE_TIME') ??
+              process.env.ACCESS_TOKEN_LIFE_TIME,
+          },
         };
       },
       inject: [ConfigService],

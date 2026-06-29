@@ -192,6 +192,12 @@ export class UserService {
     return await this.userRepository.deleteUserById(id);
   }
 
+  async findUserById(
+    id: string,
+  ): Promise<GetUserOutputModelFromMongoDB | null> {
+    return this.userQueryRepository.findUserById(id);
+  }
+
   async checkCredentials({
     loginOrEmail,
     password,
