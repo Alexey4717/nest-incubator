@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { SortPostsBy } from '../../post/models/GetPostsInputModel';
-import {
-  CommonQueryParamsTypes,
-  Paginator,
-  SortDirections,
-} from '../../../types/common';
-import { TPostDb } from '../../post/models/GetPostOutputModel';
-import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../../post/models/post.schema';
-import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
+import { Model } from 'mongoose';
+
+import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
+import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+
+import { TPostDb } from '@/modules/post/models/GetPostOutputModel';
+import { SortPostsBy } from '@/modules/post/models/GetPostsInputModel';
+import { Post, PostDocument } from '@/modules/post/models/post.schema';
+
 import { Blog, BlogDocument } from '../models/blog.schema';
+import { GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
 import { SortBlogsBy } from '../models/GetBlogsInputModel';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
@@ -42,9 +41,7 @@ export class BlogQueryRepository {
     pageSize,
   }: GetBlogsArgs): Promise<Paginator<GetBlogOutputModelFromMongoDB[]>> {
     try {
-      const filter = searchNameTerm
-        ? { name: { $regex: searchNameTerm, $options: 'i' } }
-        : {};
+      const filter = searchNameTerm ? { name: { $regex: searchNameTerm, $options: 'i' } } : {};
       const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
       const items = await this.BlogModel.find(filter)
         .sort({ [sortBy]: sortDirection === SortDirections.desc ? -1 : 1 })
@@ -93,23 +90,17 @@ export class BlogQueryRepository {
         items,
       };
     } catch (error) {
-      console.log(
-        `BlogsQueryRepository.getPostsInBlog error is occurred: ${error}`,
-      );
+      console.log(`BlogsQueryRepository.getPostsInBlog error is occurred: ${error}`);
       return null;
     }
   }
 
-  async findBlogById(
-    id: string,
-  ): Promise<GetBlogOutputModelFromMongoDB | null> {
+  async findBlogById(id: string): Promise<GetBlogOutputModelFromMongoDB | null> {
     try {
       const foundBlog = await this.BlogModel.findOne({ id }).lean();
       return foundBlog ?? null;
     } catch (error) {
-      console.log(
-        `BlogsQueryRepository find blog by id error is occurred: ${error}`,
-      );
+      console.log(`BlogsQueryRepository find blog by id error is occurred: ${error}`);
       return null;
     }
   }

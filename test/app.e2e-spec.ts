@@ -1,5 +1,5 @@
-import request from 'supertest';
 import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
 
 import { createE2eApplication } from './utils/e2e-application';
 
@@ -17,9 +17,6 @@ suite('App (e2e)', () => {
   });
 
   it('/ (GET)', async () => {
-    await request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello Nest22!');
+    await request(app.getHttpServer()).get('/').expect(200).expect('Hello Nest22!');
   });
 });

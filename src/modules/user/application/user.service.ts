@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
+
+import { CreateUserDTO } from '../dto/create-user.dto';
+import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
+import { UserRepository } from '../infrastructure/user.repository.mongodb';
 import { CreateUserInsertToDBModel } from '../models/CreateUserInsertToDBModel';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
-import { UserRepository } from '../infrastructure/user.repository.mongodb';
-import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
-import { randomUUID } from 'crypto';
-import { CreateUserDTO } from '../dto/create-user.dto';
 
 type CreateUserInputModel = {
   login: string;
@@ -36,9 +37,7 @@ export class UserService {
     private userQueryRepository: UserQueryRepository, // private emailManager: EmailManager,
   ) {}
 
-  async createUser(
-    inputModel: CreateUserDTO,
-  ): Promise<GetUserOutputModelFromMongoDB> {
+  async createUser(inputModel: CreateUserDTO): Promise<GetUserOutputModelFromMongoDB> {
     const { login, email, password } = inputModel;
     const newUser = await this._getNewUser({
       login,
@@ -162,9 +161,7 @@ export class UserService {
     recoveryCode,
     newPassword,
   }: ChangeUserPasswordInputType): Promise<boolean> {
-    const user = await this.userQueryRepository.findUserByRecoveryCode(
-      recoveryCode,
-    );
+    const user = await this.userQueryRepository.findUserByRecoveryCode(recoveryCode);
     if (
       !user ||
       !user?.recoveryData ||
@@ -192,9 +189,7 @@ export class UserService {
     return await this.userRepository.deleteUserById(id);
   }
 
-  async findUserById(
-    id: string,
-  ): Promise<GetUserOutputModelFromMongoDB | null> {
+  async findUserById(id: string): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.userQueryRepository.findUserById(id);
   }
 
@@ -202,15 +197,10 @@ export class UserService {
     loginOrEmail,
     password,
   }: CheckCredentialsInputArgs): Promise<GetUserOutputModelFromMongoDB | null> {
-    const foundUser = await this.userQueryRepository.findByLoginOrEmail(
-      loginOrEmail,
-    );
+    const foundUser = await this.userQueryRepository.findByLoginOrEmail(loginOrEmail);
     if (!foundUser || !foundUser?.accountData?.passwordHash) return null;
     if (!foundUser.emailConfirmation?.isConfirmed) return null;
-    const passwordIsValid = await bcrypt.compare(
-      password,
-      foundUser.accountData.passwordHash,
-    );
+    const passwordIsValid = await bcrypt.compare(password, foundUser.accountData.passwordHash);
     if (!passwordIsValid) return null;
     return foundUser;
   }

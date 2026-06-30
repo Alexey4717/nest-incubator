@@ -1,8 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 
-import { createE2eApplication } from './utils/e2e-application';
 import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
+import { createE2eApplication } from './utils/e2e-application';
 
 /** E2e требуют доступный MongoDB (локально задаётся MONGO_URI). */
 const homeworkSuite = process.env.MONGO_URI ? describe : describe.skip;
@@ -22,9 +22,7 @@ homeworkSuite('Homework14 — users & auth (e2e)', () => {
 
   describe('sparse recovery index + два POST /users + GET список', () => {
     it('DELETE /testing/all-data — 204', async () => {
-      await request(app.getHttpServer())
-        .delete('/testing/all-data')
-        .expect(204);
+      await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
     });
 
     it('POST /users первый — 201', async () => {
@@ -68,9 +66,7 @@ homeworkSuite('Homework14 — users & auth (e2e)', () => {
     const email = 'e2elog01@test.dev';
 
     beforeAll(async () => {
-      await request(app.getHttpServer())
-        .delete('/testing/all-data')
-        .expect(204);
+      await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
       await request(app.getHttpServer())
         .post('/users')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)

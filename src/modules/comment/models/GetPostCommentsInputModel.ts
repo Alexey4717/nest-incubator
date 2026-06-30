@@ -1,5 +1,6 @@
+import { SortDirections } from '@/shared/types/common';
+
 import { GetCommentOutputModel } from './GetCommentOutputModel';
-import { SortDirections } from '../../../types/common';
 
 export type SortPostCommentsBy = keyof GetCommentOutputModel;
 

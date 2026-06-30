@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+
+import { AuthModule } from '@/modules/auth/auth.module';
+import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+
 import { BlogController } from './api/blog.controller';
 import { BlogService } from './application/blog.service';
-import { BlogRepository } from './infrastructure/blog.repository.mongodb';
 import { BlogQueryRepository } from './infrastructure/blog-query.repository.mongodb';
-import { MongooseModelsModule } from '../database/mongoose-models.module';
-import { AuthModule } from '../auth/auth.module';
+import { BlogRepository } from './infrastructure/blog.repository.mongodb';
 
 @Module({
   imports: [MongooseModelsModule, AuthModule],

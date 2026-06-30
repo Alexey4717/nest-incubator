@@ -10,24 +10,27 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { AuthService } from '../application/auth.service';
-import { UserService } from '../../user/application/user.service';
-import { LoginDto } from '../dto/login.dto';
-import { LocalAuthGuard } from '../guards/local-auth.guard';
-import { AccessJwtAuthGuard } from '../guards/access-jwt-auth.guard';
-import { CurrentUserId } from '../../../decorators/param/currentUserId.decorator';
-import { RegistrationDto } from '../dto/registration.dto';
-import { RegistrationEmailResendingDto } from '../dto/registration-email-resending.dto';
-import { RegistrationConfirmationDto } from '../dto/registration-confirmation.dto';
-import { UserAgent } from '../../../decorators/param/user-agent.decorator';
-import { RefreshJwtAuthGuard } from '../guards/refresh-jwt-auth.guard';
-import { RefreshToken } from '../../../decorators/param/refresh-token.decorator';
-import { RefreshTokenJwtPayload } from '../../../decorators/param/refresh-token-jwt-payload.decorator';
-import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
 import { SkipThrottle } from '@nestjs/throttler';
-import { RecoveryPasswordDto } from '../dto/recovery-password.dto';
+import { Request, Response } from 'express';
+
+import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+import { RefreshToken } from '@/shared/decorators/param/refresh-token.decorator';
+import { UserAgent } from '@/shared/decorators/param/user-agent.decorator';
+
+import { UserService } from '@/modules/user/application/user.service';
+
+import { AuthService } from '../application/auth.service';
+import { RefreshTokenJwtPayload } from '../decorators/refresh-token-jwt-payload.decorator';
+import { LoginDto } from '../dto/login.dto';
 import { NewPasswordDto } from '../dto/new-password.dto';
+import { RecoveryPasswordDto } from '../dto/recovery-password.dto';
+import { RegistrationConfirmationDto } from '../dto/registration-confirmation.dto';
+import { RegistrationEmailResendingDto } from '../dto/registration-email-resending.dto';
+import { RegistrationDto } from '../dto/registration.dto';
+import { AccessJwtAuthGuard } from '../guards/access-jwt-auth.guard';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
+import { RefreshJwtAuthGuard } from '../guards/refresh-jwt-auth.guard';
+import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
 
 @SkipThrottle()
 @Controller('auth')
@@ -86,9 +89,7 @@ export class AuthController {
   ) {
     if (!token) throw new UnauthorizedException();
     try {
-      const { accessToken, refreshToken } = await this.authService.refreshToken(
-        token,
-      );
+      const { accessToken, refreshToken } = await this.authService.refreshToken(token);
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
@@ -112,20 +113,14 @@ export class AuthController {
   async registrationEmailResending(
     @Body() registrationEmailResendingDto: RegistrationEmailResendingDto,
   ) {
-    return this.authService.registrationEmailResending(
-      registrationEmailResendingDto.email,
-    );
+    return this.authService.registrationEmailResending(registrationEmailResendingDto.email);
   }
 
   @SkipThrottle(false)
   @Post('registration-confirmation')
   @HttpCode(204)
-  async registrationConfirmation(
-    @Body() registrationConfirmationDto: RegistrationConfirmationDto,
-  ) {
-    return this.authService.registrationConfirmation(
-      registrationConfirmationDto.code,
-    );
+  async registrationConfirmation(@Body() registrationConfirmationDto: RegistrationConfirmationDto) {
+    return this.authService.registrationConfirmation(registrationConfirmationDto.code);
   }
 
   @UseGuards(RefreshJwtAuthGuard)
@@ -135,10 +130,7 @@ export class AuthController {
     @CurrentUserId() userId: string,
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
   ) {
-    const isDeleted = await this.authService.logout(
-      userId,
-      refreshTokenJWTPayload,
-    );
+    const isDeleted = await this.authService.logout(userId, refreshTokenJWTPayload);
     if (!isDeleted) throw new UnauthorizedException();
     return;
   }

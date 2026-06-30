@@ -1,4 +1,4 @@
-import { LikeStatus } from '../../../types/common';
+import { LikeStatus } from '@/shared/types/common';
 
 export type UpdatePostLikeStatusInputModel = {
   /**

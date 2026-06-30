@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+
+import { LikeStatus } from '@/shared/types/common';
+
+import { TPostDb, TReactions } from '../models/GetPostOutputModel';
 import { Post, PostDocument } from '../models/post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
-import { LikeStatus } from '../../../types/common';
-import { TPostDb, TReactions } from '../models/GetPostOutputModel';
 import { PostQueryRepository } from './post-query.repository.mongodb';
 
 interface UpdatePostArgs {
@@ -92,10 +94,7 @@ export class PostRepository {
 
       return result.matchedCount === 1;
     } catch (error) {
-      console.log(
-        'postsRepository.updatePostLikeStatus error is occurred: ',
-        error,
-      );
+      console.log('postsRepository.updatePostLikeStatus error is occurred: ', error);
       return false;
     }
   }

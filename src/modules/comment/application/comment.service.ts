@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 // import { randomUUID } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import { LikeStatus } from '../../../types/common';
-import {
-  GetMappedCommentOutputModel,
-  TCommentDb,
-} from '../models/GetCommentOutputModel';
-import { CommentManageStatuses } from '../types';
+
+import { LikeStatus } from '@/shared/types/common';
+
+import { Post, PostDocument } from '@/modules/post/models/post.schema';
+
 import { CommentQueryRepository } from '../infrastructure/comment-query.repository.mongodb';
-import { Post, PostDocument } from '../../post/models/post.schema';
 import { CommentRepository } from '../infrastructure/comment.repository.mongodb';
+import { GetMappedCommentOutputModel, TCommentDb } from '../models/GetCommentOutputModel';
+import { CommentManageStatuses } from '../types';
 
 interface CreateCommentInput {
   postId: string;
@@ -126,9 +126,7 @@ export class CommentService {
       userId,
     });
     if (checkingResult !== CommentManageStatuses.SUCCESS) return checkingResult;
-    const updateResult = await this.commentRepository.deleteCommentById(
-      commentId,
-    );
+    const updateResult = await this.commentRepository.deleteCommentById(commentId);
     if (!updateResult) return CommentManageStatuses.NOT_FOUND;
     return CommentManageStatuses.SUCCESS;
   }
@@ -137,12 +135,9 @@ export class CommentService {
     commentId,
     userId,
   }: DeleteCommentArgs): Promise<CommentManageStatuses> {
-    const foundComment = await this.commentQueryRepository.getCommentById(
-      commentId,
-    );
+    const foundComment = await this.commentQueryRepository.getCommentById(commentId);
     if (!foundComment) return CommentManageStatuses.NOT_FOUND;
-    if (foundComment.commentatorInfo.userId !== userId)
-      return CommentManageStatuses.NOT_OWNER;
+    if (foundComment.commentatorInfo.userId !== userId) return CommentManageStatuses.NOT_OWNER;
     return CommentManageStatuses.SUCCESS;
   }
 }

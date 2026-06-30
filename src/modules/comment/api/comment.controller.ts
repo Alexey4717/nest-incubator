@@ -1,21 +1,23 @@
 import {
-  Controller,
-  Get,
-  Put,
-  Delete,
-  Param,
   Body,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   NotFoundException,
+  Param,
+  Put,
 } from '@nestjs/common';
 import { constants } from 'http2';
-import { getMappedCommentViewModel } from '../helpers';
-import { LikeStatus } from '../../../types/common';
-import { GetCommentInputModel } from '../models/GetCommentInputModel';
-import { CommentQueryRepository } from '../infrastructure/comment-query.repository.mongodb';
+
+import { LikeStatus } from '@/shared/types/common';
+
 import { CommentService } from '../application/comment.service';
-import { CommentManageStatuses } from '../types';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
+import { getMappedCommentViewModel } from '../helpers';
+import { CommentQueryRepository } from '../infrastructure/comment-query.repository.mongodb';
+import { GetCommentInputModel } from '../models/GetCommentInputModel';
+import { CommentManageStatuses } from '../types';
 
 @Controller('comments')
 export class CommentController {
@@ -27,9 +29,7 @@ export class CommentController {
   @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getComment(@Param() params: { id: string }) {
-    const foundComment = await this.commentQueryRepository.getCommentById(
-      params.id,
-    );
+    const foundComment = await this.commentQueryRepository.getCommentById(params.id);
 
     if (!foundComment) throw new NotFoundException();
 
@@ -45,10 +45,7 @@ export class CommentController {
 
   @Put(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
-  async updateComment(
-    @Param() params: GetCommentInputModel,
-    @Body() body: UpdateCommentDTO,
-  ) {
+  async updateComment(@Param() params: GetCommentInputModel, @Body() body: UpdateCommentDTO) {
     // if (!req.context.user) {
     //   res.sendStatus(constants.HTTP_STATUS_UNAUTHORIZED)
     //   return
@@ -66,8 +63,7 @@ export class CommentController {
     //   return;
     // }
     //
-    if (result === CommentManageStatuses.NOT_FOUND)
-      throw new NotFoundException();
+    if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
 
     return result;
   }
@@ -91,8 +87,7 @@ export class CommentController {
     //   return;
     // }
 
-    if (result === CommentManageStatuses.NOT_FOUND)
-      throw new NotFoundException();
+    if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
 
     return result;
   }
@@ -109,13 +104,12 @@ export class CommentController {
     //   return
     // }
 
-    const likeStatusIsUpdated =
-      await this.commentService.updateCommentLikeStatus({
-        commentId: params.commentId,
-        // userId: context.user.id,
-        userId: undefined,
-        likeStatus: body.likeStatus,
-      });
+    const likeStatusIsUpdated = await this.commentService.updateCommentLikeStatus({
+      commentId: params.commentId,
+      // userId: context.user.id,
+      userId: undefined,
+      likeStatus: body.likeStatus,
+    });
 
     if (!likeStatusIsUpdated) throw new NotFoundException();
 

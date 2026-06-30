@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule, ModelDefinition } from '@nestjs/mongoose';
+import { ModelDefinition, MongooseModule } from '@nestjs/mongoose';
 
-import { User, UserSchema } from '../user/models/user.schema';
-import { Blog, BlogSchema } from '../blog/models/blog.schema';
-import { Post, PostSchema } from '../post/models/post.schema';
-import { Comment, CommentSchema } from '../comment/models/comment.schema';
-import { Session, SessionSchema } from '../session/models/session.schema';
+import { Blog, BlogSchema } from '@/modules/blog/models/blog.schema';
+import { Comment, CommentSchema } from '@/modules/comment/models/comment.schema';
+import { Post, PostSchema } from '@/modules/post/models/post.schema';
+import { Session, SessionSchema } from '@/modules/session/models/session.schema';
+import { User, UserSchema } from '@/modules/user/models/user.schema';
 
 const mongooseModels = [
   { name: User.name, schema: UserSchema as ModelDefinition['schema'] },

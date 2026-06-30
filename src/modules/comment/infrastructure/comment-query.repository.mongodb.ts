@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { Paginator, SortDirections } from '../../../types/common';
-import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../../post/models/post.schema';
-import { GetPostsInputModel } from '../models/GetPostCommentsInputModel';
+import { Model } from 'mongoose';
+
+import { Paginator, SortDirections } from '@/shared/types/common';
+import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+
+import { Post, PostDocument } from '@/modules/post/models/post.schema';
+
 import { Comment, CommentDocument } from '../models/comment.schema';
 import { TCommentDb } from '../models/GetCommentOutputModel';
+import { GetPostsInputModel } from '../models/GetPostCommentsInputModel';
 
 Injectable();
 export class CommentQueryRepository {
@@ -44,9 +47,7 @@ export class CommentQueryRepository {
         items,
       };
     } catch (error) {
-      console.log(
-        `commentsQueryRepository.getPostComments error is occurred: ${error}`,
-      );
+      console.log(`commentsQueryRepository.getPostComments error is occurred: ${error}`);
       return {} as Paginator<TCommentDb[]>;
     }
   }
@@ -55,9 +56,7 @@ export class CommentQueryRepository {
     try {
       return await this.CommentModel.findOne({ id }).lean();
     } catch (error) {
-      console.log(
-        `commentsQueryRepository.getCommentById error is occurred: ${error}`,
-      );
+      console.log(`commentsQueryRepository.getCommentById error is occurred: ${error}`);
       return null;
     }
   }

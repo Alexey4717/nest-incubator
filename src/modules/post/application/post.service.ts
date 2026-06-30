@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 // import { randomUUID } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  GetMappedPostOutputModel,
-  TPostDb,
-} from '../models/GetPostOutputModel';
+
+import { LikeStatus } from '@/shared/types/common';
+import { validateOrRejectModel } from '@/shared/utils/helpers';
+
+import { Blog, BlogDocument } from '@/modules/blog/models/blog.schema';
+import { CreateUserDTO } from '@/modules/user/dto/create-user.dto';
+
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
+import { PostRepository } from '../infrastructure/post.repository.mongodb';
 import { CreatePostInputModel } from '../models/CreatePostInputModel';
-import { LikeStatus } from '../../../types/common';
+import { GetMappedPostOutputModel, TPostDb } from '../models/GetPostOutputModel';
 import { Post, PostDocument } from '../models/post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
-import { PostRepository } from '../infrastructure/post.repository.mongodb';
-import { Blog, BlogDocument } from '../../blog/models/blog.schema';
-import { UpdatePostDto } from '../dto/update-post.dto';
-import { validateOrRejectModel } from '../../../helpers';
-import { CreateUserDTO } from '../../user/dto/create-user.dto';
-import { CreatePostDto } from '../dto/create-post.dto';
 
 interface UpdatePostArgs {
   id: string;
@@ -60,9 +60,7 @@ export class PostService {
     };
   }
 
-  async createPost(
-    input: CreatePostDto,
-  ): Promise<GetMappedPostOutputModel | null> {
+  async createPost(input: CreatePostDto): Promise<GetMappedPostOutputModel | null> {
     await validateOrRejectModel(input, CreatePostDto, 'PostService.createPost');
     const { title, shortDescription, blogId, content } = input || {};
 

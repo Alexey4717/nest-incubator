@@ -1,8 +1,8 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid';
 import { add } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class EmailService {
@@ -13,11 +13,7 @@ export class EmailService {
 
   private emailConfirmationUrl = this.configService.get<string>('MAIN_URL');
 
-  async sendRegistrationEmail(
-    email: string,
-    login: string,
-    confirmationCode: string,
-  ) {
+  async sendRegistrationEmail(email: string, login: string, confirmationCode: string) {
     // const result = await this.userRepository.updateUserConfirmationCode({
     //   userId: user?.id,
     //   newCode: confirmationCode,
@@ -38,11 +34,7 @@ export class EmailService {
     });
   }
 
-  async sendEmailWithNewConfirmationCode(
-    email: string,
-    login: string,
-    confirmationCode: string,
-  ) {
+  async sendEmailWithNewConfirmationCode(email: string, login: string, confirmationCode: string) {
     // const result = await this.userRepository.updateUserConfirmationCode({
     //   userId: user?.id,
     //   newCode: confirmationCode,
@@ -62,11 +54,7 @@ export class EmailService {
     });
   }
 
-  async sendPasswordRecoveryCode(
-    email: string,
-    login: string,
-    recoveryCode: string,
-  ) {
+  async sendPasswordRecoveryCode(email: string, login: string, recoveryCode: string) {
     // const foundUser = await this.userQueryRepository.findByLoginOrEmail(email);
     // // Even if current email is not registered (for prevent user's email detection)
     // if (!foundUser) return true;

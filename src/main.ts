@@ -1,8 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { createWriteStream } from 'fs';
 import { get } from 'http';
-import { AppModule } from './app.module';
-import { appSettings } from './app-settings';
+
+import { AppModule } from '@/app/app.module';
+import { appSettings } from '@/app/app.settings';
 
 async function downloadSwaggerStaticIfDev(port: number) {
   if (process.env.NODE_ENV !== 'development') return;
@@ -17,14 +18,9 @@ async function downloadSwaggerStaticIfDev(port: number) {
     response.pipe(createWriteStream('swagger-static/swagger-ui-init.js'));
   });
 
-  get(
-    `${serverUrl}/swagger/swagger-ui-standalone-preset.js`,
-    function (response) {
-      response.pipe(
-        createWriteStream('swagger-static/swagger-ui-standalone-preset.js'),
-      );
-    },
-  );
+  get(`${serverUrl}/swagger/swagger-ui-standalone-preset.js`, function (response) {
+    response.pipe(createWriteStream('swagger-static/swagger-ui-standalone-preset.js'));
+  });
 
   get(`${serverUrl}/swagger/swagger-ui.css`, function (response) {
     response.pipe(createWriteStream('swagger-static/swagger-ui.css'));

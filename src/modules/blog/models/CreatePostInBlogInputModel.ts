@@ -1,4 +1,5 @@
-import { GetPostOutputModel } from '../../post/models/GetPostOutputModel';
+import { GetPostOutputModel } from '@/modules/post/models/GetPostOutputModel';
+
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 
 export type CreatePostInBlogInputModel = {

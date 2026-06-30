@@ -67,8 +67,5 @@ export class User {
 
 export const UserSchema = SchemaFactory.createForClass(User);
 /** Несколько документов с `recoveryData: null` без sparse-индекса дают E11000 на recoveryCode. */
-UserSchema.index(
-  { 'recoveryData.recoveryCode': 1 },
-  { unique: true, sparse: true },
-);
+UserSchema.index({ 'recoveryData.recoveryCode': 1 }, { unique: true, sparse: true });
 export type UserDocument = HydratedDocument<User>;

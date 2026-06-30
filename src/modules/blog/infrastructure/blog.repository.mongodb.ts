@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Post, PostDocument } from '../../post/models/post.schema';
-import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
-import {
-  GetBlogOutputModel,
-  GetBlogOutputModelFromMongoDB,
-} from '../models/GetBlogOutputModel';
-import { TPostDb } from '../../post/models/GetPostOutputModel';
+
+import { TPostDb } from '@/modules/post/models/GetPostOutputModel';
+import { Post, PostDocument } from '@/modules/post/models/post.schema';
+
 import { Blog, BlogDocument } from '../models/blog.schema';
+import { GetBlogOutputModel, GetBlogOutputModelFromMongoDB } from '../models/GetBlogOutputModel';
+import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
 
 interface UpdateBlogArgs {
   id: string;
@@ -22,9 +21,7 @@ export class BlogRepository {
     @InjectModel(Blog.name) private BlogModel: Model<BlogDocument>,
   ) {}
 
-  async createBlog(
-    newBlog: GetBlogOutputModel,
-  ): Promise<GetBlogOutputModelFromMongoDB | null> {
+  async createBlog(newBlog: GetBlogOutputModel): Promise<GetBlogOutputModelFromMongoDB | null> {
     try {
       return await this.BlogModel.create(newBlog);
     } catch (error) {
@@ -38,9 +35,7 @@ export class BlogRepository {
       await this.PostModel.create(newPost);
       return true;
     } catch (error) {
-      console.log(
-        `blogsRepository.createPostInBlog error is occurred: ${error}`,
-      );
+      console.log(`blogsRepository.createPostInBlog error is occurred: ${error}`);
       return false;
     }
   }

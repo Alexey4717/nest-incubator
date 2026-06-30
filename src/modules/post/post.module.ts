@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
+
+import { AuthModule } from '@/modules/auth/auth.module';
+import { CommentService } from '@/modules/comment/application/comment.service';
+import { CommentQueryRepository } from '@/modules/comment/infrastructure/comment-query.repository.mongodb';
+import { CommentRepository } from '@/modules/comment/infrastructure/comment.repository.mongodb';
+import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+
 import { PostController } from './api/post.controller';
 import { PostService } from './application/post.service';
-import { PostRepository } from './infrastructure/post.repository.mongodb';
 import { PostQueryRepository } from './infrastructure/post-query.repository.mongodb';
-import { CommentQueryRepository } from '../comment/infrastructure/comment-query.repository.mongodb';
-import { CommentService } from '../comment/application/comment.service';
-import { CommentRepository } from '../comment/infrastructure/comment.repository.mongodb';
-import { MongooseModelsModule } from '../database/mongoose-models.module';
-import { AuthModule } from '../auth/auth.module';
+import { PostRepository } from './infrastructure/post.repository.mongodb';
 
 @Module({
   imports: [MongooseModelsModule, AuthModule],

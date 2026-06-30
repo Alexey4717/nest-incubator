@@ -1,31 +1,31 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
   Body,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
-import { getMappedBlogViewModel } from '../helpers';
-import { Paginator, SortDirections } from '../../../types/common';
-import {
-  GetPostsInputModel,
-  SortPostsBy,
-} from '../../post/models/GetPostsInputModel';
-import { getMappedPostViewModel } from '../../post/helpers';
-import { GetBlogsInputModel, SortBlogsBy } from '../models/GetBlogsInputModel';
+
+import { Paginator, SortDirections } from '@/shared/types/common';
+
+import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
+import { getMappedPostViewModel } from '@/modules/post/helpers';
+import { GetPostsInputModel, SortPostsBy } from '@/modules/post/models/GetPostsInputModel';
+
 import { BlogService } from '../application/blog.service';
-import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mongodb';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
-import { GetUserIdFromBearerToken } from '../../auth/guards/get-userId-from-bearer-token';
+import { getMappedBlogViewModel } from '../helpers';
+import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mongodb';
+import { GetBlogsInputModel, SortBlogsBy } from '../models/GetBlogsInputModel';
 
 @Controller('blogs')
 export class BlogController {
@@ -40,8 +40,7 @@ export class BlogController {
     const resData = await this.blogQueryRepository.getBlogs({
       searchNameTerm: query?.searchNameTerm || null, // by-default null
       sortBy: (query?.sortBy || 'createdAt') as SortBlogsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection ||
-        SortDirections.desc) as SortDirections, // by-default desc
+      sortDirection: (query?.sortDirection || SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1,
       pageSize: +(query?.pageSize || 10), // by-default 10
     });
@@ -66,17 +65,13 @@ export class BlogController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getPostsOfBlog(
-    @Param() params: { blogId: string },
-    @Query() query: GetPostsInputModel,
-  ) {
+  async getPostsOfBlog(@Param() params: { blogId: string }, @Query() query: GetPostsInputModel) {
     // const currentUserId = req?.context?.user?.id
 
     const resData = await this.blogQueryRepository.getPostsInBlog({
       blogId: params?.blogId,
       sortBy: (query?.sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection ||
-        SortDirections.desc) as SortDirections, // by-default desc
+      sortDirection: (query?.sortDirection || SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10
     });
@@ -107,10 +102,7 @@ export class BlogController {
 
   @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createPostInBlog(
-    @Param() params: { blogId: string },
-    @Body() body: CreatePostInBlogDTO,
-  ) {
+  async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
     // const currentUserId = req?.context?.user?.id
 
     const createdPostInBlog = await this.blogService.createPostInBlog({
@@ -129,10 +121,7 @@ export class BlogController {
 
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
-  async updateBlog(
-    @Param() params: { id: string },
-    @Body() body: UpdateBlogDto,
-  ) {
+  async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
     const isBlogUpdated = await this.blogService.updateBlog({
       id: params.id,
       input: body,

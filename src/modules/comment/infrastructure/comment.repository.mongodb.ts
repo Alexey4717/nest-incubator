@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
+
+import { LikeStatus } from '@/shared/types/common';
+
 import { Comment, CommentDocument } from '../models/comment.schema';
-import { LikeStatus } from '../../../types/common';
+import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
 import { CommentQueryRepository } from './comment-query.repository.mongodb';
 
 @Injectable()
@@ -20,26 +22,17 @@ export class CommentRepository {
       // const result = await commentsCollection.insertOne(newComment)
       // return Boolean(result.insertedId);
     } catch (error) {
-      console.log(
-        'commentsRepository.createCommentInPost error is occurred: ',
-        error,
-      );
+      console.log('commentsRepository.createCommentInPost error is occurred: ', error);
       return false;
     }
   }
 
   async updateCommentById({ id, content }: any): Promise<boolean> {
     try {
-      const result = await this.CommentModel.updateOne(
-        { id },
-        { $set: { content } },
-      );
+      const result = await this.CommentModel.updateOne({ id }, { $set: { content } });
       return result?.matchedCount === 1;
     } catch (error) {
-      console.log(
-        'commentsRepository.updateCommentById error is occurred: ',
-        error,
-      );
+      console.log('commentsRepository.updateCommentById error is occurred: ', error);
       return false;
     }
   }
@@ -55,9 +48,7 @@ export class CommentRepository {
   }): Promise<boolean> {
     try {
       const filter = { id: commentId };
-      const foundComment = await this.commentQueryRepository.getCommentById(
-        commentId,
-      );
+      const foundComment = await this.commentQueryRepository.getCommentById(commentId);
 
       if (!foundComment) return false;
 
@@ -112,10 +103,7 @@ export class CommentRepository {
       const result = await this.CommentModel.deleteOne({ id });
       return result.deletedCount === 1;
     } catch (error) {
-      console.log(
-        'commentsRepository.deleteCommentById error is occurred: ',
-        error,
-      );
+      console.log('commentsRepository.deleteCommentById error is occurred: ', error);
       return false;
     }
   }

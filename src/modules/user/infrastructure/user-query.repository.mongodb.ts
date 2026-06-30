@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from '../models/user.schema';
-import {
-  CommonQueryParamsTypes,
-  Paginator,
-  SortDirections,
-} from '../../../types/common';
-import { calculateAndGetSkipValue } from '../../../helpers';
+
+import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
+import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
 import { SortUsersBy } from '../models/GetUsersInputModel';
+import { User, UserDocument } from '../models/user.schema';
 
 type GetUsersArgs = CommonQueryParamsTypes & {
   searchLoginTerm: string | null;
@@ -88,48 +86,31 @@ export class UserQueryRepository {
     };
   }
 
-  async findUserById(
-    id: string,
-  ): Promise<GetUserOutputModelFromMongoDB | null> {
+  async findUserById(id: string): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.UserModel.findOne({ id }).lean();
   }
 
   async findUserByLogin(login: string): Promise<User | null> {
-    return this.UserModel.findOne(
-      { 'accountData.login': login },
-      { _id: false },
-    );
+    return this.UserModel.findOne({ 'accountData.login': login }, { _id: false });
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
-    return this.UserModel.findOne(
-      { 'accountData.email': email },
-      { _id: false },
-    );
+    return this.UserModel.findOne({ 'accountData.email': email }, { _id: false });
   }
 
-  async findByLoginOrEmail(
-    loginOrEmail: string,
-  ): Promise<GetUserOutputModelFromMongoDB | null> {
+  async findByLoginOrEmail(loginOrEmail: string): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.UserModel.findOne({
-      $or: [
-        { 'accountData.login': loginOrEmail },
-        { 'accountData.email': loginOrEmail },
-      ],
+      $or: [{ 'accountData.login': loginOrEmail }, { 'accountData.email': loginOrEmail }],
     }).lean();
   }
 
-  async findByConfirmationCode(
-    code: string,
-  ): Promise<GetUserOutputModelFromMongoDB | null> {
+  async findByConfirmationCode(code: string): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.UserModel.findOne({
       'emailConfirmation.confirmationCode': code,
     }).lean();
   }
 
-  async findUserByRecoveryCode(
-    code: string,
-  ): Promise<GetUserOutputModelFromMongoDB | null> {
+  async findUserByRecoveryCode(code: string): Promise<GetUserOutputModelFromMongoDB | null> {
     return this.UserModel.findOne({ 'recoveryData.recoveryCode': code }).lean();
   }
 }

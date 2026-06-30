@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { LikeStatus } from '../../../types/common';
+
+import { LikeStatus } from '@/shared/types/common';
 
 @Schema({ _id: false, id: false })
 class CommentatorInfo {

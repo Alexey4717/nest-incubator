@@ -1,18 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
-import { UserService } from '../../user/application/user.service';
-import { RegistrationDto } from '../dto/registration.dto';
-import { EmailService } from '../../email/email.service';
-import { UserQueryRepository } from '../../user/infrastructure/user-query.repository.mongodb';
-import { UserRepository } from '../../user/infrastructure/user.repository.mongodb';
 import { randomUUID } from 'crypto';
-import { SessionService } from '../../session/application/session.service';
-import { Session } from '../../session/models/session.schema';
-import { SessionQueryRepository } from '../../session/infrastructure/session-query.repository.mongodb';
-import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
-import { SessionRepository } from '../../session/infrastructure/session.repository.mongodb';
+
+import { EmailService } from '@/modules/email/email.service';
+import { SessionService } from '@/modules/session/application/session.service';
+import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository.mongodb';
+import { SessionRepository } from '@/modules/session/infrastructure/session.repository.mongodb';
+import { Session } from '@/modules/session/models/session.schema';
+import { UserService } from '@/modules/user/application/user.service';
+import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository.mongodb';
+import { UserRepository } from '@/modules/user/infrastructure/user.repository.mongodb';
+
 import { NewPasswordDto } from '../dto/new-password.dto';
+import { RegistrationDto } from '../dto/registration.dto';
+import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
 
 @Injectable()
 export class AuthService {
@@ -32,12 +34,8 @@ export class AuthService {
     private readonly sessionQueryRepository: SessionQueryRepository,
     private readonly emailService: EmailService,
   ) {
-    this.accessTokenSecretKey = this.configService.get<string>(
-      'ACCESS_TOKEN_SECRET',
-    );
-    this.refreshTokenSecretKey = this.configService.get<string>(
-      'REFRESH_TOKEN_SECRET',
-    );
+    this.accessTokenSecretKey = this.configService.get<string>('ACCESS_TOKEN_SECRET');
+    this.refreshTokenSecretKey = this.configService.get<string>('REFRESH_TOKEN_SECRET');
 
     this.accessTokenLifeTimeSec =
       this.configService.get<string>('ACCESS_TOKEN_LIFE_TIME') ??
@@ -52,10 +50,7 @@ export class AuthService {
 
   async login(userId: string, ip: string, userAgent: string) {
     const deviceId = randomUUID();
-    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(
-      userId,
-      deviceId,
-    );
+    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(userId, deviceId);
     const lastActiveDate = this.getIssuedAtFromRefreshToken(refreshToken);
     const sessionInfo: Session = {
       ip,
@@ -134,33 +129,20 @@ export class AuthService {
     const lastActiveDate = new Date(jwtPayload.iat * 1000).toISOString();
     const user = await this.userService.findUserById(userId);
     if (!user) return null;
-    const device =
-      await this.sessionQueryRepository.findOneByDeviceAndUserIdAndDate(
-        deviceId,
-        userId,
-        lastActiveDate,
-      );
+    const device = await this.sessionQueryRepository.findOneByDeviceAndUserIdAndDate(
+      deviceId,
+      userId,
+      lastActiveDate,
+    );
     if (!device) return null;
-    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(
-      userId,
-      deviceId,
-    );
+    const { accessToken, refreshToken } = await this.signAccessAndRefreshToken(userId, deviceId);
     const newLastActiveDate = this.getIssuedAtFromRefreshToken(refreshToken);
-    await this.sessionService.updateSessionAfterRefreshToken(
-      userId,
-      deviceId,
-      newLastActiveDate,
-    );
+    await this.sessionService.updateSessionAfterRefreshToken(userId, deviceId, newLastActiveDate);
     return { accessToken, refreshToken };
   }
 
-  async logout(
-    userId: string,
-    refreshTokenJWTPayload: IRefreshTokenJwtPayload,
-  ) {
-    const lastActiveDate = new Date(
-      refreshTokenJWTPayload.iat * 1000,
-    ).toISOString();
+  async logout(userId: string, refreshTokenJWTPayload: IRefreshTokenJwtPayload) {
+    const lastActiveDate = new Date(refreshTokenJWTPayload.iat * 1000).toISOString();
     return this.sessionRepository.deleteOneSessionByUserAndDeviceIdAndDate(
       userId,
       refreshTokenJWTPayload.deviceId,

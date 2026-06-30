@@ -1,27 +1,30 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
   Body,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   Inject,
   NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
+
+import { SortDirections } from '@/shared/types/common';
+
+import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
+
 import { UserService } from '../application/user.service';
-import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
-import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
-import { getMappedUserViewModel } from '../helpers';
-import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';
-import { SortDirections } from '../../../types/common';
-import { CreateUserInputModel } from '../models/CreateUserInputModel';
 import { CreateUserDTO } from '../dto/create-user.dto';
-import { BasicAuthGuard } from '../../auth/guards/basic-auth.guard';
+import { getMappedUserViewModel } from '../helpers';
+import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
+import { CreateUserInputModel } from '../models/CreateUserInputModel';
+import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
+import { GetUsersInputModel, SortUsersBy } from '../models/GetUsersInputModel';
 
 @UseGuards(BasicAuthGuard)
 @Controller('users')
@@ -52,13 +55,7 @@ export class UserController {
       pageNumber: +(pageNumber || 1), // by-default 1
       pageSize: +(pageSize || 10), // by-default 10
     });
-    const {
-      pagesCount,
-      page,
-      pageSize: responsePageSize,
-      totalCount,
-      items,
-    } = resData || {};
+    const { pagesCount, page, pageSize: responsePageSize, totalCount, items } = resData || {};
     return {
       pagesCount,
       page,

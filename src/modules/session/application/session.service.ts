@@ -1,14 +1,12 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { SessionRepository } from '../infrastructure/session.repository.mongodb';
+
+import { IRefreshTokenJwtPayload } from '@/modules/auth/models/refresh-token-jwt-payload.model';
+
 import { SessionQueryRepository } from '../infrastructure/session-query.repository.mongodb';
+import { SessionRepository } from '../infrastructure/session.repository.mongodb';
 import { Session } from '../models/session.schema';
-import { IRefreshTokenJwtPayload } from '../../auth/models/refresh-token-jwt-payload.model';
 
 @Injectable()
 export class SessionService {
@@ -27,15 +25,10 @@ export class SessionService {
   // }
 
   async deleteOneSessionByUserAndDeviceId(userId: string, deviceId: string) {
-    const session = await this.sessionQueryRepository.findOneByDeviceId(
-      deviceId,
-    );
+    const session = await this.sessionQueryRepository.findOneByDeviceId(deviceId);
     if (!session) throw new NotFoundException();
     if (session.userId !== userId) throw new ForbiddenException();
-    return this.sessionRepository.deleteOneSessionByUserAndDeviceId(
-      userId,
-      deviceId,
-    );
+    return this.sessionRepository.deleteOneSessionByUserAndDeviceId(userId, deviceId);
   }
   //
   // async deleteOneDeviceByDeviceAndUserIdAndDate(
@@ -48,9 +41,7 @@ export class SessionService {
   //   );
   // }
   //
-  async deleteAllUserSessionExceptCurrent(
-    refreshTokenJwtPayloadDto: IRefreshTokenJwtPayload,
-  ) {
+  async deleteAllUserSessionExceptCurrent(refreshTokenJwtPayloadDto: IRefreshTokenJwtPayload) {
     return this.sessionRepository.deleteAllSessionExceptCurrent(
       refreshTokenJwtPayloadDto.userId,
       refreshTokenJwtPayloadDto.deviceId,
@@ -79,8 +70,6 @@ export class SessionService {
     const expiredISOStringValueFromNow = new Date(
       +new Date() - refreshTokenLifeTime * 1000,
     ).toISOString();
-    return this.sessionRepository.deleteAllExpiredSessions(
-      expiredISOStringValueFromNow,
-    );
+    return this.sessionRepository.deleteAllExpiredSessions(expiredISOStringValueFromNow);
   }
 }

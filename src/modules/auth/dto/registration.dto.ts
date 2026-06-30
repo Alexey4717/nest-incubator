@@ -1,6 +1,7 @@
 import { IsEmail, IsString, Length } from 'class-validator';
-import { UserLoginExist } from '../../../decorators/validation/user-login-exist.decorator';
-import { UserEmailExist } from '../../../decorators/validation/user-email-exist.decorator';
+
+import { UserEmailExist } from '@/modules/user/decorators/user-email-exist.decorator';
+import { UserLoginExist } from '@/modules/user/decorators/user-login-exist.decorator';
 
 export class RegistrationDto {
   @IsString()

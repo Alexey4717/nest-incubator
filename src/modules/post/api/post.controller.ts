@@ -1,39 +1,42 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
+  BadRequestException,
   Body,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   NotFoundException,
-  BadRequestException,
+  Param,
+  Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { constants } from 'http2';
+
+import { Paginator, SortDirections } from '@/shared/types/common';
+
+import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
+import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
+import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
+import { CommentService } from '@/modules/comment/application/comment.service';
+import { getMappedCommentViewModel } from '@/modules/comment/helpers';
+import { CommentQueryRepository } from '@/modules/comment/infrastructure/comment-query.repository.mongodb';
+import { CreateCommentInputModel } from '@/modules/comment/models/CreateCommentInputModel';
+import { SortPostCommentsBy } from '@/modules/comment/models/GetPostCommentsInputModel';
+
+import { PostService } from '../application/post.service';
+import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
+import { CreatePostDto } from '../dto/create-post.dto';
+import { UpdatePostDto } from '../dto/update-post.dto';
 import { getMappedPostViewModel } from '../helpers';
-import { Paginator, SortDirections } from '../../../types/common';
-import { GetPostsInputModel, SortPostsBy } from '../models/GetPostsInputModel';
-import { GetPostInputModel } from '../models/GetPostInputModel';
+import { PostQueryRepository } from '../infrastructure/post-query.repository.mongodb';
 import { CreatePostInputModel } from '../models/CreatePostInputModel';
+import { GetPostInputModel } from '../models/GetPostInputModel';
+import { GetPostLikeStatusInputModel } from '../models/GetPostLikeStatusInputModel';
+import { GetPostsInputModel, SortPostsBy } from '../models/GetPostsInputModel';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { UpdatePostLikeStatusInputModel } from '../models/UpdatePostLikeStatusInputModel';
-import { GetPostLikeStatusInputModel } from '../models/GetPostLikeStatusInputModel';
-import { PostQueryRepository } from '../infrastructure/post-query.repository.mongodb';
-import { PostService } from '../application/post.service';
-import { CommentQueryRepository } from '../../comment/infrastructure/comment-query.repository.mongodb';
-import { SortPostCommentsBy } from '../../comment/models/GetPostCommentsInputModel';
-import { CreateCommentInputModel } from '../../comment/models/CreateCommentInputModel';
-import { CommentService } from '../../comment/application/comment.service';
-import { getMappedCommentViewModel } from '../../comment/helpers';
-import { CreatePostDto } from '../dto/create-post.dto';
-import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
-import { UpdatePostDto } from '../dto/update-post.dto';
-import { GetUserIdFromBearerToken } from '../../auth/guards/get-userId-from-bearer-token';
-import { BasicAuthGuard } from '../../auth/guards/basic-auth.guard';
-import { AccessJwtAuthGuard } from '../../auth/guards/access-jwt-auth.guard';
 
 @Controller('posts')
 export class PostController {
@@ -59,13 +62,7 @@ export class PostController {
       pageNumber: +(pageNumber || 1), // by-default 1
       pageSize: +(pageSize || 10), // by-default 10
     });
-    const {
-      pagesCount,
-      page,
-      pageSize: responsePageSize,
-      totalCount,
-      items,
-    } = resData || {};
+    const { pagesCount, page, pageSize: responsePageSize, totalCount, items } = resData || {};
     // const itemsWithCurrentUserId = items.map((item) => ({
     //   ...item,
     //   currentUserId,
@@ -106,8 +103,7 @@ export class PostController {
 
     const resData = await this.commentQueryRepository.getPostComments({
       sortBy: (query?.sortBy || 'createdAt') as SortPostCommentsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection ||
-        SortDirections.desc) as SortDirections, // by-default desc
+      sortDirection: (query?.sortDirection || SortDirections.desc) as SortDirections, // by-default desc
       pageNumber: +(query?.pageNumber || 1), // by-default 1
       pageSize: +(query?.pageSize || 10), // by-default 10
       postId,
@@ -186,10 +182,7 @@ export class PostController {
   @UseGuards(AccessJwtAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
-  async updatePost(
-    @Param() params: GetPostInputModel,
-    @Body() body: UpdatePostDto,
-  ) {
+  async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
     const isPostUpdated = await this.postService.updatePost({
       id: params.id,
       input: body,

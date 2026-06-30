@@ -1,15 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { SortPostsBy } from '../models/GetPostsInputModel';
-import {
-  CommonQueryParamsTypes,
-  Paginator,
-  SortDirections,
-} from '../../../types/common';
-import { TPostDb } from '../models/GetPostOutputModel';
-import { calculateAndGetSkipValue } from '../../../helpers';
 import { InjectModel } from '@nestjs/mongoose';
-import { Post, PostDocument } from '../models/post.schema';
 import { Model } from 'mongoose';
+
+import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
+import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+
+import { TPostDb } from '../models/GetPostOutputModel';
+import { SortPostsBy } from '../models/GetPostsInputModel';
+import { Post, PostDocument } from '../models/post.schema';
 
 type GetPostsArgs = CommonQueryParamsTypes & {
   sortBy: SortPostsBy;
@@ -52,9 +50,7 @@ export class PostQueryRepository {
     try {
       return await this.PostModel.findOne({ id }).lean();
     } catch (error) {
-      console.log(
-        `postsQueryRepository.findPostById error is occurred: ${error}`,
-      );
+      console.log(`postsQueryRepository.findPostById error is occurred: ${error}`);
       return null;
     }
   }

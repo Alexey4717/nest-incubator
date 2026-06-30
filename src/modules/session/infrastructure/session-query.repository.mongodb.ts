@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Session, SessionDocument } from '../models/session.schema';
 import { Model } from 'mongoose';
+
 import { SessionViewModel } from '../models/session-view.model';
+import { Session, SessionDocument } from '../models/session.schema';
 
 @Injectable()
 export class SessionQueryRepository {
@@ -36,10 +37,7 @@ export class SessionQueryRepository {
     return this.sessionModel.findOne({ deviceId });
   }
 
-  async findOneByDeviceAndUserId(
-    deviceId: string,
-    userId: string,
-  ): Promise<Session | null> {
+  async findOneByDeviceAndUserId(deviceId: string, userId: string): Promise<Session | null> {
     return this.sessionModel.findOne({ deviceId, userId });
   }
 

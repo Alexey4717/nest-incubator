@@ -1,0 +1,28 @@
+import { Injectable } from '@nestjs/common';
+import {
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
+
+import { UserQueryRepository } from '../infrastructure/user-query.repository.mongodb';
+
+@ValidatorConstraint({ name: 'UserLoginExists', async: true })
+@Injectable()
+export class UserLoginExistsValidator implements ValidatorConstraintInterface {
+  constructor(private readonly userQueryRepository: UserQueryRepository) {}
+
+  async validate(login: string) {
+    try {
+      const user = await this.userQueryRepository.findUserByLogin(login);
+      if (user) return false;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  defaultMessage(args: ValidationArguments) {
+    return 'This login already exists';
+  }
+}

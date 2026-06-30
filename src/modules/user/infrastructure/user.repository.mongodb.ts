@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from '../models/user.schema';
+
 import { RecoveryDataType } from '../models/CreateUserInsertToDBModel';
 import { GetUserOutputModelFromMongoDB } from '../models/GetUserOutputModel';
+import { User, UserDocument } from '../models/user.schema';
 
 type UpdateUserConfirmationCodeInputType = {
   userId: string;
@@ -55,11 +56,7 @@ export class UserRepository {
     const out: { message: string; field: string }[] = [];
     for (const path of Object.keys(keyValue || {})) {
       const normalized = path.toLowerCase().replace(/^accountdata\./, '');
-      if (
-        normalized === 'login' ||
-        normalized.endsWith('.login') ||
-        normalized.includes('login')
-      ) {
+      if (normalized === 'login' || normalized.endsWith('.login') || normalized.includes('login')) {
         out.push({
           message: 'This login already exists',
           field: 'login',
@@ -133,10 +130,7 @@ export class UserRepository {
     userId,
     recoveryData,
   }: SetUserRecoveryDataInputType): Promise<boolean> {
-    const result = await this.UserModel.updateOne(
-      { id: userId },
-      { $set: { recoveryData } },
-    );
+    const result = await this.UserModel.updateOne({ id: userId }, { $set: { recoveryData } });
     return result.matchedCount === 1;
   }
 

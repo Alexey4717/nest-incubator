@@ -4,6 +4,108 @@ REST API на [NestJS](https://nestjs.com/) для учебного проект
 
 Основные модули: `auth`, `user`, `post`, `blog`, `comment`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
 
+## Архитектура
+
+Проект организован как **modular monolith**: в корне `src/` три слоя — `app`, `shared`, `modules`. Точка входа `main.ts` остаётся в корне `src/`.
+
+```
+src/
+├── main.ts                 # bootstrap NestJS-приложения
+├── app/                    # composition root: сборка модулей, глобальные настройки HTTP
+├── shared/                 # переиспользуемый код без доменной логики
+└── modules/                # feature-модули (домены)
+```
+
+### `app/` — composition root
+
+Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
+
+| Файл | Назначение |
+|------|------------|
+| `app.module.ts` | Регистрация feature-модулей, глобальных провайдеров (Config, Mongoose, Mailer) |
+| `app.settings.ts` | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт |
+
+`app/` импортирует `modules/*` и `shared/*`, но **не содержит бизнес-логики** доменов.
+
+### `shared/` — общий код
+
+Инфраструктурные и cross-cutting вещи, которые используются в нескольких модулях и **не зависят от конкретного домена**:
+
+```
+shared/
+├── config/                 # ConfigModule: configuration, mongoose, mailer
+├── decorators/             # param- и validation-декораторы общего назначения
+├── exception-filters/      # глобальные HTTP-фильтры ошибок
+├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
+├── validators/             # class-validator constraints + Injectable-валидаторы
+└── utils/                  # утилиты (helpers)
+```
+
+**Правило:** код в `shared/` не импортирует из `modules/*`. Если декоратор или валидатор нужен только одному модулю — он живёт внутри этого модуля (например, `modules/auth/decorators/`).
+
+### `modules/` — feature-модули
+
+Каждый модуль — изолированный домен с собственным `@Module`, контрактом через `exports` и типичной внутренней структурой:
+
+```
+modules/<feature>/
+├── api/                    # controllers, HTTP-слой
+├── application/            # services, бизнес-логика
+├── infrastructure/         # repositories, работа с БД
+├── dto/                    # class-validator DTO для HTTP
+├── models/                 # Mongoose-схемы, input/output-модели
+├── guards/ / strategies/   # при необходимости (auth)
+├── decorators/             # декораторы, специфичные для модуля
+└── <feature>.module.ts
+```
+
+Инфраструктурные модули (`database`, `email`) также располагаются в `modules/` — они регистрируют провайдеры и экспортируют их другим feature-модулям.
+
+| Модуль | Домен |
+|--------|-------|
+| `auth` | Аутентификация, JWT, Passport strategies |
+| `user` | Пользователи |
+| `blog` / `post` / `comment` | Контент |
+| `session` | Сессии и refresh-токены |
+| `email` | Отправка писем (SMTP, шаблоны) |
+| `database` | Регистрация Mongoose-моделей |
+| `testing` | Служебные эндпoинты для e2e |
+
+### Направление зависимостей
+
+```
+main.ts → app/ → modules/ → shared/
+                  ↓
+            (не наоборот)
+```
+
+- `modules/*` может импортировать `shared/*` и другие `modules/*` (через `@Module({ imports })` и прямые импорты типов)
+- `shared/*` **не импортирует** `modules/*`
+- `app/*` собирает всё вместе, но не содержит доменной логики
+
+Публичный контракт Nest-модуля определяется **`exports` в `@Module`**, а не barrel-файлами (`index.ts`).
+
+### Импорты и алиасы
+
+Path alias `@/*` → `src/*` настроен в `tsconfig.json`. При сборке алиасы разрешаются через `tsc-alias`.
+
+| Контекст | Стиль импорта | Пример |
+|----------|---------------|--------|
+| Между слоями / модулями | абсолютный с `@/` | `@/modules/auth/auth.module` |
+| Внутри одного модуля / папки | относительный | `./dto/login.dto` |
+
+**Порядок импортов** задаётся Prettier (`@trivago/prettier-plugin-sort-imports`) в `.prettierrc.cjs`:
+
+1. `nest`
+2. сторонние пакеты (`@nestjs/*`, `express`, …)
+3. `@/modules/*`
+4. `@/shared/*`
+5. `@/app/*`
+6. относительные `./` / `../`
+
+Нарушение порядка подсвечивается ESLint-правилом `prettier/prettier` (warning). Исправляется через `yarn format`, Format Document или `yarn lint --fix`.
+
 ## Требования
 
 - **Node.js 24.x** (см. `engines` в `package.json`)
@@ -44,7 +146,7 @@ yarn build && yarn start:prod
 
 | Скрипт | Описание |
 |--------|----------|
-| `build` | Сборка проекта (`nest build` → `dist/`) |
+| `build` | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`) |
 | `format` | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier |
 | `start` | Запуск приложения без watch |
 | `start:dev` | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`) |
@@ -59,7 +161,7 @@ yarn build && yarn start:prod
 
 ## Переменные окружения
 
-Значения читаются через `@nestjs/config` (`src/config/configuration.ts`) и константы модуля auth (`src/modules/auth/constants.ts`).
+Значения читаются через `@nestjs/config` (`src/shared/config/configuration.ts`) и константы модуля auth (`src/modules/auth/constants.ts`).
 
 | Переменная | Назначение |
 |------------|------------|
@@ -88,6 +190,7 @@ yarn build && yarn start:prod
 auth/
 ├── api/auth.controller.ts          # HTTP-эндпоинты
 ├── application/auth.service.ts     # бизнес-логика: login, refresh, registration, logout, recovery
+├── decorators/                     # декораторы, специфичные для auth
 ├── strategies/
 │   ├── local.strategy.ts           # login + password
 │   ├── access-jwt.strategy.ts      # Bearer access token

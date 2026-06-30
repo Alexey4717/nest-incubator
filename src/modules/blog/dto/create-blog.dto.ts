@@ -1,4 +1,4 @@
-import { MaxLength, IsString, IsUrl } from 'class-validator';
+import { IsString, IsUrl, MaxLength } from 'class-validator';
 
 export class CreateBlogDTO {
   @MaxLength(15)

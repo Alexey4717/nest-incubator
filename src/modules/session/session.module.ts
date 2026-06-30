@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+
+import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+
 import { SessionService } from './application/session.service';
-import { SessionRepository } from './infrastructure/session.repository.mongodb';
 import { SessionQueryRepository } from './infrastructure/session-query.repository.mongodb';
-import { MongooseModelsModule } from '../database/mongoose-models.module';
+import { SessionRepository } from './infrastructure/session.repository.mongodb';
 
 @Module({
   imports: [MongooseModelsModule],

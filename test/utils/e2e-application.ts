@@ -1,15 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { AppModule } from '../../src/app.module';
-import { appSettings } from '../../src/app-settings';
+import { AppModule } from '../../src/app/app.module';
+import { appSettings } from '../../src/app/app.settings';
 import { EmailService } from '../../src/modules/email/email.service';
 
 export function createEmailServiceMock(): Pick<
   EmailService,
-  | 'sendRegistrationEmail'
-  | 'sendEmailWithNewConfirmationCode'
-  | 'sendPasswordRecoveryCode'
+  'sendRegistrationEmail' | 'sendEmailWithNewConfirmationCode' | 'sendPasswordRecoveryCode'
 > {
   return {
     sendRegistrationEmail: jest.fn().mockResolvedValue(undefined),

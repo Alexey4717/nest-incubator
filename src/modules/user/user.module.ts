@@ -1,12 +1,15 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
-import { UserService } from './application/user.service';
+import { forwardRef, Module } from '@nestjs/common';
+
+import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
+import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
+
+import { AuthModule } from '@/modules/auth/auth.module';
+import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+
 import { UserController } from './api/user.controller';
-import { UserRepository } from './infrastructure/user.repository.mongodb';
+import { UserService } from './application/user.service';
 import { UserQueryRepository } from './infrastructure/user-query.repository.mongodb';
-import { MongooseModelsModule } from '../database/mongoose-models.module';
-import { UserLoginExistsValidator } from '../../validators/user-login-exists.validator';
-import { UserEmailExistsValidator } from '../../validators/user-email-exists.validator';
+import { UserRepository } from './infrastructure/user.repository.mongodb';
 
 @Module({
   imports: [MongooseModelsModule, forwardRef(() => AuthModule)],

@@ -1,9 +1,6 @@
-import {
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+
 import { IAuthenticatedUserId } from '../models/authenticated-user.model';
 import { RefreshJwtValidateResult } from '../strategies/refresh-jwt.strategy';
 
