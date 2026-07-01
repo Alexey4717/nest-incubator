@@ -8,6 +8,7 @@ export class CreatePostInBlogDTO {
   @IsString()
   title: string;
 
+  @Trim()
   @MaxLength(100)
   @IsString()
   shortDescription: string;

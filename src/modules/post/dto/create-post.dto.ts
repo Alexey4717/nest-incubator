@@ -8,6 +8,7 @@ export class CreatePostDto {
   @IsString()
   title: string;
 
+  @Trim()
   @MaxLength(100)
   @IsString()
   shortDescription: string;
