@@ -26,7 +26,7 @@ export function appSettings(app: INestApplication): void {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      stopAtFirstError: true,
+      stopAtFirstError: false,
       exceptionFactory: (errors) => {
         const message = errors.map((error) => {
           const constraintsKeys = Object.keys(error.constraints ?? {});

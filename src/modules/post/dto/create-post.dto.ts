@@ -1,6 +1,9 @@
 import { IsString, MaxLength } from 'class-validator';
 
+import { Trim } from '@/shared/decorators/validation/trim.decorator';
+
 export class CreatePostDto {
+  @Trim()
   @MaxLength(30)
   @IsString()
   title: string;

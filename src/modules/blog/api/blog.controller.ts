@@ -14,6 +14,9 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { constants } from 'http2';
 
+import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+
+import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { getMappedPostViewModel } from '@/modules/post/helpers';
 import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
@@ -47,8 +50,14 @@ export class BlogController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getPostsOfBlog(@Param() params: { blogId: string }, @Query() query: GetPostsInputModel) {
-    const resData = await this.queryBus.execute(new GetBlogPostsQuery(params.blogId, query));
+  async getPostsOfBlog(
+    @Param() params: { blogId: string },
+    @Query() query: GetPostsInputModel,
+    @CurrentUserId() currentUserId: string | null,
+  ) {
+    const resData = await this.queryBus.execute(
+      new GetBlogPostsQuery(params.blogId, query, currentUserId),
+    );
 
     if (!resData) throw new NotFoundException();
 
@@ -63,6 +72,7 @@ export class BlogController {
     return resData;
   }
 
+  @UseGuards(BasicAuthGuard)
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createBlog(@Body() body: CreateBlogDTO) {
@@ -70,6 +80,7 @@ export class BlogController {
     return getMappedBlogViewModel(createdBlog);
   }
 
+  @UseGuards(BasicAuthGuard)
   @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
@@ -82,6 +93,7 @@ export class BlogController {
     return getMappedPostViewModel(createdPostInBlog);
   }
 
+  @UseGuards(BasicAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
@@ -92,6 +104,7 @@ export class BlogController {
     return isBlogUpdated;
   }
 
+  @UseGuards(BasicAuthGuard)
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }) {

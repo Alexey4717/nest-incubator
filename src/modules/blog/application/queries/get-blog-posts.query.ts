@@ -12,6 +12,7 @@ export class GetBlogPostsQuery extends TypedQuery<Paginator<PostViewModel[]> | n
   constructor(
     public readonly blogId: string,
     public readonly query: GetPostsInputModel,
+    public readonly currentUserId: string | null = null,
   ) {
     super();
   }
@@ -28,6 +29,7 @@ export class GetBlogPostsHandler implements IQueryHandler<
     return this.getBlogPostsUseCase.execute({
       blogId: query.blogId,
       query: query.query,
+      currentUserId: query.currentUserId,
     });
   }
 }

@@ -1,7 +1,6 @@
 import { existsSync } from 'fs';
-import { join } from 'path';
-
 import * as moduleAlias from 'module-alias';
+import { join } from 'path';
 
 const distPath = join(__dirname, '..', 'dist');
 const isRunningFromSrc = __dirname.replace(/\\/g, '/').endsWith('/src');

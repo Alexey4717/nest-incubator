@@ -1,6 +1,9 @@
 import { IsString, MaxLength } from 'class-validator';
 
+import { Trim } from '@/shared/decorators/validation/trim.decorator';
+
 export class CreatePostInBlogDTO {
+  @Trim()
   @MaxLength(30)
   @IsString()
   title: string;
@@ -9,6 +12,7 @@ export class CreatePostInBlogDTO {
   @IsString()
   shortDescription: string;
 
+  @Trim()
   @MaxLength(1000)
   @IsString()
   content: string;

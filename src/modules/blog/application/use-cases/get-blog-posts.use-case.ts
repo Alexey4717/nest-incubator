@@ -13,6 +13,7 @@ import { BlogQueryRepository } from '../../infrastructure/blog-query.repository.
 type GetBlogPostsInput = {
   blogId: string;
   query: GetPostsInputModel;
+  currentUserId?: string | null;
 };
 
 @Injectable()
@@ -22,7 +23,11 @@ export class GetBlogPostsUseCase implements IUseCase<
 > {
   constructor(private readonly blogQueryRepository: BlogQueryRepository) {}
 
-  async execute({ blogId, query }: GetBlogPostsInput): Promise<Paginator<PostViewModel[]> | null> {
+  async execute({
+    blogId,
+    query,
+    currentUserId,
+  }: GetBlogPostsInput): Promise<Paginator<PostViewModel[]> | null> {
     const { sortBy, sortDirection, pageNumber, pageSize } = query;
 
     const pagination = normalizePaginationQuery<SortPostsBy>(
@@ -52,7 +57,7 @@ export class GetBlogPostsUseCase implements IUseCase<
       page,
       pageSize: responsePageSize,
       totalCount,
-      items: items.map((item) => getMappedPostViewModel(item)),
+      items: items.map((item) => getMappedPostViewModel({ ...item, currentUserId })),
     };
   }
 }

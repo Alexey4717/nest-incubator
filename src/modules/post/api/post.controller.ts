@@ -81,7 +81,7 @@ export class PostController {
     return resData;
   }
 
-  @UseGuards(AccessJwtAuthGuard)
+  @UseGuards(BasicAuthGuard)
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPost(@Body() body: CreatePostDto) {
@@ -126,7 +126,7 @@ export class PostController {
     return isPostUpdated;
   }
 
-  @UseGuards(AccessJwtAuthGuard)
+  @UseGuards(BasicAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
