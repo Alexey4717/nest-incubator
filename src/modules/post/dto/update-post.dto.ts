@@ -8,6 +8,7 @@ export class UpdatePostDto {
   @IsString()
   title: string;
 
+  @Trim()
   @MaxLength(100)
   @IsString()
   shortDescription: string;

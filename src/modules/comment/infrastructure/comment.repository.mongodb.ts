@@ -69,6 +69,13 @@ export class CommentRepository {
         return result.matchedCount === 1;
       }
 
+      if (plan.action === 'pull') {
+        const result = await this.CommentModel.updateOne(filter, {
+          $pull: { reactions: { userId: plan.userId } },
+        });
+        return result.matchedCount === 1;
+      }
+
       const result = await this.CommentModel.updateOne(
         { ...filter, 'reactions.userId': plan.userId },
         {

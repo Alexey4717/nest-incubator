@@ -6,6 +6,7 @@ import { Reaction } from '../../types/reaction.type';
 export type ReactionUpdatePlan =
   | { action: 'noop' }
   | { action: 'push'; reaction: Reaction }
+  | { action: 'pull'; userId: string }
   | {
       action: 'update';
       userId: string;
@@ -28,6 +29,14 @@ export class ReactionUpdateService {
   }): ReactionUpdatePlan {
     const existingReaction = reactions.find((reaction) => reaction.userId === userId);
     const createdAt = new Date().toISOString();
+
+    if (likeStatus === LikeStatus.None) {
+      if (!existingReaction) {
+        return { action: 'noop' };
+      }
+
+      return { action: 'pull', userId };
+    }
 
     if (!existingReaction) {
       return {

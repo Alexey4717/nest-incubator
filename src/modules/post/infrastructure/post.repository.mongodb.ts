@@ -80,6 +80,13 @@ export class PostRepository {
         return result.matchedCount === 1;
       }
 
+      if (plan.action === 'pull') {
+        const result = await this.PostModel.updateOne(filter, {
+          $pull: { reactions: { userId: plan.userId } },
+        });
+        return result.matchedCount === 1;
+      }
+
       const result = await this.PostModel.updateOne(
         { ...filter, 'reactions.userId': plan.userId },
         {
