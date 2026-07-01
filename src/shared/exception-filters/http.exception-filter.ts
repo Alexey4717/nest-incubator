@@ -47,16 +47,23 @@ function normalizeBadRequestMessages(exception: HttpException): {
 // для подсказок в режиме разработки где упала ошибка
 @Catch()
 export class ErrorExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
+    if (exception instanceof HttpException) {
+      new HttpExceptionFilter().catch(exception, host);
+      return;
+    }
+
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
     void context.getRequest<Request>();
 
+    const error = exception instanceof Error ? exception : new Error(String(exception));
+
     // catching all internal server errors (500)
     if (process.env.NODE_ENV !== 'production') {
       response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
-        error: exception.toString(),
-        stack: exception.stack,
+        error: error.toString(),
+        stack: error.stack,
       });
     } else {
       response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send('Internal Error');

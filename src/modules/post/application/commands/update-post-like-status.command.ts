@@ -11,6 +11,7 @@ export class UpdatePostLikeStatusCommand extends TypedCommand<boolean> {
     public readonly postId: string,
     public readonly userId: string,
     public readonly likeStatus: LikeStatus,
+    public readonly userLogin: string,
   ) {
     super();
   }
@@ -28,6 +29,7 @@ export class UpdatePostLikeStatusHandler implements ICommandHandler<
       postId: command.postId,
       userId: command.userId,
       likeStatus: command.likeStatus,
+      userLogin: command.userLogin,
     });
   }
 }

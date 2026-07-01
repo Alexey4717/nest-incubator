@@ -34,7 +34,6 @@ import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { CreatePostDto } from '../dto/create-post.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { GetPostInputModel } from '../models/GetPostInputModel';
-import { GetPostLikeStatusInputModel } from '../models/GetPostLikeStatusInputModel';
 import { GetPostsInputModel } from '../models/GetPostsInputModel';
 
 @Controller('posts')
@@ -114,16 +113,23 @@ export class PostController {
   @Put(':postId/like-status')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updatePostLikeStatus(
-    @Param() params: GetPostLikeStatusInputModel,
+    @Param('postId') postId: string,
     @Body() body: LikeInputDto,
     @CurrentUserId() userId: string,
   ) {
+    const user = await this.findUserByIdUseCase.execute(userId);
+    if (!user) throw new NotFoundException();
+
     const isPostUpdated = await this.commandBus.execute(
-      new UpdatePostLikeStatusCommand(params.postId, userId, body.likeStatus),
+      new UpdatePostLikeStatusCommand(
+        postId,
+        userId,
+        body.likeStatus,
+        user.accountData.login,
+      ),
     );
 
     if (!isPostUpdated) throw new NotFoundException();
-    return isPostUpdated;
   }
 
   @UseGuards(BasicAuthGuard)

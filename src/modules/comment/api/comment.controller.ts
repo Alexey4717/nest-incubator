@@ -59,7 +59,6 @@ export class CommentController {
     );
 
     if (!likeStatusIsUpdated) throw new NotFoundException();
-    return likeStatusIsUpdated;
   }
 
   @UseGuards(AccessJwtAuthGuard)
