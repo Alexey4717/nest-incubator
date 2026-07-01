@@ -74,7 +74,7 @@ export class BlogQueryRepository {
       const foundBlog = await this.BlogModel.findOne({ id: blogId }).lean();
       if (!foundBlog) return null;
       const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-      const filter = { blogId: { $regex: blogId } };
+      const filter = { blogId };
       const items = await this.PostModel.find(filter)
         .sort({ [sortBy]: sortDirection === SortDirections.desc ? -1 : 1 })
         .skip(skipValue)
