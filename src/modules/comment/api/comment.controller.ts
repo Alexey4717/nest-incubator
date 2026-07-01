@@ -75,8 +75,6 @@ export class CommentController {
 
     if (result === CommentManageStatuses.NOT_OWNER) throw new ForbiddenException();
     if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
-
-    return result;
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -89,7 +87,5 @@ export class CommentController {
 
     if (result === CommentManageStatuses.NOT_OWNER) throw new ForbiddenException();
     if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
-
-    return result;
   }
 }
