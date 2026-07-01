@@ -27,7 +27,7 @@ export class ReactionUpdateService {
     likeStatus: LikeStatus;
     userLogin?: string;
   }): ReactionUpdatePlan {
-    const existingReaction = reactions.find((reaction) => reaction.userId === userId);
+    const existingReaction = (reactions ?? []).find((reaction) => reaction.userId === userId);
     const createdAt = new Date().toISOString();
 
     if (likeStatus === LikeStatus.None) {

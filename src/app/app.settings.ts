@@ -3,10 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
-import {
-  ErrorExceptionFilter,
-  HttpExceptionFilter,
-} from '@/shared/exception-filters/http.exception-filter';
+import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
 
 import { AppModule } from './app.module';
 
@@ -51,7 +48,7 @@ export function appSettings(app: INestApplication): void {
     }),
   );
 
-  app.useGlobalFilters(new ErrorExceptionFilter(), new HttpExceptionFilter());
+  app.useGlobalFilters(new ErrorExceptionFilter());
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('nestjs app example')

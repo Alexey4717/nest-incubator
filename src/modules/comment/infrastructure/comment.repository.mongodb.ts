@@ -55,7 +55,7 @@ export class CommentRepository {
       if (!foundComment) return false;
 
       const plan = this.reactionUpdateService.planReactionUpdate({
-        reactions: foundComment.reactions,
+        reactions: foundComment.reactions ?? [],
         userId,
         likeStatus,
       });

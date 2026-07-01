@@ -22,11 +22,13 @@ export class TestingRepository {
 
   async deleteAllData(): Promise<boolean> {
     try {
-      await this.UserModel.deleteMany({});
-      await this.SessionModel.deleteMany({});
-      await this.BlogModel.deleteMany({});
-      await this.PostModel.deleteMany({});
-      await this.CommentModel.deleteMany({});
+      await Promise.all([
+        this.UserModel.deleteMany({}),
+        this.SessionModel.deleteMany({}),
+        this.BlogModel.deleteMany({}),
+        this.PostModel.deleteMany({}),
+        this.CommentModel.deleteMany({}),
+      ]);
       return true;
     } catch (error) {
       console.log(`TestingRepository.deleteAllData error is occurred: ${error}`);

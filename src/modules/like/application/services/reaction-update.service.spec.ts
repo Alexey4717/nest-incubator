@@ -51,4 +51,15 @@ describe('ReactionUpdateService', () => {
       }),
     ).toEqual({ action: 'noop' });
   });
+
+  it('treats undefined reactions as empty array', () => {
+    expect(
+      service.planReactionUpdate({
+        reactions: undefined as unknown as [],
+        userId: 'user-1',
+        likeStatus: LikeStatus.Like,
+        userLogin: 'login',
+      }).action,
+    ).toBe('push');
+  });
 });

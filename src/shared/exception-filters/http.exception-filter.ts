@@ -44,12 +44,33 @@ function normalizeBadRequestMessages(exception: HttpException): {
   return [{ message: 'Bad Request', field: 'email' }];
 }
 
+function sendHttpExceptionResponse(exception: HttpException, host: ArgumentsHost): void {
+  const context = host.switchToHttp();
+  const response = context.getResponse<Response>();
+  const request = context.getRequest<Request>();
+  const status = exception.getStatus();
+
+  if (status === constants.HTTP_STATUS_BAD_REQUEST) {
+    const errorsMessages = normalizeBadRequestMessages(exception);
+    response.status(status).json({
+      errorsMessages,
+    });
+    return;
+  }
+
+  response.status(status).json({
+    statusCode: status,
+    timestamp: new Date().toISOString(),
+    path: request.url,
+  });
+}
+
 // для подсказок в режиме разработки где упала ошибка
 @Catch()
 export class ErrorExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     if (exception instanceof HttpException) {
-      new HttpExceptionFilter().catch(exception, host);
+      sendHttpExceptionResponse(exception, host);
       return;
     }
 
@@ -74,22 +95,6 @@ export class ErrorExceptionFilter implements ExceptionFilter {
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
-    const context = host.switchToHttp();
-    const response = context.getResponse<Response>();
-    const request = context.getRequest<Request>();
-    const status = exception.getStatus();
-
-    if (status === constants.HTTP_STATUS_BAD_REQUEST) {
-      const errorsMessages = normalizeBadRequestMessages(exception);
-      response.status(status).json({
-        errorsMessages,
-      });
-    } else {
-      response.status(status).json({
-        statusCode: status,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-      });
-    }
+    sendHttpExceptionResponse(exception, host);
   }
 }

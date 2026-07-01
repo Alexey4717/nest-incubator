@@ -13,6 +13,6 @@ export class TestingController {
   @Delete('all-data')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteAllData() {
-    return await this.commandBus.execute(new DeleteAllDataCommand());
+    await this.commandBus.execute(new DeleteAllDataCommand());
   }
 }

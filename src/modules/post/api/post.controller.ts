@@ -121,12 +121,7 @@ export class PostController {
     if (!user) throw new NotFoundException();
 
     const isPostUpdated = await this.commandBus.execute(
-      new UpdatePostLikeStatusCommand(
-        postId,
-        userId,
-        body.likeStatus,
-        user.accountData.login,
-      ),
+      new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus, user.accountData.login),
     );
 
     if (!isPostUpdated) throw new NotFoundException();
@@ -138,7 +133,6 @@ export class PostController {
   async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
     const isPostUpdated = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
     if (!isPostUpdated) throw new NotFoundException();
-    return isPostUpdated;
   }
 
   @UseGuards(BasicAuthGuard)
@@ -147,6 +141,5 @@ export class PostController {
   async deletePost(@Param() params: GetPostInputModel) {
     const resData = await this.commandBus.execute(new DeletePostCommand(params.id));
     if (!resData) throw new NotFoundException();
-    return resData;
   }
 }

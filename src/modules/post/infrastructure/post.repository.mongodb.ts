@@ -65,7 +65,7 @@ export class PostRepository {
       if (!foundPost) return false;
 
       const plan = this.reactionUpdateService.planReactionUpdate({
-        reactions: foundPost.reactions,
+        reactions: foundPost.reactions ?? [],
         userId,
         likeStatus,
         userLogin,
@@ -93,6 +93,7 @@ export class PostRepository {
           $set: {
             'reactions.$.likeStatus': plan.likeStatus,
             'reactions.$.createdAt': plan.createdAt,
+            'reactions.$.userLogin': userLogin,
           },
         },
       );

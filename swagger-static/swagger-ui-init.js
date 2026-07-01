@@ -335,7 +335,16 @@ window.onload = function() {
       "/posts/{postId}/like-status": {
         "put": {
           "operationId": "PostController_updatePostLikeStatus",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "postId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
           "requestBody": {
             "required": true,
             "content": {
