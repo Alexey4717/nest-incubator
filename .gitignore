@@ -32,7 +32,9 @@ lerna-debug.log*
 .vscode
 
 # Enviroments vars
-.env
+.env*
 .env.development
 .env.production
 .env.staging
+
+.vercel

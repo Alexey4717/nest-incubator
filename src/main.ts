@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { createWriteStream } from 'fs';
 import { get } from 'http';
 
+import './register-paths';
+
 import { AppModule } from '@/app/app.module';
 import { appSettings } from '@/app/app.settings';
 
