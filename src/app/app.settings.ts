@@ -28,14 +28,25 @@ export function appSettings(app: INestApplication): void {
       transform: true,
       stopAtFirstError: false,
       exceptionFactory: (errors) => {
-        const message = errors.map((error) => {
-          const constraintsKeys = Object.keys(error.constraints ?? {});
-          return {
-            message: error.constraints?.[constraintsKeys[0]],
-            field: error.property,
-          };
-        });
-        throw new BadRequestException({ message, error: 'Bad Request' });
+        const formatErrors = (
+          validationErrors: typeof errors,
+        ): { message: string; field: string }[] =>
+          validationErrors.flatMap((error) => {
+            const constraintsKeys = Object.keys(error.constraints ?? {});
+            const current =
+              constraintsKeys.length > 0
+                ? [
+                    {
+                      message: String(error.constraints?.[constraintsKeys[0]]),
+                      field: error.property,
+                    },
+                  ]
+                : [];
+
+            return [...current, ...formatErrors(error.children ?? [])];
+          });
+
+        throw new BadRequestException(formatErrors(errors));
       },
     }),
   );

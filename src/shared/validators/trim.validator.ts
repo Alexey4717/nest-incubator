@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import {
   ValidationArguments,
   ValidatorConstraint,
@@ -7,14 +6,12 @@ import {
 
 @ValidatorConstraint({ name: 'Trim' })
 export class TrimValidator implements ValidatorConstraintInterface {
-  validate(value: string) {
-    try {
-      const result = value.trim();
-      return result.length > 0;
-    } catch (e) {
-      console.log(e);
-      throw new BadRequestException();
+  validate(value: unknown) {
+    if (typeof value !== 'string') {
+      return true;
     }
+
+    return value.trim().length > 0;
   }
 
   defaultMessage(args: ValidationArguments) {

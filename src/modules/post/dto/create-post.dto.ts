@@ -12,6 +12,7 @@ export class CreatePostDto {
   @IsString()
   shortDescription: string;
 
+  @Trim()
   @MaxLength(1000)
   @IsString()
   content: string;
