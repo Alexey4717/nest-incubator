@@ -26,6 +26,8 @@ import { AppService } from './app.service';
 const configModule = ConfigModule.forRoot({
   isGlobal: true,
   load: [configuration],
+  // .env.local перекрывает только те ключи, которые в нём заданы; остальное берётся из .env
+  envFilePath: ['.env', '.env.local'],
 });
 
 @Module({
