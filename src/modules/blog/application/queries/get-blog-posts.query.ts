@@ -1,0 +1,33 @@
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+
+import { Paginator } from '@/shared/types/common';
+import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+
+import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
+import { PostViewModel } from '@/modules/post/types/view-models';
+
+import { GetBlogPostsUseCase } from '../use-cases/get-blog-posts.use-case';
+
+export class GetBlogPostsQuery extends TypedQuery<Paginator<PostViewModel[]> | null> {
+  constructor(
+    public readonly blogId: string,
+    public readonly query: GetPostsInputModel,
+  ) {
+    super();
+  }
+}
+
+@QueryHandler(GetBlogPostsQuery)
+export class GetBlogPostsHandler implements IQueryHandler<
+  GetBlogPostsQuery,
+  Paginator<PostViewModel[]> | null
+> {
+  constructor(private readonly getBlogPostsUseCase: GetBlogPostsUseCase) {}
+
+  execute(query: GetBlogPostsQuery): Promise<Paginator<PostViewModel[]> | null> {
+    return this.getBlogPostsUseCase.execute({
+      blogId: query.blogId,
+      query: query.query,
+    });
+  }
+}

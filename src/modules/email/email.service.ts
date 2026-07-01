@@ -1,8 +1,6 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { add } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class EmailService {
@@ -13,64 +11,40 @@ export class EmailService {
 
   private emailConfirmationUrl = this.configService.get<string>('MAIN_URL');
 
-  async sendRegistrationEmail(email: string, login: string, confirmationCode: string) {
-    // const result = await this.userRepository.updateUserConfirmationCode({
-    //   userId: user?.id,
-    //   newCode: confirmationCode,
-    // });
-    // if (!result) return false;
-
+  private async sendConfirmationEmail(
+    email: string,
+    login: string,
+    confirmationCode: string,
+    options: { subject: string; template: string },
+  ) {
     const confirmUrl = `${this.emailConfirmationUrl}/registration-confirmation?code=${confirmationCode}`;
 
     await this.mailerService.sendMail({
       to: email,
-      // from: '"Support Team" <support@example.com>', // override default from
-      subject: 'Registration confirmation',
-      template: './registration',
+      subject: options.subject,
+      template: options.template,
       context: {
         name: login,
         confirmUrl,
       },
+    });
+  }
+
+  async sendRegistrationEmail(email: string, login: string, confirmationCode: string) {
+    await this.sendConfirmationEmail(email, login, confirmationCode, {
+      subject: 'Registration confirmation',
+      template: './registration',
     });
   }
 
   async sendEmailWithNewConfirmationCode(email: string, login: string, confirmationCode: string) {
-    // const result = await this.userRepository.updateUserConfirmationCode({
-    //   userId: user?.id,
-    //   newCode: confirmationCode,
-    // });
-    // if (!result) return false;
-
-    const confirmUrl = `${this.emailConfirmationUrl}/registration-confirmation?code=${confirmationCode}`;
-
-    await this.mailerService.sendMail({
-      to: email,
+    await this.sendConfirmationEmail(email, login, confirmationCode, {
       subject: 'Resending registration confirmation',
       template: './email-resending',
-      context: {
-        name: login,
-        confirmUrl,
-      },
     });
   }
 
   async sendPasswordRecoveryCode(email: string, login: string, recoveryCode: string) {
-    // const foundUser = await this.userQueryRepository.findByLoginOrEmail(email);
-    // // Even if current email is not registered (for prevent user's email detection)
-    // if (!foundUser) return true;
-    //
-    // const recoveryData = {
-    //   recoveryCode: uuidv4(),
-    //   expirationDate: add(new Date(), { days: 1 }),
-    // };
-    //
-    // const result = await this.userRepository.setUserRecoveryData({
-    //   userId: foundUser?.id,
-    //   recoveryData,
-    // });
-    // // Even if current email is not registered (for prevent user's email detection)
-    // if (!result) return true;
-
     const recoveryUrl = `${this.emailConfirmationUrl}/password-recovery?recoveryCode=${recoveryCode}`;
 
     await this.mailerService.sendMail({

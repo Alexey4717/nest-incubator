@@ -13,7 +13,7 @@ type GetPostsArgs = CommonQueryParamsTypes & {
   sortBy: SortPostsBy;
 };
 
-Injectable();
+@Injectable()
 export class PostQueryRepository {
   constructor(@InjectModel(Post.name) private PostModel: Model<PostDocument>) {}
 

@@ -1,26 +1,69 @@
 import { forwardRef, Module } from '@nestjs/common';
-
-import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
-import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
+import { CqrsModule } from '@nestjs/cqrs';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
+import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
 
 import { UserController } from './api/user.controller';
-import { UserService } from './application/user.service';
+import { ChangePasswordHandler } from './application/commands/change-password.command';
+import { ConfirmEmailHandler } from './application/commands/confirm-email.command';
+import { CreateUserHandler } from './application/commands/create-user.command';
+import { DeleteUserHandler } from './application/commands/delete-user.command';
+import { RegisterUserHandler } from './application/commands/register-user.command';
+import { CheckCredentialsHandler } from './application/queries/check-credentials.query';
+import { FindUserByIdHandler } from './application/queries/find-user-by-id.query';
+import { GetUsersHandler } from './application/queries/get-users.query';
+import { PasswordHasherService } from './application/services/password-hasher.service';
+import { UserFactoryService } from './application/services/user-factory.service';
+import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
+import { CheckCredentialsUseCase } from './application/use-cases/check-credentials.use-case';
+import { ConfirmEmailUseCase } from './application/use-cases/confirm-email.use-case';
+import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
+import { DeleteUserUseCase } from './application/use-cases/delete-user.use-case';
+import { FindUserByIdUseCase } from './application/use-cases/find-user-by-id.use-case';
+import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
+import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
 import { UserQueryRepository } from './infrastructure/user-query.repository.mongodb';
 import { UserRepository } from './infrastructure/user.repository.mongodb';
 
+const userUseCases = [
+  CreateUserUseCase,
+  DeleteUserUseCase,
+  GetUsersUseCase,
+  FindUserByIdUseCase,
+  RegisterUserUseCase,
+  ConfirmEmailUseCase,
+  ChangePasswordUseCase,
+  CheckCredentialsUseCase,
+];
+
+const userCommandHandlers = [
+  CreateUserHandler,
+  DeleteUserHandler,
+  RegisterUserHandler,
+  ConfirmEmailHandler,
+  ChangePasswordHandler,
+];
+
+const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredentialsHandler];
+
+const userDomainServices = [PasswordHasherService, UserFactoryService];
+
 @Module({
-  imports: [MongooseModelsModule, forwardRef(() => AuthModule)],
+  imports: [CqrsModule, MongooseModelsModule, forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [
-    UserService,
     UserRepository,
     UserQueryRepository,
+    ...userDomainServices,
+    ...userUseCases,
+    ...userCommandHandlers,
+    ...userQueryHandlers,
     UserLoginExistsValidator,
     UserEmailExistsValidator,
   ],
-  exports: [UserService, UserRepository, UserQueryRepository],
+  exports: [...userUseCases, UserRepository, UserQueryRepository],
 })
 export class UserModule {}

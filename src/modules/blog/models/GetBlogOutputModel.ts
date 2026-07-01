@@ -31,10 +31,3 @@ export type GetBlogOutputModelFromMongoDB = GetBlogOutputModel & {
    */
   id: string;
 };
-
-export type GetMappedBlogOutputModel = GetBlogOutputModel & {
-  /**
-   * Id of blog from db, required.
-   */
-  id: string;
-};

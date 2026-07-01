@@ -2,7 +2,7 @@
 
 REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **MongoDB** (Mongoose), использует модульную архитектуру и покрывает домены: аутентификация, пользователи, блоги, посты, комментарии, сессии, email-уведомления.
 
-Основные модули: `auth`, `user`, `post`, `blog`, `comment`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
+Основные модули: `auth`, `user`, `post`, `blog`, `comment`, `like`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
 
 ## Архитектура
 
@@ -20,11 +20,11 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл | Назначение |
-|------|------------|
-| `app.module.ts` | Регистрация feature-модулей, глобальных провайдеров (Config, Mongoose, Mailer) |
-| `app.settings.ts` | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт |
+| Файл                                   | Назначение                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, Mongoose, Mailer) |
+| `app.settings.ts`                      | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e       |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                 |
 
 `app/` импортирует `modules/*` и `shared/*`, но **не содержит бизнес-логики** доменов.
 
@@ -50,8 +50,12 @@ shared/
 
 ```
 modules/<feature>/
-├── api/                    # controllers, HTTP-слой
-├── application/            # services, бизнес-логика
+├── api/                    # controllers, HTTP-слой (CommandBus / QueryBus)
+├── application/
+│   ├── commands/           # CQRS command + thin @CommandHandler
+│   ├── queries/            # CQRS query + thin @QueryHandler
+│   ├── use-cases/          # *UseCase с методом execute()
+│   └── services/           # domain services (JWT, hashing, owner-check и т.п.)
 ├── infrastructure/         # repositories, работа с БД
 ├── dto/                    # class-validator DTO для HTTP
 ├── models/                 # Mongoose-схемы, input/output-модели
@@ -62,15 +66,16 @@ modules/<feature>/
 
 Инфраструктурные модули (`database`, `email`) также располагаются в `modules/` — они регистрируют провайдеры и экспортируют их другим feature-модулям.
 
-| Модуль | Домен |
-|--------|-------|
-| `auth` | Аутентификация, JWT, Passport strategies |
-| `user` | Пользователи |
-| `blog` / `post` / `comment` | Контент |
-| `session` | Сессии и refresh-токены |
-| `email` | Отправка писем (SMTP, шаблоны) |
-| `database` | Регистрация Mongoose-моделей |
-| `testing` | Служебные эндпoинты для e2e |
+| Модуль                      | Домен                                    |
+| --------------------------- | ---------------------------------------- |
+| `auth`                      | Аутентификация, JWT, Passport strategies |
+| `user`                      | Пользователи                             |
+| `blog` / `post` / `comment` | Контент                                  |
+| `like`                      | Reactions (subdomain, без HTTP)          |
+| `session`                   | Сессии и refresh-токены                  |
+| `email`                     | Отправка писем (SMTP, шаблоны)           |
+| `database`                  | Регистрация Mongoose-моделей             |
+| `testing`                   | Служебные эндпoинты для e2e              |
 
 ### Направление зависимостей
 
@@ -86,14 +91,77 @@ main.ts → app/ → modules/ → shared/
 
 Публичный контракт Nest-модуля определяется **`exports` в `@Module`**, а не barrel-файлами (`index.ts`).
 
+### CQRS и Use Cases
+
+Бизнес-логика доменов построена на **@nestjs/cqrs** и паттерне **Use Case**:
+
+| Слой                | Роль                                                                                                                                                 |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                                                     |
+| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                                               |
+| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                                                            |
+| **Domain service**  | Переиспользуемая доменная/техническая логика без привязки к HTTP (например `JwtTokenService`, `PasswordHasherService`, `CommentOwnerCheckerService`) |
+| **Repository**      | Доступ к данным (MongoDB)                                                                                                                            |
+
+**Поток запроса:**
+
+```
+HTTP → Controller → CommandBus/QueryBus → Handler → UseCase.execute() → Repository / Domain Service
+```
+
+**Регистрация в модуле** — через массивы провайдеров:
+
+```typescript
+const blogUseCases = [GetBlogsUseCase, CreateBlogUseCase, /* … */];
+const blogCommandHandlers = [CreateBlogHandler, /* … */];
+const blogQueryHandlers = [GetBlogsHandler, /* … */];
+
+@Module({
+  providers: [
+    BlogRepository,
+    ...blogUseCases,
+    ...blogCommandHandlers,
+    ...blogQueryHandlers,
+  ],
+})
+```
+
+**Use case vs domain service:** use case оркестрирует сценарий (проверки, вызов репозиториев и сервисов, маппинг результата). Domain service инкапсулирует узкую переиспользуемую логику, которую вызывают несколько use cases.
+
+Общие утилиты: `normalizePaginationQuery` (`shared/utils/pagination`).
+
+### Subdomain-модули
+
+Некоторые модули в `modules/` — **subdomain / library modules**: переиспользуемая доменная логика **без собственного HTTP-слоя** (`api/` отсутствует). Эндпoинты остаются у feature-модулей-потребителей; subdomain экспортирует services, types и dto через `@Module({ exports })`.
+
+**Когда создавать:** cross-cutting доменная логика нужна нескольким модулям, но отдельной группы эндпoинтов в Swagger не требуется.
+
+**Структура:**
+
+```
+modules/<name>/
+├── application/services/     # переиспользуемая логика
+├── types/                    # view models, domain types
+├── dto/                      # DTO для HTTP-потребителей
+└── <name>.module.ts          # без controllers
+```
+
+| Модуль    | Назначение                                                                 |
+| --------- | -------------------------------------------------------------------------- |
+| `like`    | Reactions: mapper (read) + update plan (write); роуты у `post` / `comment` |
+| `session` | Сессии и refresh-токены                                                    |
+| `email`   | Отправка писем (SMTP, шаблоны)                                             |
+
+Пример: `LikeModule` предоставляет `ReactionsMapperService` и `ReactionUpdateService`; `PostModule` и `CommentModule` импортируют его и владеют `PUT .../like-status`.
+
 ### Импорты и алиасы
 
 Path alias `@/*` → `src/*` настроен в `tsconfig.json`. При сборке алиасы разрешаются через `tsc-alias`.
 
-| Контекст | Стиль импорта | Пример |
-|----------|---------------|--------|
-| Между слоями / модулями | абсолютный с `@/` | `@/modules/auth/auth.module` |
-| Внутри одного модуля / папки | относительный | `./dto/login.dto` |
+| Контекст                     | Стиль импорта     | Пример                       |
+| ---------------------------- | ----------------- | ---------------------------- |
+| Между слоями / модулями      | абсолютный с `@/` | `@/modules/auth/auth.module` |
+| Внутри одного модуля / папки | относительный     | `./dto/login.dto`            |
 
 **Порядок импортов** задаётся Prettier (`@trivago/prettier-plugin-sort-imports`) в `.prettierrc.cjs`:
 
@@ -144,41 +212,41 @@ yarn build && yarn start:prod
 
 ## Скрипты
 
-| Скрипт | Описание |
-|--------|----------|
-| `build` | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`) |
-| `format` | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier |
-| `start` | Запуск приложения без watch |
-| `start:dev` | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`) |
-| `start:debug` | Запуск с Node.js inspector и watch |
-| `start:prod` | Запуск собранного приложения из `dist/` (`NODE_ENV=production`) |
-| `lint` | ESLint с автоисправлением для `src`, `apps`, `libs`, `test` |
-| `test` | Unit-тесты (Jest) |
-| `test:watch` | Unit-тесты в watch-режиме |
-| `test:cov` | Unit-тесты с отчётом покрытия |
-| `test:debug` | Unit-тесты с отладчиком Node.js |
-| `test:e2e` | E2e-тесты (`test/jest-e2e.json`). **Требуется** доступная MongoDB: переменная `MONGO_URI` должна указывать на рабочую БД |
+| Скрипт        | Описание                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `build`       | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                                                   |
+| `format`      | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                                             |
+| `start`       | Запуск приложения без watch                                                                                              |
+| `start:dev`   | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                                         |
+| `start:debug` | Запуск с Node.js inspector и watch                                                                                       |
+| `start:prod`  | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                                          |
+| `lint`        | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                                              |
+| `test`        | Unit-тесты (Jest)                                                                                                        |
+| `test:watch`  | Unit-тесты в watch-режиме                                                                                                |
+| `test:cov`    | Unit-тесты с отчётом покрытия                                                                                            |
+| `test:debug`  | Unit-тесты с отладчиком Node.js                                                                                          |
+| `test:e2e`    | E2e-тесты (`test/jest-e2e.json`). **Требуется** доступная MongoDB: переменная `MONGO_URI` должна указывать на рабочую БД |
 
 ## Переменные окружения
 
 Значения читаются через `@nestjs/config` (`src/shared/config/configuration.ts`) и константы модуля auth (`src/modules/auth/constants.ts`).
 
-| Переменная | Назначение |
-|------------|------------|
-| `PORT` | HTTP-порт (по умолчанию `4000`) |
-| `MONGO_URI` | Строка подключения к MongoDB |
-| `DB_NAME` | Имя базы (по умолчанию `It-incubator-01-dev`) |
-| `DB_TYPE` | Тип БД (`MONGO` / `SQL`) — влияет на паттерн ID |
-| `ACCESS_TOKEN_SECRET` | Секрет для access JWT |
-| `REFRESH_TOKEN_SECRET` | Секрет для refresh JWT |
-| `ACCESS_TOKEN_LIFE_TIME` | TTL access-токена в секундах (минимум 300) |
-| `REFRESH_TOKEN_LIFE_TIME` | TTL refresh-токена в секундах |
-| `SA_LOGIN` | Логин service account для Basic Auth (по умолчанию `admin`) |
-| `SA_PASSWORD` | Пароль service account для Basic Auth (по умолчанию `qwerty`) |
-| `NODEMAILER_USER_TRANSPORT` | Учётная запись SMTP для отправки писем |
-| `NODEMAILER_PASSWORD_TRANSPORT` | Пароль SMTP |
-| `MAIN_URL` | Базовый URL приложения (ссылки в email) |
-| `NODE_ENV` | `development` / `production` — влияет на Swagger и фильтры ошибок |
+| Переменная                      | Назначение                                                        |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `PORT`                          | HTTP-порт (по умолчанию `4000`)                                   |
+| `MONGO_URI`                     | Строка подключения к MongoDB                                      |
+| `DB_NAME`                       | Имя базы (по умолчанию `It-incubator-01-dev`)                     |
+| `DB_TYPE`                       | Тип БД (`MONGO` / `SQL`) — влияет на паттерн ID                   |
+| `ACCESS_TOKEN_SECRET`           | Секрет для access JWT                                             |
+| `REFRESH_TOKEN_SECRET`          | Секрет для refresh JWT                                            |
+| `ACCESS_TOKEN_LIFE_TIME`        | TTL access-токена в секундах (минимум 300)                        |
+| `REFRESH_TOKEN_LIFE_TIME`       | TTL refresh-токена в секундах                                     |
+| `SA_LOGIN`                      | Логин service account для Basic Auth (по умолчанию `admin`)       |
+| `SA_PASSWORD`                   | Пароль service account для Basic Auth (по умолчанию `qwerty`)     |
+| `NODEMAILER_USER_TRANSPORT`     | Учётная запись SMTP для отправки писем                            |
+| `NODEMAILER_PASSWORD_TRANSPORT` | Пароль SMTP                                                       |
+| `MAIN_URL`                      | Базовый URL приложения (ссылки в email)                           |
+| `NODE_ENV`                      | `development` / `production` — влияет на Swagger и фильтры ошибок |
 
 ## Authentication
 
@@ -188,8 +256,12 @@ yarn build && yarn start:prod
 
 ```
 auth/
-├── api/auth.controller.ts          # HTTP-эндпоинты
-├── application/auth.service.ts     # бизнес-логика: login, refresh, registration, logout, recovery
+├── api/auth.controller.ts          # HTTP-эндпоинты (CommandBus / QueryBus)
+├── application/
+│   ├── commands/                   # LoginCommand, RegistrationCommand, …
+│   ├── queries/                    # GetMeQuery
+│   ├── use-cases/                  # LoginUseCase, RegistrationUseCase, …
+│   └── services/jwt-token.service.ts
 ├── decorators/                     # декораторы, специфичные для auth
 ├── strategies/
 │   ├── local.strategy.ts           # login + password
@@ -208,12 +280,12 @@ auth/
 
 ### Стратегии и guards
 
-| Strategy | Guard | Источник credentials | Где используется |
-|----------|-------|----------------------|------------------|
-| `local` (passport-local) | `LocalAuthGuard` | body: `loginOrEmail` + `password` | `POST /auth/login` |
-| `jwt-access` (passport-jwt) | `AccessJwtAuthGuard` | header `Authorization: Bearer <accessToken>` | `GET /auth/me`; мутации постов: `POST /posts`, `POST /posts/:postId/comments`, `PUT /posts/:id`, `PUT /posts/:postId` |
-| `jwt-refresh` (passport-jwt) | `RefreshJwtAuthGuard` | cookie `refreshToken` | `POST /auth/logout` |
-| `basic` (passport-http) | `BasicAuthGuard` | header `Authorization: Basic …` | все маршруты `/users/*`; `DELETE /posts/:id` |
+| Strategy                     | Guard                 | Источник credentials                         | Где используется                                                                                                      |
+| ---------------------------- | --------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `local` (passport-local)     | `LocalAuthGuard`      | body: `loginOrEmail` + `password`            | `POST /auth/login`                                                                                                    |
+| `jwt-access` (passport-jwt)  | `AccessJwtAuthGuard`  | header `Authorization: Bearer <accessToken>` | `GET /auth/me`; мутации постов: `POST /posts`, `POST /posts/:postId/comments`, `PUT /posts/:id`, `PUT /posts/:postId` |
+| `jwt-refresh` (passport-jwt) | `RefreshJwtAuthGuard` | cookie `refreshToken`                        | `POST /auth/logout`                                                                                                   |
+| `basic` (passport-http)      | `BasicAuthGuard`      | header `Authorization: Basic …`              | все маршруты `/users/*`; `DELETE /posts/:id`                                                                          |
 
 **Опциональный Bearer** — guard `GetUserIdFromBearerToken` (не Passport-strategy): декодирует access JWT без верификации и кладёт `userId` в `request.userId`, не блокируя запрос при отсутствии или невалидном токене. Используется на read-only эндпоинтах:
 
@@ -226,15 +298,15 @@ auth/
 POST /auth/login
   → LocalAuthGuard
   → LocalStrategy.validate(loginOrEmail, password)
-  → req.user = User
-  → AuthService.login(user, ip, userAgent)
-      → signAccessAndRefreshToken(userId, deviceId)
+  → req.user = { userId }
+  → LoginUseCase.execute({ userId, ip, userAgent })
+      → JwtTokenService.signAccessAndRefreshToken(userId, deviceId)
       → создание сессии в MongoDB
   → refreshToken в httpOnly cookie
   → { accessToken } в теле ответа
 ```
 
-`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `AuthService.refreshToken` (без Passport guard; проверка сессии по `deviceId` + `iat`).
+`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `RefreshTokenUseCase` (без Passport guard; проверка сессии по `deviceId` + `iat`).
 
 ### JWT payload
 
@@ -248,18 +320,18 @@ Access и refresh токены подписываются **разными се�
 
 ### Эндпоинты auth (без guard)
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| `POST` | `/auth/registration` | Регистрация |
-| `POST` | `/auth/registration-email-resending` | Повторная отправка письма |
-| `POST` | `/auth/registration-confirmation` | Подтверждение email |
-| `POST` | `/auth/password-recovery` | Запрос восстановления пароля |
-| `POST` | `/auth/new-password` | Установка нового пароля |
-| `POST` | `/auth/refresh-token` | Обновление access/refresh по cookie |
+| Метод  | Путь                                 | Описание                            |
+| ------ | ------------------------------------ | ----------------------------------- |
+| `POST` | `/auth/registration`                 | Регистрация                         |
+| `POST` | `/auth/registration-email-resending` | Повторная отправка письма           |
+| `POST` | `/auth/registration-confirmation`    | Подтверждение email                 |
+| `POST` | `/auth/password-recovery`            | Запрос восстановления пароля        |
+| `POST` | `/auth/new-password`                 | Установка нового пароля             |
+| `POST` | `/auth/refresh-token`                | Обновление access/refresh по cookie |
 
 ### Почему Passport, а не кастомные guards
 
-1. **Разделение ответственности** — strategy отвечает за *как* извлечь и проверить credentials; guard — *когда* применять проверку; controller — *что* делать с аутентифицированным пользователем.
+1. **Разделение ответственности** — strategy отвечает за _как_ извлечь и проверить credentials; guard — _когда_ применять проверку; controller — _что_ делать с аутентифицированным пользователем.
 2. **Стандартный паттерн NestJS** — предсказуемая структура, проще писать unit/e2e-тесты и подключать новые способы входа.
 3. **Именованные стратегии** — `jwt-access` и `jwt-refresh` используют разные секреты, источники токена (header vs cookie) и логику `validate`, без смешивания в одном guard.
 4. **Меньше дублирования** — парсинг header/cookie, verify JWT и загрузка пользователя из БД не повторяются в каждом контроллере.

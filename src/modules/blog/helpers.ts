@@ -1,7 +1,5 @@
-import {
-  GetBlogOutputModelFromMongoDB,
-  GetMappedBlogOutputModel,
-} from './models/GetBlogOutputModel';
+import { GetBlogOutputModelFromMongoDB } from './models/GetBlogOutputModel';
+import { BlogViewModel } from './types/view-models';
 
 export const getMappedBlogViewModel = ({
   id,
@@ -10,11 +8,11 @@ export const getMappedBlogViewModel = ({
   websiteUrl,
   isMembership,
   createdAt,
-}: GetBlogOutputModelFromMongoDB): GetMappedBlogOutputModel => ({
+}: GetBlogOutputModelFromMongoDB): BlogViewModel => ({
   id,
   name,
   description,
   websiteUrl,
-  isMembership,
+  isMembership: isMembership ?? false,
   createdAt,
 });

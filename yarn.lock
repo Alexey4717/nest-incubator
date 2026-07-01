@@ -896,6 +896,13 @@
     path-to-regexp "3.2.0"
     tslib "2.5.0"
 
+"@nestjs/cqrs@^10.2.8":
+  version "10.2.8"
+  resolved "https://registry.npmmirror.com/@nestjs/cqrs/-/cqrs-10.2.8.tgz#0bfda904669d7ac50e94c0c979c8e4bb4092cdca"
+  integrity sha512-nes4J9duwogme6CzNg8uhF5WVbSKYnNotjhHP+3kJxe6RTzcvJDZN10KpROjWJALEVO5fNmKnkGMecoOfqYzYA==
+  dependencies:
+    uuid "11.0.2"
+
 "@nestjs/jwt@^10.0.0":
   version "10.2.0"
   resolved "https://registry.npmjs.org/@nestjs/jwt/-/jwt-10.2.0.tgz#6aa35a04922d19c6426efced4671620f92e6dbd0"
@@ -7017,6 +7024,11 @@ utils-merge@1.0.1, utils-merge@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+uuid@11.0.2:
+  version "11.0.2"
+  resolved "https://registry.npmmirror.com/uuid/-/uuid-11.0.2.tgz#a8d68ba7347d051e7ea716cc8dcbbab634d66875"
+  integrity sha512-14FfcOJmqdjbBPdDjFQyk/SdT4NySW4eM0zcG+HqbHP5jzuH56xO3J1DGhgs/cEMCfwYi3HQI1gnTO62iaG+tQ==
 
 uuid@9.0.0, uuid@^9.0.0:
   version "9.0.0"

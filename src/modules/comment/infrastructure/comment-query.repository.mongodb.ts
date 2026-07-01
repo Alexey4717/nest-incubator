@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 import { Paginator, SortDirections } from '@/shared/types/common';
 import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
-
-import { Post, PostDocument } from '@/modules/post/models/post.schema';
 
 import { Comment, CommentDocument } from '../models/comment.schema';
 import { TCommentDb } from '../models/GetCommentOutputModel';
 import { GetPostsInputModel } from '../models/GetPostCommentsInputModel';
 
-Injectable();
+@Injectable()
 export class CommentQueryRepository {
   constructor(
-    @InjectModel(Post.name) private PostModel: Model<PostDocument>,
+    @InjectConnection() private readonly connection: Connection,
     @InjectModel(Comment.name) private CommentModel: Model<CommentDocument>,
   ) {}
 
@@ -26,7 +24,9 @@ export class CommentQueryRepository {
     postId,
   }: GetPostsInputModel) {
     try {
-      const foundPost = await this.PostModel.findOne({ id: postId }).lean();
+      const foundPost = await this.connection.db
+        .collection('posts')
+        .findOne({ id: postId }, { projection: { _id: 1 } });
 
       if (!foundPost) return null;
 

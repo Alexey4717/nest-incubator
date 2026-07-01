@@ -1,25 +1,13 @@
-import { LikeStatus } from '@/shared/types/common';
+import { LikeStatus } from '@/modules/like/types/like-status';
+import { LikesInfoViewModel } from '@/modules/like/types/view-models';
 
-type CommentatorInfoType = {
-  userId: string;
-  userLogin: string;
-};
-
-export type LikesInfo = {
-  likesCount: number;
-  dislikesCount: number;
-  myStatus: LikeStatus;
-};
+import { CommentatorInfo } from '../types/view-models';
 
 export type GetCommentOutputModel = {
   content: string;
-  commentatorInfo: CommentatorInfoType;
+  commentatorInfo: CommentatorInfo;
   createdAt: string;
-  likesInfo: LikesInfo;
-};
-
-export type GetMappedCommentOutputModel = GetCommentOutputModel & {
-  id: string;
+  likesInfo: LikesInfoViewModel;
 };
 
 export type TReactions = {
@@ -32,7 +20,7 @@ export type TCommentDb = {
   id: string;
   postId: string;
   content: string;
-  commentatorInfo: CommentatorInfoType;
+  commentatorInfo: CommentatorInfo;
   createdAt: string;
   reactions: TReactions[];
 };

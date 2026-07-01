@@ -1,11 +1,9 @@
-import { LikeStatus } from '@/shared/types/common';
+import { ReactionsMapperService } from '@/modules/like/application/services/reactions-mapper.service';
 
-import {
-  GetMappedCommentOutputModel,
-  LikesInfo,
-  TCommentDb,
-  TReactions,
-} from './models/GetCommentOutputModel';
+import { TCommentDb } from './models/GetCommentOutputModel';
+import { CommentViewModel } from './types/view-models';
+
+const reactionsMapper = new ReactionsMapperService();
 
 export const getMappedCommentViewModel = ({
   id,
@@ -14,31 +12,8 @@ export const getMappedCommentViewModel = ({
   createdAt,
   reactions,
   currentUserId,
-}: TCommentDb & { currentUserId?: string }): GetMappedCommentOutputModel => {
+}: TCommentDb & { currentUserId?: string }): CommentViewModel => {
   const { userId, userLogin } = commentatorInfo || {};
-
-  const likesInfo =
-    reactions?.length > 0
-      ? reactions.reduce(
-          (result: LikesInfo, reaction: TReactions) => {
-            if (reaction.likeStatus === LikeStatus.Like) result.likesCount += 1;
-            if (reaction.likeStatus === LikeStatus.Dislike) result.dislikesCount += 1;
-            if (reaction.userId === currentUserId) {
-              result.myStatus = reaction.likeStatus;
-            }
-            return result;
-          },
-          {
-            likesCount: 0,
-            dislikesCount: 0,
-            myStatus: LikeStatus.None,
-          },
-        )
-      : {
-          likesCount: 0,
-          dislikesCount: 0,
-          myStatus: LikeStatus.None,
-        };
 
   return {
     id,
@@ -48,6 +23,6 @@ export const getMappedCommentViewModel = ({
       userLogin,
     },
     createdAt,
-    likesInfo,
+    likesInfo: reactionsMapper.mapReactionsToBaseLikesInfo(reactions, currentUserId),
   };
 };

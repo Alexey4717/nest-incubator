@@ -5,21 +5,27 @@ import {
   HttpCode,
   Ip,
   Post,
-  Req,
   Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { SkipThrottle } from '@nestjs/throttler';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
 import { RefreshToken } from '@/shared/decorators/param/refresh-token.decorator';
 import { UserAgent } from '@/shared/decorators/param/user-agent.decorator';
 
-import { UserService } from '@/modules/user/application/user.service';
-
-import { AuthService } from '../application/auth.service';
+import { LoginCommand } from '../application/commands/login.command';
+import { LogoutCommand } from '../application/commands/logout.command';
+import { NewPasswordCommand } from '../application/commands/new-password.command';
+import { PasswordRecoveryCommand } from '../application/commands/password-recovery.command';
+import { RefreshTokenCommand } from '../application/commands/refresh-token.command';
+import { RegistrationConfirmationCommand } from '../application/commands/registration-confirmation.command';
+import { RegistrationEmailResendingCommand } from '../application/commands/registration-email-resending.command';
+import { RegistrationCommand } from '../application/commands/registration.command';
+import { GetMeQuery } from '../application/queries/get-me.query';
 import { RefreshTokenJwtPayload } from '../decorators/refresh-token-jwt-payload.decorator';
 import { LoginDto } from '../dto/login.dto';
 import { NewPasswordDto } from '../dto/new-password.dto';
@@ -36,8 +42,8 @@ import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.mod
 @Controller('auth')
 export class AuthController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly userService: UserService,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @SkipThrottle(false)
@@ -49,13 +55,13 @@ export class AuthController {
     @CurrentUserId() userId: string,
     @Ip() ip: string,
     @UserAgent() userAgent: string,
-    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
     try {
-      const tokens = await this.authService.login(userId, ip, userAgent);
+      const tokens = await this.commandBus.execute(new LoginCommand({ userId, ip, userAgent }));
       if (!tokens) throw new UnauthorizedException();
       const { accessToken, refreshToken } = tokens;
-      req.res.cookie('refreshToken', refreshToken, {
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
@@ -70,14 +76,14 @@ export class AuthController {
   @Post('password-recovery')
   @HttpCode(204)
   async passwordRecovery(@Body() recoveryPasswordDto: RecoveryPasswordDto) {
-    return this.authService.passwordRecovery(recoveryPasswordDto.email);
+    return this.commandBus.execute(new PasswordRecoveryCommand(recoveryPasswordDto.email));
   }
 
   @SkipThrottle(false)
   @Post('new-password')
   @HttpCode(204)
   async newPassword(@Body() newPasswordDto: NewPasswordDto) {
-    return this.authService.newPassword(newPasswordDto);
+    return this.commandBus.execute(new NewPasswordCommand(newPasswordDto));
   }
 
   @Post('refresh-token')
@@ -89,7 +95,9 @@ export class AuthController {
   ) {
     if (!token) throw new UnauthorizedException();
     try {
-      const { accessToken, refreshToken } = await this.authService.refreshToken(token);
+      const tokens = await this.commandBus.execute(new RefreshTokenCommand(token));
+      if (!tokens) throw new UnauthorizedException();
+      const { accessToken, refreshToken } = tokens;
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
@@ -104,7 +112,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(204)
   async registration(@Body() registrationDto: RegistrationDto) {
-    return this.authService.registration(registrationDto);
+    return this.commandBus.execute(new RegistrationCommand(registrationDto));
   }
 
   @SkipThrottle(false)
@@ -113,14 +121,18 @@ export class AuthController {
   async registrationEmailResending(
     @Body() registrationEmailResendingDto: RegistrationEmailResendingDto,
   ) {
-    return this.authService.registrationEmailResending(registrationEmailResendingDto.email);
+    return this.commandBus.execute(
+      new RegistrationEmailResendingCommand(registrationEmailResendingDto.email),
+    );
   }
 
   @SkipThrottle(false)
   @Post('registration-confirmation')
   @HttpCode(204)
   async registrationConfirmation(@Body() registrationConfirmationDto: RegistrationConfirmationDto) {
-    return this.authService.registrationConfirmation(registrationConfirmationDto.code);
+    return this.commandBus.execute(
+      new RegistrationConfirmationCommand(registrationConfirmationDto.code),
+    );
   }
 
   @UseGuards(RefreshJwtAuthGuard)
@@ -130,7 +142,9 @@ export class AuthController {
     @CurrentUserId() userId: string,
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
   ) {
-    const isDeleted = await this.authService.logout(userId, refreshTokenJWTPayload);
+    const isDeleted = await this.commandBus.execute(
+      new LogoutCommand({ userId, refreshTokenJWTPayload }),
+    );
     if (!isDeleted) throw new UnauthorizedException();
     return;
   }
@@ -139,12 +153,8 @@ export class AuthController {
   @Get('/me')
   @HttpCode(200)
   async aboutMe(@CurrentUserId() userId: string) {
-    const fullUser = await this.userService.findUserById(userId);
-    if (!fullUser) throw new UnauthorizedException();
-    return {
-      userId: fullUser.id,
-      login: fullUser.accountData.login,
-      email: fullUser.accountData.email,
-    };
+    const me = await this.queryBus.execute(new GetMeQuery(userId));
+    if (!me) throw new UnauthorizedException();
+    return me;
   }
 }

@@ -2,10 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { LikeStatus } from '@/shared/types/common';
+import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
+import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { Comment, CommentDocument } from '../models/comment.schema';
-import { TCommentDb, TReactions } from '../models/GetCommentOutputModel';
+import { TCommentDb } from '../models/GetCommentOutputModel';
 import { CommentQueryRepository } from './comment-query.repository.mongodb';
 
 @Injectable()
@@ -13,6 +14,7 @@ export class CommentRepository {
   constructor(
     @InjectModel(Comment.name) private CommentModel: Model<CommentDocument>,
     private commentQueryRepository: CommentQueryRepository,
+    private reactionUpdateService: ReactionUpdateService,
   ) {}
 
   async createCommentInPost(newComment: TCommentDb): Promise<boolean> {
@@ -52,38 +54,27 @@ export class CommentRepository {
 
       if (!foundComment) return false;
 
-      const foundCommentLikeStatus = foundComment.reactions.find(
-        (likeStatus: TReactions) => likeStatus.userId === userId,
-      );
+      const plan = this.reactionUpdateService.planReactionUpdate({
+        reactions: foundComment.reactions,
+        userId,
+        likeStatus,
+      });
 
-      if (!foundCommentLikeStatus) {
-        const newCommentLikeStatus: TReactions = {
-          userId,
-          likeStatus,
-          createdAt: new Date().toISOString(),
-        };
+      if (plan.action === 'noop') return true;
 
+      if (plan.action === 'push') {
         const result = await this.CommentModel.updateOne(filter, {
-          $push: { reactions: newCommentLikeStatus },
+          $push: { reactions: plan.reaction },
         });
         return result.matchedCount === 1;
       }
 
-      if (foundCommentLikeStatus.likeStatus === likeStatus) return true;
-
-      // if (foundCommentLikeStatus.likeStatus === LikeStatus.None) {
-      //     const result = await CommentModel.updateOne(
-      //         filter,
-      //         {$pull: {reactions: {userId}}}
-      //     )
-      // }
-
       const result = await this.CommentModel.updateOne(
-        { ...filter, 'reactions.userId': userId },
+        { ...filter, 'reactions.userId': plan.userId },
         {
           $set: {
-            'reactions.$.likeStatus': likeStatus,
-            'reactions.$.createdAt': new Date().toISOString(),
+            'reactions.$.likeStatus': plan.likeStatus,
+            'reactions.$.createdAt': plan.createdAt,
           },
         },
       );

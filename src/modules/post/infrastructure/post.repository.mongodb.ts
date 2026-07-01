@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import { LikeStatus } from '@/shared/types/common';
+import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
+import { LikeStatus } from '@/modules/like/types/like-status';
 
-import { TPostDb, TReactions } from '../models/GetPostOutputModel';
+import { TPostDb } from '../models/GetPostOutputModel';
 import { Post, PostDocument } from '../models/post.schema';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostQueryRepository } from './post-query.repository.mongodb';
@@ -26,6 +27,7 @@ export class PostRepository {
   constructor(
     @InjectModel(Post.name) private PostModel: Model<PostDocument>,
     private postQueryRepository: PostQueryRepository,
+    private reactionUpdateService: ReactionUpdateService,
   ) {}
 
   async createPost(newPost: TPostDb): Promise<TPostDb | null> {
@@ -62,32 +64,28 @@ export class PostRepository {
 
       if (!foundPost) return false;
 
-      const foundPostLikeStatus = foundPost.reactions.find(
-        (likeStatus: TReactions) => likeStatus.userId === userId,
-      );
+      const plan = this.reactionUpdateService.planReactionUpdate({
+        reactions: foundPost.reactions,
+        userId,
+        likeStatus,
+        userLogin,
+      });
 
-      if (!foundPostLikeStatus) {
-        const newPostLikeStatus: TReactions = {
-          userId,
-          userLogin,
-          likeStatus,
-          createdAt: new Date().toISOString(),
-        };
+      if (plan.action === 'noop') return true;
 
+      if (plan.action === 'push') {
         const result = await this.PostModel.updateOne(filter, {
-          $push: { reactions: newPostLikeStatus },
+          $push: { reactions: plan.reaction },
         });
         return result.matchedCount === 1;
       }
 
-      if (foundPostLikeStatus.likeStatus === likeStatus) return true;
-
       const result = await this.PostModel.updateOne(
-        { ...filter, 'reactions.userId': userId },
+        { ...filter, 'reactions.userId': plan.userId },
         {
           $set: {
-            'reactions.$.likeStatus': likeStatus,
-            'reactions.$.createdAt': new Date().toISOString(),
+            'reactions.$.likeStatus': plan.likeStatus,
+            'reactions.$.createdAt': plan.createdAt,
           },
         },
       );

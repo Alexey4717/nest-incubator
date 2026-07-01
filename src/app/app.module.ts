@@ -1,6 +1,7 @@
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -29,6 +30,7 @@ const configModule = ConfigModule.forRoot({
 
 @Module({
   imports: [
+    CqrsModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'swagger-static'),
       serveRoot: process.env.NODE_ENV === 'development' ? '/' : '/swagger',

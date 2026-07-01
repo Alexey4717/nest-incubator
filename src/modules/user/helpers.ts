@@ -1,12 +1,10 @@
-import {
-  GetMappedUserOutputModel,
-  GetUserOutputModelFromMongoDB,
-} from './models/GetUserOutputModel';
+import { GetUserOutputModelFromMongoDB } from './models/GetUserOutputModel';
+import { UserViewModel } from './types/view-models';
 
 export const getMappedUserViewModel = ({
   id,
   accountData,
-}: GetUserOutputModelFromMongoDB): GetMappedUserOutputModel => ({
+}: GetUserOutputModelFromMongoDB): UserViewModel => ({
   id,
   login: accountData.login,
   email: accountData.email,

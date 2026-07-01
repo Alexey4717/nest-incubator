@@ -332,9 +332,81 @@ window.onload = function() {
           }
         }
       },
-      "/posts/{postId}": {
+      "/posts/{postId}/like-status": {
         "put": {
           "operationId": "PostController_updatePostLikeStatus",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeInputDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/comments/{id}": {
+        "get": {
+          "operationId": "CommentController_getComment",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/comments/{commentId}/like-status": {
+        "put": {
+          "operationId": "CommentController_changeLikeStatus",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeInputDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/comments/{commentId}": {
+        "put": {
+          "operationId": "CommentController_updateComment",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCommentDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        },
+        "delete": {
+          "operationId": "CommentController_deleteComment",
           "parameters": [],
           "responses": {
             "204": {
@@ -362,6 +434,36 @@ window.onload = function() {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CreateBlogDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/blogs/{blogId}/posts": {
+        "get": {
+          "operationId": "BlogController_getPostsOfBlog",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "post": {
+          "operationId": "BlogController_createPostInBlog",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostInBlogDTO"
                 }
               }
             }
@@ -404,67 +506,6 @@ window.onload = function() {
         },
         "delete": {
           "operationId": "BlogController_deleteBlog",
-          "parameters": [],
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/blogs/{blogId}/posts": {
-        "get": {
-          "operationId": "BlogController_getPostsOfBlog",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
-        "post": {
-          "operationId": "BlogController_createPostInBlog",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostInBlogDTO"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/comments/{id}": {
-        "get": {
-          "operationId": "CommentController_getComment",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/comments/{commentId}": {
-        "put": {
-          "operationId": "CommentController_changeLikeStatus",
-          "parameters": [],
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        },
-        "delete": {
-          "operationId": "CommentController_deleteComment",
           "parameters": [],
           "responses": {
             "204": {
@@ -525,7 +566,29 @@ window.onload = function() {
           "type": "object",
           "properties": {}
         },
+        "LikeInputDto": {
+          "type": "object",
+          "properties": {
+            "likeStatus": {
+              "type": "string",
+              "enum": [
+                "None",
+                "Like",
+                "Dislike"
+              ],
+              "description": "Like status of entity (None, Like, Dislike)",
+              "example": "Like"
+            }
+          },
+          "required": [
+            "likeStatus"
+          ]
+        },
         "UpdatePostDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "UpdateCommentDTO": {
           "type": "object",
           "properties": {}
         },
@@ -538,10 +601,6 @@ window.onload = function() {
           "properties": {}
         },
         "UpdateBlogDto": {
-          "type": "object",
-          "properties": {}
-        },
-        "UpdateCommentDTO": {
           "type": "object",
           "properties": {}
         }

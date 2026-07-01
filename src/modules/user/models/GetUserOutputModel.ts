@@ -9,9 +9,4 @@ export type GetUserOutputModelFromMongoDB = GetUserOutputModel & {
   id: string;
 };
 
-export type GetMappedUserOutputModel = Omit<AccountDataType, 'passwordHash'> & {
-  /**
-   * Mapped id of user from db
-   */
-  id: string;
-};
+export type GetMappedUserFields = Omit<AccountDataType, 'passwordHash'>;

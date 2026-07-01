@@ -11,121 +11,81 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { constants } from 'http2';
-
-import { Paginator, SortDirections } from '@/shared/types/common';
 
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { getMappedPostViewModel } from '@/modules/post/helpers';
-import { GetPostsInputModel, SortPostsBy } from '@/modules/post/models/GetPostsInputModel';
+import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
 
-import { BlogService } from '../application/blog.service';
+import { CreateBlogCommand } from '../application/commands/create-blog.command';
+import { CreatePostInBlogCommand } from '../application/commands/create-post-in-blog.command';
+import { DeleteBlogCommand } from '../application/commands/delete-blog.command';
+import { UpdateBlogCommand } from '../application/commands/update-blog.command';
+import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query';
+import { GetBlogPostsQuery } from '../application/queries/get-blog-posts.query';
+import { GetBlogsQuery } from '../application/queries/get-blogs.query';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
 import { getMappedBlogViewModel } from '../helpers';
-import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mongodb';
-import { GetBlogsInputModel, SortBlogsBy } from '../models/GetBlogsInputModel';
+import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
 @Controller('blogs')
 export class BlogController {
   constructor(
-    private blogService: BlogService,
-    private blogQueryRepository: BlogQueryRepository,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
   async getBlogs(@Query() query: GetBlogsInputModel) {
-    const resData = await this.blogQueryRepository.getBlogs({
-      searchNameTerm: query?.searchNameTerm || null, // by-default null
-      sortBy: (query?.sortBy || 'createdAt') as SortBlogsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection || SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query?.pageNumber || 1), // by-default 1,
-      pageSize: +(query?.pageSize || 10), // by-default 10
-    });
-    const { pagesCount, page, pageSize, totalCount, items } = resData || {};
-    return {
-      pagesCount,
-      page,
-      pageSize,
-      totalCount,
-      items: items.map(getMappedBlogViewModel),
-    };
-  }
-
-  @Get(':id')
-  @HttpCode(constants.HTTP_STATUS_OK)
-  async getBlog(@Param() params: { id: string }) {
-    const resData = await this.blogQueryRepository.findBlogById(params.id);
-    if (!resData) throw new NotFoundException();
-    return getMappedBlogViewModel(resData);
+    return this.queryBus.execute(new GetBlogsQuery(query));
   }
 
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPostsOfBlog(@Param() params: { blogId: string }, @Query() query: GetPostsInputModel) {
-    // const currentUserId = req?.context?.user?.id
-
-    const resData = await this.blogQueryRepository.getPostsInBlog({
-      blogId: params?.blogId,
-      sortBy: (query?.sortBy || 'createdAt') as SortPostsBy, // by-default createdAt
-      sortDirection: (query?.sortDirection || SortDirections.desc) as SortDirections, // by-default desc
-      pageNumber: +(query?.pageNumber || 1), // by-default 1
-      pageSize: +(query?.pageSize || 10), // by-default 10
-    });
+    const resData = await this.queryBus.execute(new GetBlogPostsQuery(params.blogId, query));
 
     if (!resData) throw new NotFoundException();
 
-    const { pagesCount, page, pageSize, totalCount, items } = resData || {};
+    return resData;
+  }
 
-    const itemsWithCurrentUserId = items.map((item) => ({
-      ...item /* currentUserId */,
-    }));
-
-    return {
-      pagesCount,
-      page,
-      pageSize,
-      totalCount,
-      items: itemsWithCurrentUserId.map(getMappedPostViewModel),
-    };
+  @Get(':id')
+  @HttpCode(constants.HTTP_STATUS_OK)
+  async getBlog(@Param() params: { id: string }) {
+    const resData = await this.queryBus.execute(new GetBlogByIdQuery(params.id));
+    if (!resData) throw new NotFoundException();
+    return resData;
   }
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createBlog(@Body() body: CreateBlogDTO) {
-    const createdBlog = await this.blogService.createBlog(body);
+    const createdBlog = await this.commandBus.execute(new CreateBlogCommand(body));
     return getMappedBlogViewModel(createdBlog);
   }
 
   @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
-    // const currentUserId = req?.context?.user?.id
+    const createdPostInBlog = await this.commandBus.execute(
+      new CreatePostInBlogCommand(params.blogId, body),
+    );
 
-    const createdPostInBlog = await this.blogService.createPostInBlog({
-      blogId: params?.blogId,
-      input: body,
-    });
-
-    // Если по какой-то причине не найден блог
     if (!createdPostInBlog) throw new NotFoundException();
 
-    return getMappedPostViewModel({
-      ...createdPostInBlog,
-      // currentUserId
-    });
+    return getMappedPostViewModel(createdPostInBlog);
   }
 
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
-    const isBlogUpdated = await this.blogService.updateBlog({
-      id: params.id,
-      input: body,
-    });
+    const isBlogUpdated = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
 
     if (!isBlogUpdated) throw new NotFoundException();
 
@@ -135,7 +95,7 @@ export class BlogController {
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   async deleteBlog(@Param() params: { id: string }) {
-    const isBlogDeleted = await this.blogService.deleteBlogById(params.id);
+    const isBlogDeleted = await this.commandBus.execute(new DeleteBlogCommand(params.id));
     if (!isBlogDeleted) throw new NotFoundException();
     return isBlogDeleted;
   }

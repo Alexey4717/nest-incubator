@@ -1,16 +1,5 @@
-import { LikeStatus } from '@/shared/types/common';
-
-export type NewestLikeType = {
-  addedAt: string;
-  userId: string;
-  login: string;
-};
-export type ExtendedLikesInfo = {
-  likesCount: number;
-  dislikesCount: number;
-  myStatus: LikeStatus;
-  newestLikes: NewestLikeType[];
-};
+import { LikeStatus } from '@/modules/like/types/like-status';
+import { ExtendedLikesInfoViewModel } from '@/modules/like/types/view-models';
 
 export type GetPostOutputModel = {
   /**
@@ -42,19 +31,12 @@ export type GetPostOutputModel = {
    * Date of post creation in db.
    */
   createdAt: string;
-  extendedLikesInfo: ExtendedLikesInfo;
+  extendedLikesInfo: ExtendedLikesInfoViewModel;
 };
 
 export type GetPostOutputModelFromMongoDB = GetPostOutputModel & {
   /**
    * Id of post from mongoDB.
-   */
-  id: string;
-};
-
-export type GetMappedPostOutputModel = GetPostOutputModel & {
-  /**
-   * Id of post from db, required.
    */
   id: string;
 };
