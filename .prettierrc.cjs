@@ -11,6 +11,7 @@ module.exports = {
   importOrder: [
     '^nest$',
     '<THIRD_PARTY_MODULES>',
+    '^\\./register-paths$',
     '^(@/)?shared/(.*)$',
     '^(@/)?modules/(.*)$',
     '^(@/)?app/(.*)$',
