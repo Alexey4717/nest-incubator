@@ -1,8 +1,8 @@
 # nest-incubator
 
-REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **MongoDB** (Mongoose), использует модульную архитектуру и покрывает домены: аутентификация, пользователи, блоги, посты, комментарии, сессии, email-уведомления.
+REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **MongoDB** (Mongoose), использует модульную архитектуру и покрывает домены: аутентификация, управление устройствами и сессиями, пользователи, блоги, посты, комментарии, email-уведомления.
 
-Основные модули: `auth`, `user`, `post`, `blog`, `comment`, `like`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
+Основные модули: `auth`, `security`, `user`, `post`, `blog`, `comment`, `like`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
 
 ## Архитектура
 
@@ -25,6 +25,15 @@ src/
 | `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, Mongoose, Mailer) |
 | `app.settings.ts`                      | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e       |
 | `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                 |
+
+**Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
+
+| Регистрация                                              | Назначение                                     |
+| -------------------------------------------------------- | ---------------------------------------------- |
+| `ScheduleModule.forRoot()`                               | Cron-планировщик (очистка просроченных сессий) |
+| `ThrottlerModule.forRoot({ ttl: 10, limit: 5 })`         | Rate limiting: 5 запросов за 10 секунд на IP   |
+| `{ provide: APP_GUARD, useClass: ThrottlerGuard }`       | Глобальный throttling для всех маршрутов       |
+| `CqrsModule.forRoot()`, `MongooseModule`, `MailerModule` | CQRS, MongoDB, SMTP                            |
 
 `app/` импортирует `modules/*` и `shared/*`, но **не содержит бизнес-логики** доменов.
 
@@ -66,16 +75,17 @@ modules/<feature>/
 
 Инфраструктурные модули (`database`, `email`) также располагаются в `modules/` — они регистрируют провайдеры и экспортируют их другим feature-модулям.
 
-| Модуль                      | Домен                                    |
-| --------------------------- | ---------------------------------------- |
-| `auth`                      | Аутентификация, JWT, Passport strategies |
-| `user`                      | Пользователи                             |
-| `blog` / `post` / `comment` | Контент                                  |
-| `like`                      | Reactions (subdomain, без HTTP)          |
-| `session`                   | Сессии и refresh-токены                  |
-| `email`                     | Отправка писем (SMTP, шаблоны)           |
-| `database`                  | Регистрация Mongoose-моделей             |
-| `testing`                   | Служебные эндпoинты для e2e              |
+| Модуль                      | Домен                                                                  |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `auth`                      | Аутентификация, JWT, Passport strategies                               |
+| `security`                  | Управление устройствами и сессиями текущего пользователя               |
+| `user`                      | Пользователи                                                           |
+| `blog` / `post` / `comment` | Контент                                                                |
+| `like`                      | Reactions (subdomain, без HTTP)                                        |
+| `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`) |
+| `email`                     | Отправка писем (SMTP, шаблоны)                                         |
+| `database`                  | Регистрация Mongoose-моделей                                           |
+| `testing`                   | Служебные эндпoинты для e2e                                            |
 
 ### Направление зависимостей
 
@@ -151,6 +161,8 @@ modules/<name>/
 | `like`    | Reactions: mapper (read) + update plan (write); роуты у `post` / `comment` |
 | `session` | Сессии и refresh-токены                                                    |
 | `email`   | Отправка писем (SMTP, шаблоны)                                             |
+
+**Модуль `session`:** HTTP-слоя нет — use cases вызываются из `auth` (login, refresh, logout) и `security` (список/завершение устройств). `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет сессии, у которых `lastActiveDate` старше `REFRESH_TOKEN_LIFE_TIME`.
 
 Пример: `LikeModule` предоставляет `ReactionsMapperService` и `ReactionUpdateService`; `PostModule` и `CommentModule` импортируют его и владеют `PUT .../like-status`.
 
@@ -340,6 +352,16 @@ yarn start:dev
 yarn test:e2e
 ```
 
+Файлы e2e в `test/`:
+
+| Файл                           | Покрытие                        |
+| ------------------------------ | ------------------------------- |
+| `app.e2e-spec.ts`              | Корневой health-check           |
+| `auth-users.e2e-spec.ts`       | Регистрация, login, users       |
+| `auth-refresh.e2e-spec.ts`     | Refresh-токены и ротация сессий |
+| `auth-throttle.e2e-spec.ts`    | Rate limiting на auth POST      |
+| `security-devices.e2e-spec.ts` | Эндпoинты `/security/devices`   |
+
 ## Authentication
 
 Аутентификация реализована через **Passport**, **@nestjs/passport** и **@nestjs/jwt**. Каждый способ входа вынесен в отдельную **strategy**; контроллеры защищаются соответствующими **guard**-обёртками над `AuthGuard('имя-стратегии')`.
@@ -393,22 +415,31 @@ POST /auth/login
   → req.user = { userId }
   → LoginUseCase.execute({ userId, ip, userAgent })
       → JwtTokenService.signAccessAndRefreshToken(userId, deviceId)
-      → создание сессии в MongoDB
+      → создание сессии в MongoDB (deviceId, lastActiveDate)
   → refreshToken в httpOnly cookie
   → { accessToken } в теле ответа
 ```
 
-`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `RefreshTokenUseCase` (без Passport guard; проверка сессии по `deviceId` + `iat`).
+`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `RefreshTokenUseCase`: проверка JWT, поиск сессии по `deviceId` + `userId` + `lastActiveDate` из payload; при успехе — ротация refresh (старый refresh становится невалидным).
+
+Cookie `refreshToken`: `httpOnly`, `secure` только в production, `sameSite: 'strict'`, `maxAge` из `REFRESH_TOKEN_LIFE_TIME`.
+
+**TTL токенов** (`ACCESS_TOKEN_LIFE_TIME` / `REFRESH_TOKEN_LIFE_TIME`):
+
+| Окружение             | Access | Refresh |
+| --------------------- | ------ | ------- |
+| development / testing | 10 с   | 20 с    |
+| production            | 300 с  | 72000 с |
 
 ### JWT payload
 
 Access и refresh токены подписываются **разными секретами** (`ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET`):
 
 ```json
-{ "userId": "<mongoId>", "deviceId": "<uuid>" }
+{ "userId": "<mongoId>", "deviceId": "<uuid>", "lastActiveDate": "<ISO string>" }
 ```
 
-После успешной JWT-стратегии пользователь доступен через декоратор `@User()` (`req.user`). Для logout дополнительно используется `@RefreshTokenJwtPayload()` с полным payload refresh-токена (`userId`, `deviceId`, `iat`).
+После успешной JWT-стратегии пользователь доступен через декоратор `@User()` (`req.user`). Для logout дополнительно используется `@RefreshTokenJwtPayload()` с полным payload refresh-токена (`userId`, `deviceId`, `lastActiveDate`).
 
 ### Эндпоинты auth (без guard)
 
@@ -421,6 +452,14 @@ Access и refresh токены подписываются **разными се�
 | `POST` | `/auth/new-password`                 | Установка нового пароля             |
 | `POST` | `/auth/refresh-token`                | Обновление access/refresh по cookie |
 
+### Rate limiting
+
+Глобально: **5 запросов за 10 секунд на IP** (`ThrottlerModule.forRoot({ ttl: 10, limit: 5 })` + `ThrottlerGuard` через `APP_GUARD`).
+
+На `AuthController` класс помечен `@SkipThrottle()` — throttling по умолчанию выключен; чувствительные POST-эндпoинты (`login`, `registration`, `password-recovery` и т.п.) явно включают лимит через `@SkipThrottle(false)`.
+
+**Без rate limiting:** `POST /auth/refresh-token`, `POST /auth/logout`, `GET /auth/me`, все маршруты `/security/*` и `/testing/*`.
+
 ### Почему Passport, а не кастомные guards
 
 1. **Разделение ответственности** — strategy отвечает за _как_ извлечь и проверить credentials; guard — _когда_ применять проверку; controller — _что_ делать с аутентифицированным пользователем.
@@ -429,6 +468,20 @@ Access и refresh токены подписываются **разными се�
 4. **Меньше дублирования** — парсинг header/cookie, verify JWT и загрузка пользователя из БД не повторяются в каждом контроллере.
 5. **Экосистема Passport** — готовые адаптеры `passport-local`, `passport-jwt`, `passport-http` вместо самописных парсеров.
 6. **Единообразный контекст запроса** — после guard/strategy пользователь всегда в `req.user`, что стыкуется с декоратором `@User()`.
+
+## Security
+
+Модуль `security` — HTTP-слой для управления устройствами (сессиями) **текущего пользователя**. Делегирует в use cases модуля `session`.
+
+| Метод    | Путь                          | Guard      | Описание                                                       |
+| -------- | ----------------------------- | ---------- | -------------------------------------------------------------- |
+| `GET`    | `/security/devices`           | Access JWT | Список устройств пользователя                                  |
+| `DELETE` | `/security/devices`           | Access JWT | Завершить все сессии, кроме текущей (`deviceId` из access JWT) |
+| `DELETE` | `/security/devices/:deviceId` | Access JWT | Завершить сессию конкретного устройства                        |
+
+## Testing module
+
+`DELETE /testing/all-data` (только при `NODE_ENV=testing`) очищает данные в MongoDB для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам.
 
 ## Лицензия
 

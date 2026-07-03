@@ -522,6 +522,46 @@ window.onload = function() {
             }
           }
         }
+      },
+      "/security/devices": {
+        "get": {
+          "operationId": "SecurityController_getDevices",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "delete": {
+          "operationId": "SecurityController_terminateOtherDevices",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/security/devices/{deviceId}": {
+        "delete": {
+          "operationId": "SecurityController_terminateDevice",
+          "parameters": [
+            {
+              "name": "deviceId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
       }
     },
     "info": {
