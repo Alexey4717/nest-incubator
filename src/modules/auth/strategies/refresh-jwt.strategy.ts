@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
 
+import { AuthConfig } from '../auth.config';
 import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
 
 export type RefreshJwtValidateResult = {
@@ -13,10 +13,10 @@ export type RefreshJwtValidateResult = {
 
 @Injectable()
 export class RefreshJwtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
-  constructor(configService: ConfigService) {
+  constructor(authConfig: AuthConfig) {
     super({
       jwtFromRequest: (req: Request) => req?.cookies?.refreshToken ?? null,
-      secretOrKey: configService.get<string>('REFRESH_TOKEN_SECRET'),
+      secretOrKey: authConfig.REFRESH_TOKEN_SECRET,
       ignoreExpiration: false,
     });
   }

@@ -31,10 +31,9 @@ lerna-debug.log*
 .cursor
 .vscode
 
-# Enviroments vars
-.env*
-.env.development
-.env.production
-.env.staging
+# Local env overrides (never commit)
+src/env/.env.*.local
+.env
+.env.local
 
 .vercel

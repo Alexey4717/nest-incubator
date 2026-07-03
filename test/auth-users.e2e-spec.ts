@@ -4,10 +4,7 @@ import request from 'supertest';
 import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
 import { createE2eApplication } from './utils/e2e-application';
 
-/** E2e требуют доступный MongoDB (локально задаётся MONGO_URI). */
-const homeworkSuite = process.env.MONGO_URI ? describe : describe.skip;
-
-homeworkSuite('Homework14 — users & auth (e2e)', () => {
+describe('Homework14 — users & auth (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {

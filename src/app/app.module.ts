@@ -1,20 +1,22 @@
+import { configModule } from '@/dynamic-config-module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
-import configuration from '@/shared/config/configuration';
-import { MailerConfig } from '@/shared/config/mailer.config';
-import { MongooseConfig } from '@/shared/config/mongoose.config';
+import { CoreConfig } from '@/shared/core/core.config';
+import { CoreModule } from '@/shared/core/core.module';
+import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
 import { CommentModule } from '@/modules/comment/comment.module';
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+import { DatabaseModule } from '@/modules/database/database.module';
+import { MongooseConfig } from '@/modules/database/mongoose.config';
 import { EmailModule } from '@/modules/email/email.module';
+import { MailerConfig } from '@/modules/email/mailer.config';
 import { PostModule } from '@/modules/post/post.module';
 import { SessionModule } from '@/modules/session/session.module';
 import { TestingModule } from '@/modules/testing/testing.module';
@@ -23,24 +25,30 @@ import { UserModule } from '@/modules/user/user.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
-const configModule = ConfigModule.forRoot({
-  isGlobal: true,
-  load: [configuration],
-  // .env.local перекрывает только те ключи, которые в нём заданы; остальное берётся из .env
-  envFilePath: ['.env', '.env.local'],
-});
-
 @Module({
   imports: [
-    CqrsModule.forRoot(),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'swagger-static'),
-      serveRoot: process.env.NODE_ENV === 'development' ? '/' : '/swagger',
-    }),
     configModule,
-    MongooseModule.forRootAsync({ useClass: MongooseConfig }),
-    MongooseModelsModule,
-    MailerModule.forRootAsync({ useClass: MailerConfig }),
+    CoreModule,
+    CqrsModule.forRoot(),
+    ServeStaticModule.forRootAsync({
+      imports: [CoreModule],
+      useFactory: (coreConfig: CoreConfig) => [
+        {
+          rootPath: join(__dirname, '..', '..', 'swagger-static'),
+          serveRoot: coreConfig.isDevelopment ? '/' : '/swagger',
+        },
+      ],
+      inject: [CoreConfig],
+    }),
+    DatabaseModule,
+    MongooseModule.forRootAsync({
+      imports: [DatabaseModule],
+      useClass: MongooseConfig,
+    }),
+    MailerModule.forRootAsync({
+      imports: [EmailModule],
+      useClass: MailerConfig,
+    }),
     TestingModule,
     AuthModule,
     SessionModule,
@@ -51,6 +59,6 @@ const configModule = ConfigModule.forRoot({
     CommentModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ErrorExceptionFilter],
 })
 export class AppModule {}

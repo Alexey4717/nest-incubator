@@ -34,7 +34,7 @@ src/
 
 ```
 shared/
-├── config/                 # ConfigModule: configuration, mongoose, mailer
+├── core/                   # CoreConfig, CoreModule, validateConfig utility
 ├── decorators/             # param- и validation-декораторы общего назначения
 ├── exception-filters/      # глобальные HTTP-фильтры ошибок
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
@@ -212,41 +212,94 @@ yarn build && yarn start:prod
 
 ## Скрипты
 
-| Скрипт        | Описание                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `build`       | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                                                   |
-| `format`      | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                                             |
-| `start`       | Запуск приложения без watch                                                                                              |
-| `start:dev`   | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                                         |
-| `start:debug` | Запуск с Node.js inspector и watch                                                                                       |
-| `start:prod`  | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                                          |
-| `lint`        | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                                              |
-| `test`        | Unit-тесты (Jest)                                                                                                        |
-| `test:watch`  | Unit-тесты в watch-режиме                                                                                                |
-| `test:cov`    | Unit-тесты с отчётом покрытия                                                                                            |
-| `test:debug`  | Unit-тесты с отладчиком Node.js                                                                                          |
-| `test:e2e`    | E2e-тесты (`test/jest-e2e.json`). **Требуется** доступная MongoDB: переменная `MONGO_URI` должна указывать на рабочую БД |
+| Скрипт          | Описание                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `build`         | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                                             |
+| `format`        | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                                       |
+| `start`         | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                                      |
+| `start:dev`     | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                                   |
+| `start:debug`   | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                                        |
+| `start:staging` | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                                  |
+| `start:prod`    | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                                    |
+| `lint`          | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                                        |
+| `test`          | Unit-тесты (Jest)                                                                                                  |
+| `test:watch`    | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                                     |
+| `test:cov`      | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                                 |
+| `test:debug`    | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                               |
+| `test:e2e`      | E2e-тесты (`test/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** доступная MongoDB (см. `src/env/.env.testing`) |
 
-## Переменные окружения
+## Конфигурация и settings
 
-Значения читаются через `@nestjs/config` (`src/shared/config/configuration.ts`) и константы модуля auth (`src/modules/auth/constants.ts`).
+### Configuration vs Settings
 
-| Переменная                      | Назначение                                                        |
-| ------------------------------- | ----------------------------------------------------------------- |
-| `PORT`                          | HTTP-порт (по умолчанию `4000`)                                   |
-| `MONGO_URI`                     | Строка подключения к MongoDB                                      |
-| `DB_NAME`                       | Имя базы (по умолчанию `It-incubator-01-dev`)                     |
-| `DB_TYPE`                       | Тип БД (`MONGO` / `SQL`) — влияет на паттерн ID                   |
-| `ACCESS_TOKEN_SECRET`           | Секрет для access JWT                                             |
-| `REFRESH_TOKEN_SECRET`          | Секрет для refresh JWT                                            |
-| `ACCESS_TOKEN_LIFE_TIME`        | TTL access-токена в секундах (минимум 300)                        |
-| `REFRESH_TOKEN_LIFE_TIME`       | TTL refresh-токена в секундах                                     |
-| `SA_LOGIN`                      | Логин service account для Basic Auth (по умолчанию `admin`)       |
-| `SA_PASSWORD`                   | Пароль service account для Basic Auth (по умолчанию `qwerty`)     |
-| `NODEMAILER_USER_TRANSPORT`     | Учётная запись SMTP для отправки писем                            |
-| `NODEMAILER_PASSWORD_TRANSPORT` | Пароль SMTP                                                       |
-| `MAIN_URL`                      | Базовый URL приложения (ссылки в email)                           |
-| `NODE_ENV`                      | `development` / `production` — влияет на Swagger и фильтры ошибок |
+**Configuration (конфигурация)** — всё, что хранится в **переменных окружения**: секреты, инфраструктура, подключение к БД, пароли, порты и т.п. Эти значения задаёт окружение: ОС, Docker, Kubernetes, CI/CD или панель хостинга (Vercel).
+
+**Settings (настройки приложения и домена)** — параметры бизнес-логики: TTL токенов, лимиты API, интервалы планировщиков. В учебном проекте они пока тоже хранятся в env-файлах (секция `APPLICATION SETTINGS + DOMAIN SETTINGS`).
+
+### Эталон переменных
+
+Полный список переменных с комментариями — в [`src/env/.env.production`](src/env/.env.production). **Новые переменные добавляйте сначала туда**, затем при необходимости переопределяйте в `.env.development`, `.env.testing` или `.env.staging`.
+
+### Module configs (fail-fast)
+
+В прикладном коде **не используйте `process.env` и `ConfigService.get()`** — только типизированные `*Config`-классы с валидацией через `class-validator`:
+
+| Config-класс     | Модуль        | Переменные                                                     |
+| ---------------- | ------------- | -------------------------------------------------------------- |
+| `CoreConfig`     | `shared/core` | `PORT`, `NODE_ENV`                                             |
+| `DatabaseConfig` | `database`    | `MONGO_URI`, `DB_NAME`, `DB_TYPE`                              |
+| `AuthConfig`     | `auth`        | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD` |
+| `EmailConfig`    | `email`       | `NODEMAILER_*`, `MAIN_URL`                                     |
+| `SessionConfig`  | `session`     | `REFRESH_TOKEN_LIFE_TIME`                                      |
+
+`CoreModule` **не глобальный** — модуль, которому нужен `CoreConfig` или другой config, явно импортирует `CoreModule` / модуль-владелец config. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
+
+### Файлы окружения
+
+| Файл                             | В git | Содержимое                                                                  |
+| -------------------------------- | ----- | --------------------------------------------------------------------------- |
+| `src/env/.env.production`        | да    | **Эталон**: все переменные; infra/secrets — пустые значения с комментариями |
+| `src/env/.env.staging`           | да    | Только **settings**, если отличаются от production                          |
+| `src/env/.env.development`       | да    | **Config + secrets (fake)** для локальной разработки                        |
+| `src/env/.env.testing`           | да    | **Config + secrets (fake)** для e2e; settings наследуются из production     |
+| `src/env/.env.development.local` | нет   | Локальные переопределения разработчика                                      |
+| `src/env/.env.testing.local`     | нет   | Локальные переопределения для e2e                                           |
+
+Файлы `src/env/.env.*.local` перечислены в `.gitignore` и **никогда не коммитятся**.
+
+### Приоритет загрузки
+
+`NODE_ENV` задаётся в **npm-скриптах** через `cross-env` (см. `package.json`). `@nestjs/config` читает файлы **сверху вниз** — первый найденный ключ побеждает:
+
+```
+1. ENV_FILE_PATH (если задан)
+2. src/env/.env.${NODE_ENV}.local   ← наивысший приоритет (локальные переопределения)
+3. src/env/.env.${NODE_ENV}         ← development / testing / staging / production
+4. src/env/.env.production          ← fallback для settings, если ключ не задан выше
+```
+
+Переменные, уже заданные в **process.env** (Vercel Dashboard, Docker `-e`, системное окружение), **не перезаписываются** файлами — у них приоритет выше всех `.env`.
+
+Подключение: `src/dynamic-config-module.ts`, первый импорт в `src/app/app.module.ts`.
+
+### Локальная разработка
+
+```bash
+# Старт с src/env/.env.development (NODE_ENV=development)
+yarn start:dev
+
+# Переопределить только нужные ключи — создайте файл:
+# src/env/.env.development.local
+# MONGO_URI=mongodb://127.0.0.1:27018
+# PORT=5000
+```
+
+### E2e-тесты
+
+```bash
+# Читает src/env/.env.testing (+ .env.testing.local при наличии)
+yarn test:e2e
+```
 
 ## Authentication
 
@@ -274,7 +327,7 @@ auth/
 │   ├── refresh-jwt-auth.guard.ts
 │   ├── basic-auth.guard.ts
 │   └── get-userId-from-bearer-token.ts  # опциональный Bearer (без блокировки запроса)
-├── constants.ts
+├── auth.config.ts
 └── dto/
 ```
 

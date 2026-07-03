@@ -1,10 +1,9 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
+import { DatabaseModule } from '@/modules/database/database.module';
 import { EmailModule } from '@/modules/email/email.module';
 import { SessionModule } from '@/modules/session/session.module';
 import { UserModule } from '@/modules/user/user.module';
@@ -29,6 +28,8 @@ import { RefreshTokenUseCase } from './application/use-cases/refresh-token.use-c
 import { RegistrationConfirmationUseCase } from './application/use-cases/registration-confirmation.use-case';
 import { RegistrationEmailResendingUseCase } from './application/use-cases/registration-email-resending.use-case';
 import { RegistrationUseCase } from './application/use-cases/registration.use-case';
+import { AuthConfigModule } from './auth-config.module';
+import { AuthConfig } from './auth.config';
 import { AccessJwtAuthGuard } from './guards/access-jwt-auth.guard';
 import { BasicAuthGuard } from './guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from './guards/get-userId-from-bearer-token';
@@ -69,23 +70,21 @@ const authDomainServices = [JwtTokenService];
 @Module({
   imports: [
     CqrsModule,
-    MongooseModelsModule,
+    AuthConfigModule,
+    DatabaseModule,
     EmailModule,
     SessionModule,
     forwardRef(() => UserModule),
     PassportModule.register({ defaultStrategy: 'jwt-access' }),
     JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => {
-        return {
-          secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
-          signOptions: {
-            expiresIn:
-              configService.get<string>('ACCESS_TOKEN_LIFE_TIME') ??
-              process.env.ACCESS_TOKEN_LIFE_TIME,
-          },
-        };
-      },
-      inject: [ConfigService],
+      imports: [AuthConfigModule],
+      useFactory: (authConfig: AuthConfig) => ({
+        secret: authConfig.ACCESS_TOKEN_SECRET,
+        signOptions: {
+          expiresIn: authConfig.ACCESS_TOKEN_LIFE_TIME,
+        },
+      }),
+      inject: [AuthConfig],
     }),
   ],
   controllers: [AuthController],
@@ -105,6 +104,7 @@ const authDomainServices = [JwtTokenService];
     GetUserIdFromBearerToken,
   ],
   exports: [
+    AuthConfigModule,
     JwtModule,
     LocalAuthGuard,
     AccessJwtAuthGuard,

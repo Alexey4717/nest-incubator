@@ -1,10 +1,11 @@
 import { MailerOptions, MailerOptionsFactory } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { lookup, resolve4 } from 'dns';
 import { join } from 'path';
 import * as tls from 'tls';
+
+import { EmailConfig } from './email.config';
 
 const SMTP_HOST = 'smtp.gmail.com';
 const SMTP_PORT = 465;
@@ -47,10 +48,7 @@ async function resolveSmtpIpv4(): Promise<string> {
 
 @Injectable()
 export class MailerConfig implements MailerOptionsFactory {
-  constructor(private readonly configService: ConfigService) {}
-
-  private user = this.configService.get<string>('NODEMAILER_USER_TRANSPORT');
-  private pass = this.configService.get<string>('NODEMAILER_PASSWORD_TRANSPORT');
+  constructor(private readonly emailConfig: EmailConfig) {}
 
   createMailerOptions(): MailerOptions {
     return {
@@ -61,8 +59,8 @@ export class MailerConfig implements MailerOptionsFactory {
         secure: true,
         connectionTimeout: 15_000,
         auth: {
-          user: this.user,
-          pass: this.pass,
+          user: this.emailConfig.NODEMAILER_USER_TRANSPORT,
+          pass: this.emailConfig.NODEMAILER_PASSWORD_TRANSPORT,
         },
         // smtp.gmail.com часто резолвится только в AAAA; IPv6 у провайдера может не работать.
         getSocket(_options, callback) {
@@ -86,7 +84,7 @@ export class MailerConfig implements MailerOptionsFactory {
       },
       preview: false,
       template: {
-        dir: join(__dirname, '../../modules/email/templates'),
+        dir: join(__dirname, 'templates'),
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,

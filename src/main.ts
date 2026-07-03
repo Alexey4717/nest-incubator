@@ -4,11 +4,13 @@ import { get } from 'http';
 
 import './register-paths';
 
+import { CoreConfig } from '@/shared/core/core.config';
+
 import { AppModule } from '@/app/app.module';
 import { appSettings } from '@/app/app.settings';
 
-async function downloadSwaggerStaticIfDev(port: number) {
-  if (process.env.NODE_ENV !== 'development') return;
+async function downloadSwaggerStaticIfDev(coreConfig: CoreConfig, port: number) {
+  if (!coreConfig.isDevelopment) return;
 
   const serverUrl = `http://127.0.0.1:${port}`;
 
@@ -34,7 +36,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   appSettings(app);
 
-  const port = parseInt(process.env.PORT, 10) || 4000;
+  const coreConfig = app.get(CoreConfig);
+  const port = coreConfig.PORT;
   const finishInit = (+new Date() - startInit) / 1000;
 
   await app.listen(port, () => {
@@ -42,7 +45,7 @@ async function bootstrap() {
     console.log(`Time to init: ${finishInit} seconds`);
   });
 
-  await downloadSwaggerStaticIfDev(port);
+  await downloadSwaggerStaticIfDev(coreConfig, port);
 }
 
 bootstrap();

@@ -48,7 +48,7 @@ export function appSettings(app: INestApplication): void {
     }),
   );
 
-  app.useGlobalFilters(new ErrorExceptionFilter());
+  app.useGlobalFilters(app.get(ErrorExceptionFilter));
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('nestjs app example')

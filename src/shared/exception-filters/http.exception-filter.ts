@@ -1,7 +1,8 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Injectable } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { constants } from 'http2';
-import * as process from 'process';
+
+import { CoreConfig } from '@/shared/core/core.config';
 
 /** Разбираем тело BadRequestException / Validation Pipe в массив { message, field } для errorsMessages */
 function normalizeBadRequestMessages(exception: HttpException): {
@@ -66,8 +67,11 @@ function sendHttpExceptionResponse(exception: HttpException, host: ArgumentsHost
 }
 
 // для подсказок в режиме разработки где упала ошибка
+@Injectable()
 @Catch()
 export class ErrorExceptionFilter implements ExceptionFilter {
+  constructor(private readonly coreConfig: CoreConfig) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     if (exception instanceof HttpException) {
       sendHttpExceptionResponse(exception, host);
@@ -81,7 +85,7 @@ export class ErrorExceptionFilter implements ExceptionFilter {
     const error = exception instanceof Error ? exception : new Error(String(exception));
 
     // catching all internal server errors (500)
-    if (process.env.NODE_ENV !== 'production') {
+    if (!this.coreConfig.isProduction) {
       response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
         error: error.toString(),
         stack: error.stack,

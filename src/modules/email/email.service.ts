@@ -1,15 +1,14 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+
+import { EmailConfig } from './email.config';
 
 @Injectable()
 export class EmailService {
   constructor(
     private readonly mailerService: MailerService,
-    private readonly configService: ConfigService,
+    private readonly emailConfig: EmailConfig,
   ) {}
-
-  private emailConfirmationUrl = this.configService.get<string>('MAIN_URL');
 
   private async sendConfirmationEmail(
     email: string,
@@ -17,7 +16,7 @@ export class EmailService {
     confirmationCode: string,
     options: { subject: string; template: string },
   ) {
-    const confirmUrl = `${this.emailConfirmationUrl}/registration-confirmation?code=${confirmationCode}`;
+    const confirmUrl = `${this.emailConfig.MAIN_URL}/registration-confirmation?code=${confirmationCode}`;
 
     await this.mailerService.sendMail({
       to: email,
@@ -45,7 +44,7 @@ export class EmailService {
   }
 
   async sendPasswordRecoveryCode(email: string, login: string, recoveryCode: string) {
-    const recoveryUrl = `${this.emailConfirmationUrl}/password-recovery?recoveryCode=${recoveryCode}`;
+    const recoveryUrl = `${this.emailConfig.MAIN_URL}/password-recovery?recoveryCode=${recoveryCode}`;
 
     await this.mailerService.sendMail({
       to: email,

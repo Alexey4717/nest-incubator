@@ -3,9 +3,7 @@ import request from 'supertest';
 
 import { createE2eApplication } from './utils/e2e-application';
 
-const suite = process.env.MONGO_URI ? describe : describe.skip;
-
-suite('App (e2e)', () => {
+describe('App (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
