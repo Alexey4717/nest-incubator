@@ -4,7 +4,7 @@ import { Strategy } from 'passport-local';
 
 import { CheckCredentialsUseCase } from '@/modules/user/application/use-cases/check-credentials.use-case';
 
-import { IAuthenticatedUserId } from '../models/authenticated-user.model';
+import { IAuthenticatedUser } from '../models/authenticated-user.model';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -12,7 +12,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     super({ usernameField: 'loginOrEmail', passwordField: 'password' });
   }
 
-  async validate(loginOrEmail: string, password: string): Promise<IAuthenticatedUserId> {
+  async validate(loginOrEmail: string, password: string): Promise<IAuthenticatedUser> {
     const user = await this.checkCredentialsUseCase.execute({
       loginOrEmail,
       password,

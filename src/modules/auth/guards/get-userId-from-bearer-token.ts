@@ -8,27 +8,27 @@ export class GetUserIdFromBearerToken implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const auth = request.headers.authorization;
     if (!auth) {
-      request.userId = null;
+      request.user = null;
       return true;
     }
     const authType = auth.split(' ')[0];
     if (authType !== 'Bearer') {
-      request.userId = null;
+      request.user = null;
       return true;
     }
     const accessToken = auth.split(' ')[1];
     if (!accessToken) {
-      request.userId = null;
+      request.user = null;
       return true;
     }
     const payload = this.jwtService.decode(accessToken) as {
       userId?: string;
     } | null;
     if (!payload?.userId) {
-      request.userId = null;
+      request.user = null;
       return true;
     }
-    request.userId = payload.userId;
+    request.user = { userId: payload.userId };
     return true;
   }
 }

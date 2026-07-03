@@ -401,7 +401,7 @@ auth/
 | `jwt-refresh` (passport-jwt) | `RefreshJwtAuthGuard` | cookie `refreshToken`                        | `POST /auth/logout`                                                                                                   |
 | `basic` (passport-http)      | `BasicAuthGuard`      | header `Authorization: Basic …`              | все маршруты `/users/*`; `DELETE /posts/:id`                                                                          |
 
-**Опциональный Bearer** — guard `GetUserIdFromBearerToken` (не Passport-strategy): декодирует access JWT без верификации и кладёт `userId` в `request.userId`, не блокируя запрос при отсутствии или невалидном токене. Используется на read-only эндпоинтах:
+**Опциональный Bearer** — guard `GetUserIdFromBearerToken` (не Passport-strategy): декодирует access JWT без верификации и кладёт `{ userId }` в `request.user`, не блокируя запрос при отсутствии или невалидном токене. Используется на read-only эндпоинтах:
 
 - `GET /posts`, `GET /posts/:id`, `GET /posts/:postId/comments`
 - `GET /blogs/:blogId/posts`

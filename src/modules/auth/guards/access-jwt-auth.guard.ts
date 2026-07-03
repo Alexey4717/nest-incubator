@@ -1,25 +1,17 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-import { IAuthenticatedUserId } from '../models/authenticated-user.model';
+import { IAuthenticatedUser } from '../models/authenticated-user.model';
 
 @Injectable()
 export class AccessJwtAuthGuard extends AuthGuard('jwt-access') {
-  handleRequest<TUser = IAuthenticatedUserId>(
+  handleRequest<TUser = IAuthenticatedUser>(
     err: Error | null,
-    user: IAuthenticatedUserId | false | null,
+    user: IAuthenticatedUser | false | null,
     _info: unknown,
-    context: ExecutionContext,
   ): TUser {
     if (err || !user) {
       throw err || new UnauthorizedException();
-    }
-
-    const request = context.switchToHttp().getRequest();
-    request.user = user;
-    request.userId = user.userId;
-    if (user.deviceId != null) {
-      request.deviceId = user.deviceId;
     }
 
     return user as TUser;

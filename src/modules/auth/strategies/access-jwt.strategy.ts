@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 import { AuthConfig } from '../auth.config';
-import { IAuthenticatedUserId } from '../models/authenticated-user.model';
+import { IAuthenticatedUser } from '../models/authenticated-user.model';
 
 @Injectable()
 export class AccessJwtStrategy extends PassportStrategy(Strategy, 'jwt-access') {
@@ -15,7 +15,7 @@ export class AccessJwtStrategy extends PassportStrategy(Strategy, 'jwt-access') 
     });
   }
 
-  validate(payload: { userId: string; deviceId: string }): IAuthenticatedUserId {
+  validate(payload: { userId: string; deviceId: string }): IAuthenticatedUser {
     return { userId: payload.userId, deviceId: payload.deviceId };
   }
 }
