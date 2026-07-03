@@ -67,6 +67,38 @@ describe('Auth throttle (e2e)', () => {
       .expect(429);
   });
 
+  it('POST /auth/registration-email-resending — 5 запросов 204, 6-й 429, после паузы снова 204', async () => {
+    await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
+
+    await request(app.getHttpServer())
+      .post('/auth/registration')
+      .send({
+        login: 'resend1',
+        email: 'resend1@test.dev',
+        password: 'qwerty12',
+      })
+      .expect(204);
+
+    for (let i = 1; i <= 5; i++) {
+      await request(app.getHttpServer())
+        .post('/auth/registration-email-resending')
+        .send({ email: 'resend1@test.dev' })
+        .expect(204);
+    }
+
+    await request(app.getHttpServer())
+      .post('/auth/registration-email-resending')
+      .send({ email: 'resend1@test.dev' })
+      .expect(429);
+
+    await new Promise((resolve) => setTimeout(resolve, 10_000));
+
+    await request(app.getHttpServer())
+      .post('/auth/registration-email-resending')
+      .send({ email: 'resend1@test.dev' })
+      .expect(204);
+  });
+
   it('POST /auth/registration-confirmation — неверный code: 5 запросов 400, 6-й 429', async () => {
     await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
 

@@ -33,10 +33,14 @@ export class RegistrationEmailResendingUseCase implements IUseCase<string, void>
       userId: user.id,
       newCode: newConfirmationCode,
     });
-    await this.emailService.sendEmailWithNewConfirmationCode(
-      user.accountData.email,
-      user.accountData.login,
-      newConfirmationCode,
-    );
+    void this.emailService
+      .sendEmailWithNewConfirmationCode(
+        user.accountData.email,
+        user.accountData.login,
+        newConfirmationCode,
+      )
+      .catch((error) => {
+        console.log(`RegistrationEmailResendingUseCase.sendEmail error: ${error}`);
+      });
   }
 }

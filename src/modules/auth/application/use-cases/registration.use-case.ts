@@ -20,10 +20,14 @@ export class RegistrationUseCase implements IUseCase<RegistrationInput, void> {
 
   async execute(input: RegistrationInput): Promise<void> {
     const user = await this.registerUserUseCase.execute(input);
-    await this.emailService.sendRegistrationEmail(
-      user.accountData.email,
-      user.accountData.login,
-      user.emailConfirmation.confirmationCode,
-    );
+    void this.emailService
+      .sendRegistrationEmail(
+        user.accountData.email,
+        user.accountData.login,
+        user.emailConfirmation.confirmationCode,
+      )
+      .catch((error) => {
+        console.log(`RegistrationUseCase.sendRegistrationEmail error: ${error}`);
+      });
   }
 }
