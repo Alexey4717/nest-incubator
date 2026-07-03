@@ -15,8 +15,9 @@ export class DeleteAllDataUseCase implements IUseCase<void, boolean> {
   async execute(): Promise<boolean> {
     const result = await this.testingRepository.deleteAllData();
 
+    // reset in-place: delete ломает pending setTimeout в ThrottlerStorageService (crash на Vercel)
     for (const key of Object.keys(this.throttlerStorage.storage)) {
-      delete this.throttlerStorage.storage[key];
+      this.throttlerStorage.storage[key] = { totalHits: 0, expiresAt: Date.now() - 1 };
     }
 
     return result;
