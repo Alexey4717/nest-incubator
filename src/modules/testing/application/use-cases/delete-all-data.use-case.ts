@@ -23,17 +23,25 @@ export class DeleteAllDataUseCase implements IUseCase<void, boolean> {
   }
 
   private resetThrottlerStorage(): void {
-    const storageService = this.throttlerStorage as ThrottlerStorageServiceLike;
+    try {
+      const storageService = this.throttlerStorage as ThrottlerStorageServiceLike;
 
-    if (Array.isArray(storageService.timeoutIds)) {
-      for (const timeoutId of storageService.timeoutIds) {
-        clearTimeout(timeoutId);
+      if (Array.isArray(storageService.timeoutIds)) {
+        for (const timeoutId of storageService.timeoutIds) {
+          clearTimeout(timeoutId);
+        }
+        storageService.timeoutIds.length = 0;
       }
-      storageService.timeoutIds.length = 0;
-    }
 
-    for (const key of Object.keys(this.throttlerStorage.storage)) {
-      delete this.throttlerStorage.storage[key];
+      const storage = storageService.storage;
+      if (!storage || typeof storage !== 'object') return;
+
+      // reset in-place: delete ломает pending setTimeout в ThrottlerStorageService (crash на prod/Vercel)
+      for (const key of Object.keys(storage)) {
+        storage[key] = { totalHits: 0, expiresAt: Date.now() - 1 };
+      }
+    } catch {
+      // сброс throttler не должен ломать очистку тестовых данных
     }
   }
 }
