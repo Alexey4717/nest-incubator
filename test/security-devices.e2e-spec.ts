@@ -35,22 +35,22 @@ describe('Security devices (e2e)', () => {
     const ua1 = 'Mozilla/5.0 E2E-Device-One';
     const ua2 = 'Mozilla/5.0 E2E-Device-Two';
 
-    const login1 = await request(app.getHttpServer())
+    const agent1 = request.agent(app.getHttpServer());
+    const agent2 = request.agent(app.getHttpServer());
+
+    await agent1
       .post('/auth/login')
       .set('User-Agent', ua1)
       .send({ loginOrEmail: login, password })
       .expect(200);
 
-    await request(app.getHttpServer())
+    await agent2
       .post('/auth/login')
       .set('User-Agent', ua2)
       .send({ loginOrEmail: login, password })
       .expect(200);
 
-    const devicesRes = await request(app.getHttpServer())
-      .get('/security/devices')
-      .set('Authorization', `Bearer ${login1.body.accessToken}`)
-      .expect(200);
+    const devicesRes = await agent1.get('/security/devices').expect(200);
 
     expect(devicesRes.body).toHaveLength(2);
     const titles = devicesRes.body.map((device: { title: string }) => device.title);
@@ -68,48 +68,41 @@ describe('Security devices (e2e)', () => {
       .send({ login: otherLogin, password, email: otherEmail })
       .expect(201);
 
-    const user1Login = await request(app.getHttpServer())
+    const user1Agent = request.agent(app.getHttpServer());
+    const user2Agent = request.agent(app.getHttpServer());
+
+    await user1Agent
       .post('/auth/login')
       .set('User-Agent', 'User1-Device')
       .send({ loginOrEmail: login, password })
       .expect(200);
 
-    const user2Login = await request(app.getHttpServer())
+    await user2Agent
       .post('/auth/login')
       .set('User-Agent', 'User2-Device')
       .send({ loginOrEmail: otherLogin, password })
       .expect(200);
 
-    const user2Devices = await request(app.getHttpServer())
-      .get('/security/devices')
-      .set('Authorization', `Bearer ${user2Login.body.accessToken}`)
-      .expect(200);
+    const user2Devices = await user2Agent.get('/security/devices').expect(200);
 
     const otherUserDeviceId = user2Devices.body[0].deviceId;
 
-    await request(app.getHttpServer())
-      .delete(`/security/devices/${otherUserDeviceId}`)
-      .set('Authorization', `Bearer ${user1Login.body.accessToken}`)
-      .expect(403);
+    await user1Agent.delete(`/security/devices/${otherUserDeviceId}`).expect(403);
   });
 
   it('DELETE non-existent deviceId → 404', async () => {
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ loginOrEmail: login, password })
-      .expect(200);
+    const agent = request.agent(app.getHttpServer());
 
-    await request(app.getHttpServer())
-      .delete(`/security/devices/${randomUUID()}`)
-      .set('Authorization', `Bearer ${loginRes.body.accessToken}`)
-      .expect(404);
+    await agent.post('/auth/login').send({ loginOrEmail: login, password }).expect(200);
+
+    await agent.delete(`/security/devices/${randomUUID()}`).expect(404);
   });
 
   it('DELETE /security/devices → current device remains, others deleted', async () => {
     const agent1 = request.agent(app.getHttpServer());
     const agent2 = request.agent(app.getHttpServer());
 
-    const login1 = await agent1
+    await agent1
       .post('/auth/login')
       .set('User-Agent', 'E2E-Current-Device')
       .send({ loginOrEmail: login, password })
@@ -121,15 +114,9 @@ describe('Security devices (e2e)', () => {
       .send({ loginOrEmail: login, password })
       .expect(200);
 
-    await request(app.getHttpServer())
-      .delete('/security/devices')
-      .set('Authorization', `Bearer ${login1.body.accessToken}`)
-      .expect(204);
+    await agent1.delete('/security/devices').expect(204);
 
-    const devicesRes = await request(app.getHttpServer())
-      .get('/security/devices')
-      .set('Authorization', `Bearer ${login1.body.accessToken}`)
-      .expect(200);
+    const devicesRes = await agent1.get('/security/devices').expect(200);
 
     expect(devicesRes.body).toHaveLength(1);
     expect(devicesRes.body[0].title).toBe('E2E-Current-Device');
@@ -138,23 +125,17 @@ describe('Security devices (e2e)', () => {
   it('refresh with revoked device → 401', async () => {
     const agent = request.agent(app.getHttpServer());
 
-    const loginRes = await agent
+    await agent
       .post('/auth/login')
       .set('User-Agent', 'E2E-Revoked-Device')
       .send({ loginOrEmail: login, password })
       .expect(200);
 
-    const devicesRes = await request(app.getHttpServer())
-      .get('/security/devices')
-      .set('Authorization', `Bearer ${loginRes.body.accessToken}`)
-      .expect(200);
+    const devicesRes = await agent.get('/security/devices').expect(200);
 
     const deviceId = devicesRes.body[0].deviceId;
 
-    await request(app.getHttpServer())
-      .delete(`/security/devices/${deviceId}`)
-      .set('Authorization', `Bearer ${loginRes.body.accessToken}`)
-      .expect(204);
+    await agent.delete(`/security/devices/${deviceId}`).expect(204);
 
     await agent.post('/auth/refresh-token').expect(401);
   });

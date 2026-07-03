@@ -5,6 +5,10 @@ import { IUseCase } from '@/shared/types/use-case';
 
 import { TestingRepository } from '../../infrastructure/testing.repository.mongodb';
 
+type ThrottlerStorageServiceLike = ThrottlerStorage & {
+  timeoutIds?: ReturnType<typeof setTimeout>[];
+};
+
 @Injectable()
 export class DeleteAllDataUseCase implements IUseCase<void, boolean> {
   constructor(
@@ -14,12 +18,22 @@ export class DeleteAllDataUseCase implements IUseCase<void, boolean> {
 
   async execute(): Promise<boolean> {
     const result = await this.testingRepository.deleteAllData();
+    this.resetThrottlerStorage();
+    return result;
+  }
 
-    // reset in-place: delete ломает pending setTimeout в ThrottlerStorageService (crash на Vercel)
-    for (const key of Object.keys(this.throttlerStorage.storage)) {
-      this.throttlerStorage.storage[key] = { totalHits: 0, expiresAt: Date.now() - 1 };
+  private resetThrottlerStorage(): void {
+    const storageService = this.throttlerStorage as ThrottlerStorageServiceLike;
+
+    if (Array.isArray(storageService.timeoutIds)) {
+      for (const timeoutId of storageService.timeoutIds) {
+        clearTimeout(timeoutId);
+      }
+      storageService.timeoutIds.length = 0;
     }
 
-    return result;
+    for (const key of Object.keys(this.throttlerStorage.storage)) {
+      delete this.throttlerStorage.storage[key];
+    }
   }
 }
