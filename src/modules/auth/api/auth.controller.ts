@@ -157,7 +157,7 @@ export class AuthController {
   }
 
   @UseGuards(AccessJwtAuthGuard)
-  @Get('/me')
+  @Get('me')
   @HttpCode(200)
   async aboutMe(@CurrentUserId() userId: string) {
     const me = await this.queryBus.execute(new GetMeQuery(userId));

@@ -10,6 +10,8 @@ export class MongooseConfig implements MongooseOptionsFactory {
   createMongooseOptions(): MongooseModuleOptions {
     return {
       uri: this.databaseConfig.MONGO_URI,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
   }
 }
