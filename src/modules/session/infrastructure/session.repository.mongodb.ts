@@ -57,8 +57,8 @@ export class SessionRepository {
     });
   }
 
-  async deleteAllSessionExceptCurrent(userId, deviceId) {
-    return this.sessionModel.deleteOne({ userId, deviceId: { $ne: deviceId } });
+  async deleteAllSessionExceptCurrent(userId: string, deviceId: string) {
+    return this.sessionModel.deleteMany({ userId, deviceId: { $ne: deviceId } });
   }
 
   //For Cron Job

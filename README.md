@@ -178,14 +178,12 @@ Path alias `@/*` → `src/*` настроен в `tsconfig.json`. При сбо�
 
 - **Node.js 24.x** (см. `engines` в `package.json`)
 - **MongoDB** — для запуска приложения и e2e-тестов
-- **Yarn** или **npm**
+- **Yarn 1.x** (см. `packageManager` в `package.json`)
 
 ## Установка
 
 ```bash
 yarn install
-# или
-npm install
 ```
 
 ## Запуск
@@ -193,19 +191,15 @@ npm install
 ```bash
 # обычный старт
 yarn start
-# npm run start
 
 # режим разработки (watch)
 yarn start:dev
-# npm run start:dev
 
 # отладка
 yarn start:debug
-# npm run start:debug
 
 # production-сборка и запуск
 yarn build && yarn start:prod
-# npm run build && npm run start:prod
 ```
 
 По умолчанию приложение слушает порт **4000** (переопределяется через `PORT`).
@@ -254,6 +248,51 @@ yarn build && yarn start:prod
 
 `CoreModule` **не глобальный** — модуль, которому нужен `CoreConfig` или другой config, явно импортирует `CoreModule` / модуль-владелец config. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
 
+### Использование *Config (инъекция и чтение)
+
+**Паттерн:** инжектируйте `*Config` в конструктор и читайте типизированные поля. **Не** используйте `process.env` и **не** вызывайте `ConfigService.get()`.
+
+```typescript
+constructor(private readonly authConfig: AuthConfig) {}
+
+this.authConfig.ACCESS_TOKEN_SECRET
+```
+
+Реальный пример — `AccessJwtStrategy` и `JwtTokenService` в модуле `auth`: секрет и TTL берутся из `AuthConfig`.
+
+| Что нужно                     | Действие                                            |
+| ----------------------------- | --------------------------------------------------- |
+| Использовать `AuthConfig`     | Импортировать `AuthModule` (или `AuthConfigModule`) |
+| Использовать `DatabaseConfig` | Импортировать `DatabaseModule`                      |
+| Использовать `CoreConfig`     | Импортировать `CoreModule`                          |
+
+`CoreModule` **не** помечен `@Global()` — явный импорт модуля-владельца config обязателен.
+
+**Factory-классы:** некоторые config-классы не читают env напрямую, а потребляют другой `*Config`:
+
+| Factory-класс    | Использует       | Назначение                    |
+| ---------------- | ---------------- | ----------------------------- |
+| `MongooseConfig` | `DatabaseConfig` | `MongooseModule.forRootAsync` |
+| `MailerConfig`   | `EmailConfig`    | `MailerModule.forRootAsync`   |
+
+### Создание нового *Config
+
+Пошагово:
+
+1. **Добавьте переменную в [`src/env/.env.production`](src/env/.env.production)** — эталон с комментарием.
+2. **Переопределите при необходимости** в `.env.development` / `.env.testing` (локальные fake-значения).
+3. **Создайте `src/modules/<feature>/<feature>.config.ts`:**
+   - класс `XxxEnvironmentVariables` с декораторами `class-validator`;
+   - `@Injectable()` класс `XxxConfig` с полями конфигурации;
+   - в конструкторе: `applyValidatedConfig(this, process.env, XxxEnvironmentVariables)`.
+
+   Образцы: [`src/shared/core/config-validation.utility.ts`](src/shared/core/config-validation.utility.ts), [`src/modules/auth/auth.config.ts`](src/modules/auth/auth.config.ts).
+
+4. **Зарегистрируйте в Nest-модуле:** `providers: [XxxConfig]`, `exports: [XxxConfig]`. Если config нужен в `registerAsync` другого модуля (например, `JwtModule`), вынесите отдельный `XxxConfigModule` — см. [`src/modules/auth/auth-config.module.ts`](src/modules/auth/auth-config.module.ts).
+5. **Инжектируйте** `XxxConfig` в сервисы, стратегии, контроллеры.
+
+> Не каждому feature-модулю нужен свой `*Config` — только модулям, которые читают env: `auth`, `database`, `email`, `session`, `core`.
+
 ### Файлы окружения
 
 | Файл                             | В git | Содержимое                                                                  |
@@ -269,7 +308,7 @@ yarn build && yarn start:prod
 
 ### Приоритет загрузки
 
-`NODE_ENV` задаётся в **npm-скриптах** через `cross-env` (см. `package.json`). `@nestjs/config` читает файлы **сверху вниз** — первый найденный ключ побеждает:
+`NODE_ENV` задаётся в **скриптах** `package.json` через `cross-env`. `@nestjs/config` читает файлы **сверху вниз** — первый найденный ключ побеждает:
 
 ```
 1. ENV_FILE_PATH (если задан)

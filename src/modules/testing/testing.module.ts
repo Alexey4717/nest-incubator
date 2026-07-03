@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
+import { CoreModule } from '@/shared/core/core.module';
+
 import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
 
 import { TestingController } from './api/testing.controller';
@@ -13,7 +15,7 @@ const testingUseCases = [DeleteAllDataUseCase];
 const testingCommandHandlers = [DeleteAllDataHandler];
 
 @Module({
-  imports: [CqrsModule, MongooseModelsModule],
+  imports: [CqrsModule, CoreModule, MongooseModelsModule],
   controllers: [TestingController],
   providers: [TestingRepository, ...testingUseCases, ...testingCommandHandlers],
 })

@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionService } from '@/modules/session/application/session.service';
+import { CreateSessionUseCase } from '@/modules/session/application/use-cases/create-session.use-case';
 import { Session } from '@/modules/session/models/session.schema';
 
 import { AuthTokensViewModel } from '../../types/view-models';
@@ -19,16 +19,13 @@ type LoginInput = {
 export class LoginUseCase implements IUseCase<LoginInput, AuthTokensViewModel> {
   constructor(
     private readonly jwtTokenService: JwtTokenService,
-    private readonly sessionService: SessionService,
+    private readonly createSessionUseCase: CreateSessionUseCase,
   ) {}
 
   async execute({ userId, ip, userAgent }: LoginInput): Promise<AuthTokensViewModel> {
     const deviceId = randomUUID();
-    const { accessToken, refreshToken } = this.jwtTokenService.signAccessAndRefreshToken(
-      userId,
-      deviceId,
-    );
-    const lastActiveDate = this.jwtTokenService.getIssuedAtFromRefreshToken(refreshToken);
+    const { accessToken, refreshToken, lastActiveDate } =
+      this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
     const sessionInfo: Session = {
       ip,
       title: userAgent,
@@ -36,7 +33,7 @@ export class LoginUseCase implements IUseCase<LoginInput, AuthTokensViewModel> {
       deviceId,
       userId,
     };
-    await this.sessionService.createNewSession(sessionInfo);
+    await this.createSessionUseCase.execute(sessionInfo);
     return { accessToken, refreshToken };
   }
 }

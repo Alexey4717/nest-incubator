@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionService } from '@/modules/session/application/session.service';
+import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
 import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository.mongodb';
 import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
 
@@ -15,7 +15,7 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
     private readonly jwtTokenService: JwtTokenService,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly sessionQueryRepository: SessionQueryRepository,
-    private readonly sessionService: SessionService,
+    private readonly updateSessionAfterRefreshUseCase: UpdateSessionAfterRefreshUseCase,
   ) {}
 
   async execute(token: string): Promise<AuthTokensViewModel | null> {
@@ -24,7 +24,7 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
 
     const userId = jwtPayload.userId;
     const deviceId = jwtPayload.deviceId;
-    const lastActiveDate = new Date(jwtPayload.iat * 1000).toISOString();
+    const lastActiveDate = jwtPayload.lastActiveDate;
     const user = await this.findUserByIdUseCase.execute(userId);
     if (!user) return null;
 
@@ -35,12 +35,16 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
     );
     if (!device) return null;
 
-    const { accessToken, refreshToken } = this.jwtTokenService.signAccessAndRefreshToken(
+    const {
+      accessToken,
+      refreshToken,
+      lastActiveDate: newLastActiveDate,
+    } = this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
+    await this.updateSessionAfterRefreshUseCase.execute({
       userId,
       deviceId,
-    );
-    const newLastActiveDate = this.jwtTokenService.getIssuedAtFromRefreshToken(refreshToken);
-    await this.sessionService.updateSessionAfterRefreshToken(userId, deviceId, newLastActiveDate);
+      newLastActiveDate,
+    });
     return { accessToken, refreshToken };
   }
 }

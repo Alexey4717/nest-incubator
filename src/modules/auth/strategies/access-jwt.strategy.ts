@@ -16,6 +16,6 @@ export class AccessJwtStrategy extends PassportStrategy(Strategy, 'jwt-access') 
   }
 
   validate(payload: { userId: string; deviceId: string }): IAuthenticatedUserId {
-    return { userId: payload.userId };
+    return { userId: payload.userId, deviceId: payload.deviceId };
   }
 }

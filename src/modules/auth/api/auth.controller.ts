@@ -11,8 +11,9 @@ import {
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { SkipThrottle } from '@nestjs/throttler';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 
+import { CoreConfig } from '@/shared/core/core.config';
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
 import { RefreshToken } from '@/shared/decorators/param/refresh-token.decorator';
 import { UserAgent } from '@/shared/decorators/param/user-agent.decorator';
@@ -26,6 +27,7 @@ import { RegistrationConfirmationCommand } from '../application/commands/registr
 import { RegistrationEmailResendingCommand } from '../application/commands/registration-email-resending.command';
 import { RegistrationCommand } from '../application/commands/registration.command';
 import { GetMeQuery } from '../application/queries/get-me.query';
+import { AuthConfig } from '../auth.config';
 import { RefreshTokenJwtPayload } from '../decorators/refresh-token-jwt-payload.decorator';
 import { LoginDto } from '../dto/login.dto';
 import { NewPasswordDto } from '../dto/new-password.dto';
@@ -44,7 +46,18 @@ export class AuthController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly authConfig: AuthConfig,
+    private readonly coreConfig: CoreConfig,
   ) {}
+
+  private getRefreshTokenCookieOptions(): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.coreConfig.isProduction,
+      sameSite: 'strict',
+      maxAge: this.authConfig.REFRESH_TOKEN_LIFE_TIME * 1000,
+    };
+  }
 
   @SkipThrottle(false)
   @UseGuards(LocalAuthGuard)
@@ -61,11 +74,7 @@ export class AuthController {
       const tokens = await this.commandBus.execute(new LoginCommand({ userId, ip, userAgent }));
       if (!tokens) throw new UnauthorizedException();
       const { accessToken, refreshToken } = tokens;
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-      });
+      res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
       return { accessToken };
     } catch (e) {
       throw new UnauthorizedException();
@@ -98,10 +107,7 @@ export class AuthController {
       const tokens = await this.commandBus.execute(new RefreshTokenCommand(token));
       if (!tokens) throw new UnauthorizedException();
       const { accessToken, refreshToken } = tokens;
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-      });
+      res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
       return { accessToken };
     } catch (e) {
       throw new UnauthorizedException();
@@ -141,12 +147,13 @@ export class AuthController {
   async logout(
     @CurrentUserId() userId: string,
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const isDeleted = await this.commandBus.execute(
       new LogoutCommand({ userId, refreshTokenJWTPayload }),
     );
     if (!isDeleted) throw new UnauthorizedException();
-    return;
+    res.clearCookie('refreshToken', this.getRefreshTokenCookieOptions());
   }
 
   @UseGuards(AccessJwtAuthGuard)

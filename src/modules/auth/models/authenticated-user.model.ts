@@ -1,1 +1,1 @@
-export type IAuthenticatedUserId = { userId: string };
+export type IAuthenticatedUserId = { userId: string; deviceId?: string };

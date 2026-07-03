@@ -12,26 +12,22 @@ export class JwtTokenService {
   ) {}
 
   signAccessAndRefreshToken(userId: string, deviceId: string) {
+    const lastActiveDate = new Date().toISOString();
     const accessToken = this.nestJwtService.sign(
-      { userId, deviceId },
+      { userId, deviceId, lastActiveDate },
       {
         secret: this.authConfig.ACCESS_TOKEN_SECRET,
         expiresIn: this.authConfig.ACCESS_TOKEN_LIFE_TIME,
       },
     );
     const refreshToken = this.nestJwtService.sign(
-      { userId, deviceId },
+      { userId, deviceId, lastActiveDate },
       {
         secret: this.authConfig.REFRESH_TOKEN_SECRET,
         expiresIn: this.authConfig.REFRESH_TOKEN_LIFE_TIME,
       },
     );
-    return { accessToken, refreshToken };
-  }
-
-  getIssuedAtFromRefreshToken(token: string): string {
-    const payload = this.nestJwtService.decode(token) as { iat: number } | null;
-    return new Date(payload!.iat * 1000).toISOString();
+    return { accessToken, refreshToken, lastActiveDate };
   }
 
   verifyRefreshToken(token: string): IRefreshTokenJwtPayload | null {

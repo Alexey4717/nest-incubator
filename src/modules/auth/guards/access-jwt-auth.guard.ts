@@ -18,6 +18,9 @@ export class AccessJwtAuthGuard extends AuthGuard('jwt-access') {
     const request = context.switchToHttp().getRequest();
     request.user = user;
     request.userId = user.userId;
+    if (user.deviceId != null) {
+      request.deviceId = user.deviceId;
+    }
 
     return user as TUser;
   }

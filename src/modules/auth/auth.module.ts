@@ -3,6 +3,8 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
+import { CoreModule } from '@/shared/core/core.module';
+
 import { DatabaseModule } from '@/modules/database/database.module';
 import { EmailModule } from '@/modules/email/email.module';
 import { SessionModule } from '@/modules/session/session.module';
@@ -69,6 +71,7 @@ const authDomainServices = [JwtTokenService];
 
 @Module({
   imports: [
+    CoreModule,
     CqrsModule,
     AuthConfigModule,
     DatabaseModule,

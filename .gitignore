@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# npm lockfile (project uses Yarn)
+package-lock.json
+
 # Logs
 logs
 *.log

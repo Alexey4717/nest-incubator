@@ -13,7 +13,7 @@ class AuthEnvironmentVariables {
   REFRESH_TOKEN_SECRET: string;
 
   @IsNumber({}, { message: 'Set ACCESS_TOKEN_LIFE_TIME env variable as number' })
-  @Min(300, { message: 'ACCESS_TOKEN_LIFE_TIME must be at least 300 seconds' })
+  @Min(10, { message: 'ACCESS_TOKEN_LIFE_TIME must be at least 10 seconds' })
   ACCESS_TOKEN_LIFE_TIME: number;
 
   @IsNumber({}, { message: 'Set REFRESH_TOKEN_LIFE_TIME env variable as number' })

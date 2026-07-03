@@ -16,11 +16,10 @@ export class LogoutUseCase implements IUseCase<LogoutInput, boolean> {
   constructor(private readonly sessionRepository: SessionRepository) {}
 
   async execute({ userId, refreshTokenJWTPayload }: LogoutInput): Promise<boolean> {
-    const lastActiveDate = new Date(refreshTokenJWTPayload.iat * 1000).toISOString();
     const deleted = await this.sessionRepository.deleteOneSessionByUserAndDeviceIdAndDate(
       userId,
       refreshTokenJWTPayload.deviceId,
-      lastActiveDate,
+      refreshTokenJWTPayload.lastActiveDate,
     );
     return Boolean(deleted);
   }

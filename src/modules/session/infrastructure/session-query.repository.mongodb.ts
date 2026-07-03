@@ -16,14 +16,11 @@ export class SessionQueryRepository {
     userId: string,
     lastActiveDate: string,
   ): Promise<Session | null> {
-    console.log(deviceId, userId, lastActiveDate);
-    const a = await this.sessionModel.findOne({
+    return this.sessionModel.findOne({
       deviceId,
       userId,
       lastActiveDate,
     });
-    console.log(a);
-    return a;
   }
 
   async findOneByDeviceIdAndDate(
