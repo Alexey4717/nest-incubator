@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { IsEnum, IsNumber } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber } from 'class-validator';
 
-import { applyValidatedConfig } from './config-validation.utility';
+import { applyValidatedConfig, convertToBoolean } from './config-validation.utility';
 
 export enum Environments {
   Development = 'development',
@@ -16,12 +16,16 @@ class CoreEnvironmentVariables {
 
   @IsEnum(Environments, { message: 'Set correct NODE_ENV env variable' })
   env: Environments;
+
+  @IsBoolean()
+  includeTestingModule: boolean;
 }
 
 @Injectable()
 export class CoreConfig {
   PORT: number;
   env: Environments;
+  includeTestingModule: boolean;
 
   constructor() {
     applyValidatedConfig(
@@ -29,6 +33,7 @@ export class CoreConfig {
       {
         PORT: process.env.PORT || 4000,
         env: process.env.NODE_ENV || Environments.Development,
+        includeTestingModule: convertToBoolean(process.env.INCLUDE_TESTING_MODULE),
       },
       CoreEnvironmentVariables,
     );

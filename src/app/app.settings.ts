@@ -5,8 +5,6 @@ import cookieParser from 'cookie-parser';
 
 import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
 
-import { AppModule } from './app.module';
-
 /** Глобальная настройка HTTP-приложения (pipes, фильтры, Swagger, CORS); вызывается из main и e2e. */
 export function appSettings(app: INestApplication): void {
   const server = app.getHttpAdapter().getInstance();
@@ -16,7 +14,8 @@ export function appSettings(app: INestApplication): void {
 
   app.use(cookieParser());
 
-  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+  // AppModule — dynamic root; app.select(AppModule) недоступен, используем контекст приложения
+  useContainer(app, { fallbackOnErrors: true });
   app.enableCors();
 
   app.useGlobalPipes(

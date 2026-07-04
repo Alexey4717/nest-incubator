@@ -6,8 +6,8 @@ import './register-paths';
 
 import { CoreConfig } from '@/shared/core/core.config';
 
-import { AppModule } from '@/app/app.module';
 import { appSettings } from '@/app/app.settings';
+import { initAppModule } from '@/app/init-app-module';
 
 async function downloadSwaggerStaticIfDev(coreConfig: CoreConfig, port: number) {
   if (!coreConfig.isDevelopment) return;
@@ -33,7 +33,8 @@ async function downloadSwaggerStaticIfDev(coreConfig: CoreConfig, port: number) 
 
 async function bootstrap() {
   const startInit = +new Date();
-  const app = await NestFactory.create(AppModule);
+  const dynamicAppModule = await initAppModule();
+  const app = await NestFactory.create(dynamicAppModule);
   appSettings(app);
 
   const coreConfig = app.get(CoreConfig);

@@ -1,8 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { AppModule } from '../../src/app/app.module';
 import { appSettings } from '../../src/app/app.settings';
+import { initAppModule } from '../../src/app/init-app-module';
 import { EmailService } from '../../src/modules/email/email.service';
 
 export function createEmailServiceMock(): Pick<
@@ -20,8 +20,10 @@ export function createEmailServiceMock(): Pick<
 export async function createE2eApplication(): Promise<INestApplication> {
   const emailMock = createEmailServiceMock();
 
+  const dynamicAppModule = await initAppModule();
+
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
+    imports: [dynamicAppModule],
   })
     .overrideProvider(EmailService)
     .useValue(emailMock)

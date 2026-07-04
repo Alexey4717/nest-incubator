@@ -1,6 +1,6 @@
 import { configModule } from '@/dynamic-config-module';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -55,7 +55,6 @@ import { AppService } from './app.service';
       imports: [EmailModule],
       useClass: MailerConfig,
     }),
-    TestingModule,
     AuthModule,
     SessionModule,
     EmailModule,
@@ -68,4 +67,11 @@ import { AppService } from './app.service';
   controllers: [AppController],
   providers: [AppService, ErrorExceptionFilter, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
-export class AppModule {}
+export class AppModule {
+  static forRoot(coreConfig: CoreConfig): DynamicModule {
+    return {
+      module: AppModule,
+      imports: [...(coreConfig.includeTestingModule ? [TestingModule] : [])],
+    };
+  }
+}
