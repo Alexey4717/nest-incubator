@@ -25,7 +25,7 @@ describe('Security devices (e2e)', () => {
   beforeEach(async () => {
     await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
     await request(app.getHttpServer())
-      .post('/users')
+      .post('/sa/users')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send({ login, password, email })
       .expect(201);
@@ -63,7 +63,7 @@ describe('Security devices (e2e)', () => {
     const otherEmail = 'secuser2@test.dev';
 
     await request(app.getHttpServer())
-      .post('/users')
+      .post('/sa/users')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send({ login: otherLogin, password, email: otherEmail })
       .expect(201);

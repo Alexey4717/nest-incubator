@@ -17,14 +17,14 @@ describe('Homework14 — users & auth (e2e)', () => {
     }
   });
 
-  describe('sparse recovery index + два POST /users + GET список', () => {
+  describe('sparse recovery index + два POST /sa/users + GET список', () => {
     it('DELETE /testing/all-data — 204', async () => {
       await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
     });
 
-    it('POST /users первый — 201', async () => {
+    it('POST /sa/users первый — 201', async () => {
       await request(app.getHttpServer())
-        .post('/users')
+        .post('/sa/users')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
           login: 'e2euser1',
@@ -34,9 +34,9 @@ describe('Homework14 — users & auth (e2e)', () => {
         .expect(201);
     });
 
-    it('POST /users второй — 201 (нет E11000)', async () => {
+    it('POST /sa/users второй — 201 (нет E11000)', async () => {
       await request(app.getHttpServer())
-        .post('/users')
+        .post('/sa/users')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
           login: 'e2euser2',
@@ -46,9 +46,9 @@ describe('Homework14 — users & auth (e2e)', () => {
         .expect(201);
     });
 
-    it('GET /users — пагинация', async () => {
+    it('GET /sa/users — пагинация', async () => {
       const res = await request(app.getHttpServer())
-        .get('/users')
+        .get('/sa/users')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .expect(200);
       expect(res.body.items).toBeDefined();
@@ -57,7 +57,7 @@ describe('Homework14 — users & auth (e2e)', () => {
     });
   });
 
-  describe('POST /auth/login после POST /users', () => {
+  describe('POST /auth/login после POST /sa/users', () => {
     const login = 'e2elog01';
     const password = 'qwerty12';
     const email = 'e2elog01@test.dev';
@@ -65,7 +65,7 @@ describe('Homework14 — users & auth (e2e)', () => {
     beforeAll(async () => {
       await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
       await request(app.getHttpServer())
-        .post('/users')
+        .post('/sa/users')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
           login,
@@ -89,9 +89,9 @@ describe('Homework14 — users & auth (e2e)', () => {
   });
 
   describe('Basic Auth', () => {
-    it('POST /users без Authorization — 401', async () => {
+    it('POST /sa/users без Authorization — 401', async () => {
       await request(app.getHttpServer())
-        .post('/users')
+        .post('/sa/users')
         .send({
           login: 'n',
           password: 'qwerty12',

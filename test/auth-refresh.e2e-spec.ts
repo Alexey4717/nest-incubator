@@ -24,7 +24,7 @@ describe('Auth refresh token flow (e2e)', () => {
   beforeEach(async () => {
     await request(app.getHttpServer()).delete('/testing/all-data').expect(204);
     await request(app.getHttpServer())
-      .post('/users')
+      .post('/sa/users')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send({ login, password, email })
       .expect(201);

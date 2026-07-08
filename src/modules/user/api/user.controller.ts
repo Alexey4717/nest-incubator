@@ -24,7 +24,7 @@ import { GetUsersInputModel } from '../models/GetUsersInputModel';
 import { toUserViewModel } from '../utils/user.view-mapper';
 
 @UseGuards(BasicAuthGuard)
-@Controller('users')
+@Controller('sa/users')
 export class UserController {
   constructor(
     private readonly commandBus: CommandBus,
