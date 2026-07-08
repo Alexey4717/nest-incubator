@@ -64,13 +64,16 @@ import { AppService } from './app.service';
     SecurityModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ErrorExceptionFilter, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [AppService, ErrorExceptionFilter],
 })
 export class AppModule {
   static forRoot(coreConfig: CoreConfig): DynamicModule {
     return {
       module: AppModule,
       imports: coreConfig.includeTestingModule ? [TestingModule] : [],
+      providers: coreConfig.ipRestrictionEnabled
+        ? [{ provide: APP_GUARD, useClass: ThrottlerGuard }]
+        : [],
     };
   }
 }

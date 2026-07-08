@@ -19,6 +19,9 @@ class CoreEnvironmentVariables {
 
   @IsBoolean()
   includeTestingModule: boolean;
+
+  @IsBoolean()
+  ipRestrictionEnabled: boolean;
 }
 
 @Injectable()
@@ -26,6 +29,7 @@ export class CoreConfig {
   PORT: number;
   env: Environments;
   includeTestingModule: boolean;
+  ipRestrictionEnabled: boolean;
 
   constructor() {
     applyValidatedConfig(
@@ -34,6 +38,10 @@ export class CoreConfig {
         PORT: process.env.PORT || 4000,
         env: process.env.NODE_ENV || Environments.Development,
         includeTestingModule: convertToBoolean(process.env.INCLUDE_TESTING_MODULE),
+        ipRestrictionEnabled:
+          process.env.IP_RESTRICTION_ENABLED === undefined
+            ? true
+            : convertToBoolean(process.env.IP_RESTRICTION_ENABLED),
       },
       CoreEnvironmentVariables,
     );
