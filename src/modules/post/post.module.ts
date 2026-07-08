@@ -1,9 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { AuthModule } from '@/modules/auth/auth.module';
-import { CommentModule } from '@/modules/comment/comment.module';
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
 import { LikeModule } from '@/modules/like/like.module';
 import { UserModule } from '@/modules/user/user.module';
 
@@ -22,8 +20,9 @@ import { GetPostCommentsUseCase } from './application/use-cases/get-post-comment
 import { GetPostsUseCase } from './application/use-cases/get-posts.use-case';
 import { UpdatePostLikeStatusUseCase } from './application/use-cases/update-post-like-status.use-case';
 import { UpdatePostUseCase } from './application/use-cases/update-post.use-case';
-import { PostQueryRepository } from './infrastructure/post-query.repository.mongodb';
-import { PostRepository } from './infrastructure/post.repository.mongodb';
+import { PostQueryRepository } from './infrastructure/post-query.repository';
+import { PostRepository } from './infrastructure/post.repository';
+import { PostViewMapper } from './post.view-mapper';
 
 const postUseCases = [
   GetPostsUseCase,
@@ -44,16 +43,18 @@ const postCommandHandlers = [
 
 const postQueryHandlers = [GetPostsHandler, GetPostByIdHandler, GetPostCommentsHandler];
 
+@Global()
 @Module({
-  imports: [CqrsModule, MongooseModelsModule, AuthModule, UserModule, CommentModule, LikeModule],
+  imports: [CqrsModule, AuthModule, LikeModule, UserModule],
   controllers: [PostController],
   providers: [
     PostRepository,
     PostQueryRepository,
+    PostViewMapper,
     ...postUseCases,
     ...postCommandHandlers,
     ...postQueryHandlers,
   ],
-  exports: [CreatePostUseCase],
+  exports: [CreatePostUseCase, PostRepository, PostQueryRepository, PostViewMapper],
 })
 export class PostModule {}

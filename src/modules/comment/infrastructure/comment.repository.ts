@@ -1,0 +1,118 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
+import { LikeStatus } from '@/modules/like/types/like-status';
+
+import { CommentModel } from '../models/comment.model';
+import { CommentQueryRepository } from './comment-query.repository';
+import { CommentReactionEntity } from './comment-reaction.entity';
+import { CommentEntity } from './comment.entity';
+import { toOrm } from './comment.mapper';
+
+export interface UpdateCommentByIdArgs {
+  id: string;
+  content: string;
+}
+
+export interface UpdateCommentLikeStatusArgs {
+  commentId: string;
+  userId: string;
+  likeStatus: LikeStatus;
+}
+
+@Injectable()
+export class CommentRepository {
+  constructor(
+    @InjectRepository(CommentEntity)
+    private readonly commentsRepository: Repository<CommentEntity>,
+    @InjectRepository(CommentReactionEntity)
+    private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
+    private readonly commentQueryRepository: CommentQueryRepository,
+    private readonly reactionUpdateService: ReactionUpdateService,
+  ) {}
+
+  async createCommentInPost(newComment: CommentModel): Promise<boolean> {
+    try {
+      const entity = toOrm(newComment);
+      await this.commentsRepository.save(entity);
+      return true;
+    } catch (error) {
+      console.log('commentsRepository.createCommentInPost error is occurred: ', error);
+      return false;
+    }
+  }
+
+  async updateCommentById({ id, content }: UpdateCommentByIdArgs): Promise<boolean> {
+    try {
+      const result = await this.commentsRepository.update({ id }, { content });
+      return (result.affected ?? 0) === 1;
+    } catch (error) {
+      console.log('commentsRepository.updateCommentById error is occurred: ', error);
+      return false;
+    }
+  }
+
+  async updateCommentLikeStatusByCommentId({
+    commentId,
+    userId,
+    likeStatus,
+  }: UpdateCommentLikeStatusArgs): Promise<boolean> {
+    try {
+      const foundComment = await this.commentQueryRepository.getCommentById(commentId);
+      if (!foundComment) return false;
+
+      const plan = this.reactionUpdateService.planReactionUpdate({
+        reactions: foundComment.reactions ?? [],
+        userId,
+        likeStatus,
+      });
+
+      if (plan.action === 'noop') return true;
+
+      if (plan.action === 'push') {
+        const reaction = new CommentReactionEntity();
+        reaction.commentId = commentId;
+        reaction.userId = plan.reaction.userId;
+        reaction.likeStatus = plan.reaction.likeStatus;
+        reaction.createdAt = new Date(plan.reaction.createdAt);
+        await this.commentReactionsRepository.save(reaction);
+        return true;
+      }
+
+      if (plan.action === 'pull') {
+        const result = await this.commentReactionsRepository.delete({
+          commentId,
+          userId: plan.userId,
+        });
+        return (result.affected ?? 0) === 1;
+      }
+
+      const result = await this.commentReactionsRepository.update(
+        { commentId, userId: plan.userId },
+        {
+          likeStatus: plan.likeStatus,
+          createdAt: new Date(plan.createdAt),
+        },
+      );
+      return (result.affected ?? 0) === 1;
+    } catch (error) {
+      console.log(
+        'commentsRepository.updateCommentLikeStatusByCommentId error is occurred: ',
+        error,
+      );
+      return false;
+    }
+  }
+
+  async deleteCommentById(id: string): Promise<boolean> {
+    try {
+      const result = await this.commentsRepository.delete({ id });
+      return (result.affected ?? 0) === 1;
+    } catch (error) {
+      console.log('commentsRepository.deleteCommentById error is occurred: ', error);
+      return false;
+    }
+  }
+}

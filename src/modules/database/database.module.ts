@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
 
 import { DatabaseConfig } from './database.config';
-import { MongooseModelsModule } from './mongoose-models.module';
-import { MongooseConfig } from './mongoose.config';
+import { TypeOrmConfig } from './typeorm.config';
 
 @Module({
-  imports: [MongooseModelsModule],
-  providers: [DatabaseConfig, MongooseConfig],
-  exports: [DatabaseConfig, MongooseConfig, MongooseModelsModule],
+  providers: [DatabaseConfig, TypeOrmConfig],
+  exports: [DatabaseConfig, TypeOrmConfig],
 })
 export class DatabaseModule {}

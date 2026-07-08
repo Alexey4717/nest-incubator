@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { UserRepository } from '../../infrastructure/user.repository.mongodb';
+import { UserRepository } from '../../infrastructure/user.repository';
 
 @Injectable()
 export class DeleteUserUseCase implements IUseCase<string, boolean> {

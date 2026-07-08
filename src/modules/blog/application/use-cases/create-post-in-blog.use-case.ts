@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { CreatePostUseCase } from '@/modules/post/application/use-cases/create-post.use-case';
-import { TPostDb } from '@/modules/post/models/GetPostOutputModel';
+import { PostModel } from '@/modules/post/models/post.model';
 
 import { CreatePostInBlogDTO } from '../../dto/create-post-in-blog.dto';
 
@@ -14,10 +14,13 @@ type CreatePostInBlogInput = {
 };
 
 @Injectable()
-export class CreatePostInBlogUseCase implements IUseCase<CreatePostInBlogInput, TPostDb | null> {
-  constructor(private readonly createPostUseCase: CreatePostUseCase) {}
+export class CreatePostInBlogUseCase implements IUseCase<CreatePostInBlogInput, PostModel | null> {
+  constructor(
+    @Inject(forwardRef(() => CreatePostUseCase))
+    private readonly createPostUseCase: CreatePostUseCase,
+  ) {}
 
-  async execute({ blogId, input }: CreatePostInBlogInput): Promise<TPostDb | null> {
+  async execute({ blogId, input }: CreatePostInBlogInput): Promise<PostModel | null> {
     await validateOrRejectModel(input, CreatePostInBlogDTO, 'CreatePostInBlogUseCase.execute');
     const { title, shortDescription, content } = input;
 

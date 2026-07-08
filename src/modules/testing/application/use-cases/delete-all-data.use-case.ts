@@ -3,7 +3,7 @@ import { InjectThrottlerStorage, ThrottlerStorage } from '@nestjs/throttler';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { TestingRepository } from '../../infrastructure/testing.repository.mongodb';
+import { TestingRepository } from '../../infrastructure/testing.repository';
 
 type ThrottlerStorageServiceLike = ThrottlerStorage & {
   timeoutIds?: ReturnType<typeof setTimeout>[];

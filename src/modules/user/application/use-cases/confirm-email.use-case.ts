@@ -3,8 +3,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { IUseCase } from '@/shared/types/use-case';
 import { createBadRequestErrors } from '@/shared/utils/bad-request-errors';
 
-import { UserQueryRepository } from '../../infrastructure/user-query.repository.mongodb';
-import { UserRepository } from '../../infrastructure/user.repository.mongodb';
+import { UserQueryRepository } from '../../infrastructure/user-query.repository';
+import { UserRepository } from '../../infrastructure/user.repository';
 
 @Injectable()
 export class ConfirmEmailUseCase implements IUseCase<string, void> {
@@ -20,14 +20,15 @@ export class ConfirmEmailUseCase implements IUseCase<string, void> {
         createBadRequestErrors({ message: 'Confirmation code incorrect', field: 'code' }),
       );
     }
-    if (user.emailConfirmation.isConfirmed) {
+    if (user.isConfirmed) {
       throw new BadRequestException(
         createBadRequestErrors({ message: 'Confirmation code incorrect', field: 'code' }),
       );
     }
     if (
-      user.emailConfirmation.confirmationCode !== code ||
-      user.emailConfirmation.expirationDate <= new Date()
+      user.confirmationCode !== code ||
+      !user.confirmationExpiration ||
+      user.confirmationExpiration <= new Date()
     ) {
       throw new BadRequestException(
         createBadRequestErrors({ message: 'Confirmation code incorrect', field: 'code' }),

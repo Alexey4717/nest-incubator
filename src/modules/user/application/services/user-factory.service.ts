@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
 
-import { CreateUserInsertToDBModel } from '../../models/CreateUserInsertToDBModel';
+import { UserModel } from '../../models/user.model';
 import { PasswordHasherService } from './password-hasher.service';
 
 type CreateUserInput = {
@@ -21,22 +21,19 @@ export class UserFactoryService {
     email,
     password,
     isConfirmed,
-  }: CreateUserInput): Promise<CreateUserInsertToDBModel> {
+  }: CreateUserInput): Promise<UserModel> {
     const passwordHash = await this.passwordHasher.hash(password);
     return {
       id: randomUUID(),
-      accountData: {
-        login,
-        email,
-        passwordHash,
-        createdAt: new Date().toISOString(),
-      },
-      emailConfirmation: {
-        confirmationCode: randomUUID(),
-        expirationDate: add(new Date(), { hours: 1 }),
-        isConfirmed,
-      },
-      recoveryData: null,
+      login,
+      email,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+      confirmationCode: randomUUID(),
+      confirmationExpiration: add(new Date(), { hours: 1 }),
+      isConfirmed,
+      recoveryCode: null,
+      recoveryExpiration: null,
     };
   }
 }

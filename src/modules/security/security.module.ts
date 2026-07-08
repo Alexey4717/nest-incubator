@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { AuthModule } from '@/modules/auth/auth.module';
-import { SessionModule } from '@/modules/session/session.module';
 
 import { SecurityController } from './api/security.controller';
 import { TerminateDeviceHandler } from './application/commands/terminate-device.command';
@@ -19,7 +18,7 @@ const securityCommandHandlers = [TerminateDeviceHandler, TerminateOtherDevicesHa
 const securityQueryHandlers = [GetDevicesHandler];
 
 @Module({
-  imports: [CqrsModule, AuthModule, SessionModule],
+  imports: [CqrsModule, AuthModule],
   controllers: [SecurityController],
   providers: [...securityUseCases, ...securityCommandHandlers, ...securityQueryHandlers],
 })

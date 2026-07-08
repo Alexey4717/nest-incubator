@@ -4,9 +4,9 @@ import { Paginator, SortDirections } from '@/shared/types/common';
 import { IUseCase } from '@/shared/types/use-case';
 import { normalizePaginationQuery } from '@/shared/utils/pagination';
 
-import { getMappedPostViewModel } from '../../helpers';
-import { PostQueryRepository } from '../../infrastructure/post-query.repository.mongodb';
+import { PostQueryRepository } from '../../infrastructure/post-query.repository';
 import { GetPostsInputModel, SortPostsBy } from '../../models/GetPostsInputModel';
+import { PostViewMapper } from '../../post.view-mapper';
 import { PostViewModel } from '../../types/view-models';
 
 type GetPostsInput = GetPostsInputModel & {
@@ -15,7 +15,10 @@ type GetPostsInput = GetPostsInputModel & {
 
 @Injectable()
 export class GetPostsUseCase implements IUseCase<GetPostsInput, Paginator<PostViewModel[]>> {
-  constructor(private readonly postQueryRepository: PostQueryRepository) {}
+  constructor(
+    private readonly postQueryRepository: PostQueryRepository,
+    private readonly postViewMapper: PostViewMapper,
+  ) {}
 
   async execute(input: GetPostsInput): Promise<Paginator<PostViewModel[]>> {
     const { sortBy, sortDirection, pageNumber, pageSize, currentUserId } = input;
@@ -44,7 +47,7 @@ export class GetPostsUseCase implements IUseCase<GetPostsInput, Paginator<PostVi
       page,
       pageSize: responsePageSize,
       totalCount,
-      items: items.map((item) => getMappedPostViewModel({ ...item, currentUserId })),
+      items: items.map((item) => this.postViewMapper.toPostViewModel(item, currentUserId)),
     };
   }
 }

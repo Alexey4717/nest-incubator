@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionQueryRepository } from '../../infrastructure/session-query.repository.mongodb';
+import { SessionQueryRepository } from '../../infrastructure/session-query.repository';
 import { SessionViewModel } from '../../models/session-view.model';
 
 @Injectable()

@@ -4,7 +4,7 @@ import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { UpdateCommentDTO } from '../../dto/update-comment.dto';
-import { CommentRepository } from '../../infrastructure/comment.repository.mongodb';
+import { CommentRepository } from '../../infrastructure/comment.repository';
 import { CommentManageStatuses } from '../../types/types';
 import { CommentOwnerCheckerService } from '../services/comment-owner-checker.service';
 

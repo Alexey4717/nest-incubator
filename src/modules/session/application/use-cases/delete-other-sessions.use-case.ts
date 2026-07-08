@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionRepository } from '../../infrastructure/session.repository.mongodb';
+import { SessionRepository } from '../../infrastructure/session.repository';
 
 type DeleteOtherSessionsInput = {
   userId: string;

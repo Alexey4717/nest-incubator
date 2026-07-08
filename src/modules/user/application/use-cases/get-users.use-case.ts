@@ -4,10 +4,10 @@ import { Paginator, SortDirections } from '@/shared/types/common';
 import { IUseCase } from '@/shared/types/use-case';
 import { normalizePaginationQuery } from '@/shared/utils/pagination';
 
-import { getMappedUserViewModel } from '../../helpers';
-import { UserQueryRepository } from '../../infrastructure/user-query.repository.mongodb';
+import { UserQueryRepository } from '../../infrastructure/user-query.repository';
 import { GetUsersInputModel, SortUsersBy } from '../../models/GetUsersInputModel';
 import { UserViewModel } from '../../types/view-models';
+import { toUserViewModel } from '../../utils/user.view-mapper';
 
 @Injectable()
 export class GetUsersUseCase implements IUseCase<GetUsersInputModel, Paginator<UserViewModel[]>> {
@@ -42,7 +42,7 @@ export class GetUsersUseCase implements IUseCase<GetUsersInputModel, Paginator<U
       page,
       pageSize: responsePageSize,
       totalCount,
-      items: items.map(getMappedUserViewModel),
+      items: items.map(toUserViewModel),
     };
   }
 }

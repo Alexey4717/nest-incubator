@@ -1,23 +1,27 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { GetUserOutputModelFromMongoDB } from '../../models/GetUserOutputModel';
+import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+
+import { UserModel } from '../../models/user.model';
 import { RegisterUserUseCase } from '../use-cases/register-user.use-case';
 
-type RegisterUserInput = {
+type RegisterUserCommandInput = {
   login: string;
   email: string;
   password: string;
 };
 
-export class RegisterUserCommand {
-  constructor(public readonly input: RegisterUserInput) {}
+export class RegisterUserCommand extends TypedCommand<UserModel> {
+  constructor(public readonly input: RegisterUserCommandInput) {
+    super();
+  }
 }
 
 @CommandHandler(RegisterUserCommand)
-export class RegisterUserHandler implements ICommandHandler<RegisterUserCommand> {
+export class RegisterUserHandler implements ICommandHandler<RegisterUserCommand, UserModel> {
   constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
 
-  execute(command: RegisterUserCommand): Promise<GetUserOutputModelFromMongoDB> {
+  execute(command: RegisterUserCommand): Promise<UserModel> {
     return this.registerUserUseCase.execute(command.input);
   }
 }

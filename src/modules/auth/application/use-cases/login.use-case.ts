@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { CreateSessionUseCase } from '@/modules/session/application/use-cases/create-session.use-case';
-import { Session } from '@/modules/session/models/session.schema';
+import { SessionModel } from '@/modules/session/models/session.model';
 
 import { AuthTokensViewModel } from '../../types/view-models';
 import { JwtTokenService } from '../services/jwt-token.service';
@@ -26,7 +26,7 @@ export class LoginUseCase implements IUseCase<LoginInput, AuthTokensViewModel> {
     const deviceId = randomUUID();
     const { accessToken, refreshToken, lastActiveDate } =
       this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
-    const sessionInfo: Session = {
+    const sessionInfo: SessionModel = {
       ip,
       title: userAgent,
       lastActiveDate,

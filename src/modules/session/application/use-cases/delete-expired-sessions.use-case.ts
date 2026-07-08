@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionRepository } from '../../infrastructure/session.repository.mongodb';
+import { SessionRepository } from '../../infrastructure/session.repository';
 import { SessionConfig } from '../../session.config';
 
 @Injectable()

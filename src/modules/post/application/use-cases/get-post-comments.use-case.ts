@@ -1,19 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { Paginator, SortDirections } from '@/shared/types/common';
 import { IUseCase } from '@/shared/types/use-case';
 import { normalizePaginationQuery } from '@/shared/utils/pagination';
 
-import { getMappedCommentViewModel } from '@/modules/comment/helpers';
-import { CommentQueryRepository } from '@/modules/comment/infrastructure/comment-query.repository.mongodb';
-import { SortPostCommentsBy } from '@/modules/comment/models/GetPostCommentsInputModel';
+import { CommentViewMapper } from '@/modules/comment/comment.view-mapper';
+import { CommentQueryRepository } from '@/modules/comment/infrastructure/comment-query.repository';
+import {
+  GetPostCommentsInputModel,
+  SortPostCommentsBy,
+} from '@/modules/comment/models/GetPostCommentsInputModel';
 import { CommentViewModel } from '@/modules/comment/types/view-models';
-
-import { GetPostsInputModel } from '../../models/GetPostsInputModel';
 
 type GetPostCommentsInput = {
   postId: string;
-  query: GetPostsInputModel;
+  query: GetPostCommentsInputModel;
   currentUserId?: string | null;
 };
 
@@ -22,7 +23,11 @@ export class GetPostCommentsUseCase implements IUseCase<
   GetPostCommentsInput,
   Paginator<CommentViewModel[]> | null
 > {
-  constructor(private readonly commentQueryRepository: CommentQueryRepository) {}
+  constructor(
+    @Inject(forwardRef(() => CommentQueryRepository))
+    private readonly commentQueryRepository: CommentQueryRepository,
+    private readonly commentViewMapper: CommentViewMapper,
+  ) {}
 
   async execute({
     postId,
@@ -59,7 +64,7 @@ export class GetPostCommentsUseCase implements IUseCase<
       pageSize: responsePageSize,
       totalCount,
       items: items.map((item) =>
-        getMappedCommentViewModel({ ...item, currentUserId: currentUserId ?? undefined }),
+        this.commentViewMapper.toCommentViewModel(item, currentUserId ?? undefined),
       ),
     };
   }

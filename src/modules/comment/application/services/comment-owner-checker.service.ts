@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { CommentQueryRepository } from '../../infrastructure/comment-query.repository.mongodb';
+import { CommentQueryRepository } from '../../infrastructure/comment-query.repository';
 import { CommentManageStatuses } from '../../types/types';
 
 type CheckCommentOwnerInput = {

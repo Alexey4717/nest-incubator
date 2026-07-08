@@ -33,6 +33,47 @@ window.onload = function() {
           }
         }
       },
+      "/users": {
+        "get": {
+          "operationId": "UserController_getUsers",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
+        "post": {
+          "operationId": "UserController_createUser",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/users/{id}": {
+        "delete": {
+          "operationId": "UserController_deleteUser",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
       "/auth/login": {
         "post": {
           "operationId": "AuthController_login",
@@ -192,39 +233,60 @@ window.onload = function() {
           }
         }
       },
-      "/users": {
+      "/comments/{id}": {
         "get": {
-          "operationId": "UserController_getUsers",
+          "operationId": "CommentController_getComment",
           "parameters": [],
           "responses": {
             "200": {
               "description": ""
             }
           }
-        },
-        "post": {
-          "operationId": "UserController_createUser",
+        }
+      },
+      "/comments/{commentId}/like-status": {
+        "put": {
+          "operationId": "CommentController_changeLikeStatus",
           "parameters": [],
           "requestBody": {
             "required": true,
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateUserDTO"
+                  "$ref": "#/components/schemas/LikeInputDto"
                 }
               }
             }
           },
           "responses": {
-            "201": {
+            "204": {
               "description": ""
             }
           }
         }
       },
-      "/users/{id}": {
+      "/comments/{commentId}": {
+        "put": {
+          "operationId": "CommentController_updateComment",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCommentDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        },
         "delete": {
-          "operationId": "UserController_deleteUser",
+          "operationId": "CommentController_deleteComment",
           "parameters": [],
           "responses": {
             "204": {
@@ -355,68 +417,6 @@ window.onload = function() {
               }
             }
           },
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/comments/{id}": {
-        "get": {
-          "operationId": "CommentController_getComment",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/comments/{commentId}/like-status": {
-        "put": {
-          "operationId": "CommentController_changeLikeStatus",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/LikeInputDto"
-                }
-              }
-            }
-          },
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/comments/{commentId}": {
-        "put": {
-          "operationId": "CommentController_updateComment",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateCommentDTO"
-                }
-              }
-            }
-          },
-          "responses": {
-            "204": {
-              "description": ""
-            }
-          }
-        },
-        "delete": {
-          "operationId": "CommentController_deleteComment",
-          "parameters": [],
           "responses": {
             "204": {
               "description": ""
@@ -579,6 +579,10 @@ window.onload = function() {
     "servers": [],
     "components": {
       "schemas": {
+        "CreateUserDTO": {
+          "type": "object",
+          "properties": {}
+        },
         "LoginDto": {
           "type": "object",
           "properties": {}
@@ -603,18 +607,6 @@ window.onload = function() {
           "type": "object",
           "properties": {}
         },
-        "CreateUserDTO": {
-          "type": "object",
-          "properties": {}
-        },
-        "CreatePostDto": {
-          "type": "object",
-          "properties": {}
-        },
-        "CreateCommentInPostDto": {
-          "type": "object",
-          "properties": {}
-        },
         "LikeInputDto": {
           "type": "object",
           "properties": {
@@ -633,11 +625,19 @@ window.onload = function() {
             "likeStatus"
           ]
         },
-        "UpdatePostDto": {
+        "UpdateCommentDTO": {
           "type": "object",
           "properties": {}
         },
-        "UpdateCommentDTO": {
+        "CreatePostDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "CreateCommentInPostDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "UpdatePostDto": {
           "type": "object",
           "properties": {}
         },

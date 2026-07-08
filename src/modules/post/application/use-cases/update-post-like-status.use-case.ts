@@ -4,7 +4,7 @@ import { IUseCase } from '@/shared/types/use-case';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
-import { PostRepository } from '../../infrastructure/post.repository.mongodb';
+import { PostRepository } from '../../infrastructure/post.repository';
 
 type UpdatePostLikeStatusInput = {
   postId: string;

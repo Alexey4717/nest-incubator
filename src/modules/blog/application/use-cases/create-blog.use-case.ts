@@ -5,18 +5,18 @@ import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { CreateBlogDTO } from '../../dto/create-blog.dto';
-import { BlogRepository } from '../../infrastructure/blog.repository.mongodb';
-import { GetBlogOutputModelFromMongoDB } from '../../models/GetBlogOutputModel';
+import { BlogRepository } from '../../infrastructure/blog.repository';
+import { BlogModel } from '../../models/blog.model';
 
 @Injectable()
-export class CreateBlogUseCase implements IUseCase<CreateBlogDTO, GetBlogOutputModelFromMongoDB> {
+export class CreateBlogUseCase implements IUseCase<CreateBlogDTO, BlogModel> {
   constructor(private readonly blogRepository: BlogRepository) {}
 
-  async execute(input: CreateBlogDTO): Promise<GetBlogOutputModelFromMongoDB> {
+  async execute(input: CreateBlogDTO): Promise<BlogModel> {
     await validateOrRejectModel(input, CreateBlogDTO, 'CreateBlogUseCase.execute');
     const { name, websiteUrl, description } = input || {};
 
-    const newBlog = {
+    const newBlog: BlogModel = {
       id: randomUUID(),
       name,
       websiteUrl,
@@ -25,6 +25,6 @@ export class CreateBlogUseCase implements IUseCase<CreateBlogDTO, GetBlogOutputM
       createdAt: new Date().toISOString(),
     };
 
-    return (await this.blogRepository.createBlog(newBlog)) as GetBlogOutputModelFromMongoDB;
+    return (await this.blogRepository.createBlog(newBlog)) as BlogModel;
   }
 }

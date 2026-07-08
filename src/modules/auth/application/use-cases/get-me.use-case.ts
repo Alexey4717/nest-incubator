@@ -15,8 +15,8 @@ export class GetMeUseCase implements IUseCase<string, MeViewModel | null> {
     if (!fullUser) return null;
     return {
       userId: fullUser.id,
-      login: fullUser.accountData.login,
-      email: fullUser.accountData.email,
+      login: fullUser.login,
+      email: fullUser.email,
     };
   }
 }

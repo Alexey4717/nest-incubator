@@ -4,7 +4,7 @@ import { IUseCase } from '@/shared/types/use-case';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
-import { CommentRepository } from '../../infrastructure/comment.repository.mongodb';
+import { CommentRepository } from '../../infrastructure/comment.repository';
 
 type UpdateCommentLikeStatusInput = {
   commentId: string;

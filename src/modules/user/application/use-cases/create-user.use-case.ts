@@ -3,18 +3,18 @@ import { Injectable } from '@nestjs/common';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { CreateUserDTO } from '../../dto/create-user.dto';
-import { UserRepository } from '../../infrastructure/user.repository.mongodb';
-import { GetUserOutputModelFromMongoDB } from '../../models/GetUserOutputModel';
+import { UserRepository } from '../../infrastructure/user.repository';
+import { UserModel } from '../../models/user.model';
 import { UserFactoryService } from '../services/user-factory.service';
 
 @Injectable()
-export class CreateUserUseCase implements IUseCase<CreateUserDTO, GetUserOutputModelFromMongoDB> {
+export class CreateUserUseCase implements IUseCase<CreateUserDTO, UserModel> {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly userFactory: UserFactoryService,
   ) {}
 
-  async execute(input: CreateUserDTO): Promise<GetUserOutputModelFromMongoDB> {
+  async execute(input: CreateUserDTO): Promise<UserModel> {
     const { login, email, password } = input;
     const newUser = await this.userFactory.createNewUser({
       login,
@@ -23,6 +23,6 @@ export class CreateUserUseCase implements IUseCase<CreateUserDTO, GetUserOutputM
       isConfirmed: true,
     });
 
-    return this.userRepository.createUser({ ...newUser });
+    return this.userRepository.createUser(newUser);
   }
 }

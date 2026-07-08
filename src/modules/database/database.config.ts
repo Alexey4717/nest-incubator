@@ -1,35 +1,50 @@
 import { Injectable } from '@nestjs/common';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-import { applyValidatedConfig, getEnumValues } from '@/shared/core/config-validation.utility';
-
-export enum DbType {
-  MONGO = 'MONGO',
-  SQL = 'SQL',
-}
+import { applyValidatedConfig, convertToBoolean } from '@/shared/core/config-validation.utility';
 
 class DatabaseEnvironmentVariables {
-  @IsString()
-  @IsNotEmpty({ message: 'Set MONGO_URI env variable' })
-  MONGO_URI: string;
-
   @IsString()
   @IsNotEmpty({ message: 'Set DB_NAME env variable' })
   DB_NAME: string;
 
-  @IsEnum(DbType, {
-    message: `Set correct DB_TYPE env variable, available values: ${getEnumValues(DbType).join(', ')}`,
-  })
-  DB_TYPE: DbType;
+  @IsString()
+  @IsNotEmpty({ message: 'Set POSTGRES_HOST env variable' })
+  POSTGRES_HOST: string;
+
+  @IsNumber({}, { message: 'Set POSTGRES_PORT env variable as number' })
+  POSTGRES_PORT: number;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Set POSTGRES_USER env variable' })
+  POSTGRES_USER: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Set POSTGRES_PASSWORD env variable' })
+  POSTGRES_PASSWORD: string;
+
+  @IsOptional()
+  @IsBoolean()
+  POSTGRES_SSL: boolean;
 }
 
 @Injectable()
 export class DatabaseConfig {
-  MONGO_URI: string;
   DB_NAME: string;
-  DB_TYPE: DbType;
+  POSTGRES_HOST: string;
+  POSTGRES_PORT: number;
+  POSTGRES_USER: string;
+  POSTGRES_PASSWORD: string;
+  POSTGRES_SSL: boolean;
 
   constructor() {
-    applyValidatedConfig(this, process.env, DatabaseEnvironmentVariables);
+    applyValidatedConfig(
+      this,
+      {
+        ...process.env,
+        POSTGRES_SSL: convertToBoolean(process.env.POSTGRES_SSL),
+      },
+      DatabaseEnvironmentVariables,
+    );
   }
 }

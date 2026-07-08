@@ -4,8 +4,8 @@ import { randomUUID } from 'crypto';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { EmailService } from '@/modules/email/email.service';
-import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository.mongodb';
-import { UserRepository } from '@/modules/user/infrastructure/user.repository.mongodb';
+import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
+import { UserRepository } from '@/modules/user/infrastructure/user.repository';
 
 @Injectable()
 export class PasswordRecoveryUseCase implements IUseCase<string, void | null> {
@@ -20,10 +20,6 @@ export class PasswordRecoveryUseCase implements IUseCase<string, void | null> {
     if (!user) return null;
     const recoveryCode = randomUUID();
     await this.userRepository.updateRecoveryPasswordInfo(user.id, recoveryCode);
-    return this.emailService.sendPasswordRecoveryCode(
-      user.accountData.email,
-      user.accountData.login,
-      recoveryCode,
-    );
+    return this.emailService.sendPasswordRecoveryCode(user.email, user.login, recoveryCode);
   }
 }

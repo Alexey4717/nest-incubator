@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { UserQueryRepository } from '../../infrastructure/user-query.repository.mongodb';
-import { GetUserOutputModelFromMongoDB } from '../../models/GetUserOutputModel';
+import { UserQueryRepository } from '../../infrastructure/user-query.repository';
+import { UserModel } from '../../models/user.model';
 
 @Injectable()
-export class FindUserByIdUseCase implements IUseCase<string, GetUserOutputModelFromMongoDB | null> {
+export class FindUserByIdUseCase implements IUseCase<string, UserModel | null> {
   constructor(private readonly userQueryRepository: UserQueryRepository) {}
 
-  async execute(id: string): Promise<GetUserOutputModelFromMongoDB | null> {
+  async execute(id: string): Promise<UserModel | null> {
     return this.userQueryRepository.findUserById(id);
   }
 }

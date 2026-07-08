@@ -2,16 +2,16 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
 import { TypedQuery } from '@/shared/types/cqrs-augmentation';
 
-import { GetUserOutputModelFromMongoDB } from '../../models/GetUserOutputModel';
+import { UserModel } from '../../models/user.model';
 import { CheckCredentialsUseCase } from '../use-cases/check-credentials.use-case';
 
-type CheckCredentialsInput = {
+type CheckCredentialsQueryInput = {
   loginOrEmail: string;
   password: string;
 };
 
-export class CheckCredentialsQuery extends TypedQuery<GetUserOutputModelFromMongoDB | null> {
-  constructor(public readonly input: CheckCredentialsInput) {
+export class CheckCredentialsQuery extends TypedQuery<UserModel | null> {
+  constructor(public readonly input: CheckCredentialsQueryInput) {
     super();
   }
 }
@@ -19,11 +19,11 @@ export class CheckCredentialsQuery extends TypedQuery<GetUserOutputModelFromMong
 @QueryHandler(CheckCredentialsQuery)
 export class CheckCredentialsHandler implements IQueryHandler<
   CheckCredentialsQuery,
-  GetUserOutputModelFromMongoDB | null
+  UserModel | null
 > {
   constructor(private readonly checkCredentialsUseCase: CheckCredentialsUseCase) {}
 
-  execute(query: CheckCredentialsQuery): Promise<GetUserOutputModelFromMongoDB | null> {
+  execute(query: CheckCredentialsQuery): Promise<UserModel | null> {
     return this.checkCredentialsUseCase.execute(query.input);
   }
 }

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { CommentRepository } from '../../infrastructure/comment.repository.mongodb';
+import { CommentRepository } from '../../infrastructure/comment.repository';
 import { CommentManageStatuses } from '../../types/types';
 import { CommentOwnerCheckerService } from '../services/comment-owner-checker.service';
 

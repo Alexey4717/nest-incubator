@@ -2,8 +2,8 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionQueryRepository } from '../../infrastructure/session-query.repository.mongodb';
-import { SessionRepository } from '../../infrastructure/session.repository.mongodb';
+import { SessionQueryRepository } from '../../infrastructure/session-query.repository';
+import { SessionRepository } from '../../infrastructure/session.repository';
 
 type DeleteSessionInput = {
   userId: string;

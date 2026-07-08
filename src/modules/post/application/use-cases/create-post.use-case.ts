@@ -1,17 +1,15 @@
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { Model } from 'mongoose';
 
 import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
-import { Blog, BlogDocument } from '@/modules/blog/models/blog.schema';
+import { BlogQueryRepository } from '@/modules/blog/infrastructure/blog-query.repository';
 
 import { CreatePostDto } from '../../dto/create-post.dto';
-import { getMappedPostViewModel } from '../../helpers';
-import { PostRepository } from '../../infrastructure/post.repository.mongodb';
-import { TPostDb } from '../../models/GetPostOutputModel';
+import { PostRepository } from '../../infrastructure/post.repository';
+import { PostModel } from '../../models/post.model';
+import { PostViewMapper } from '../../post.view-mapper';
 import { PostViewModel } from '../../types/view-models';
 
 export type CreatePostInput = {
@@ -22,19 +20,21 @@ export type CreatePostInput = {
 };
 
 @Injectable()
-export class CreatePostUseCase implements IUseCase<CreatePostInput, TPostDb | null> {
+export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | null> {
   constructor(
     private readonly postRepository: PostRepository,
-    @InjectModel(Blog.name) private readonly blogModel: Model<BlogDocument>,
+    private readonly postViewMapper: PostViewMapper,
+    @Inject(forwardRef(() => BlogQueryRepository))
+    private readonly blogQueryRepository: BlogQueryRepository,
   ) {}
 
-  async execute(input: CreatePostInput): Promise<TPostDb | null> {
+  async execute(input: CreatePostInput): Promise<PostModel | null> {
     const { blogId, title, shortDescription, content } = input;
 
-    const foundBlog = await this.blogModel.findOne({ id: blogId }).lean();
+    const foundBlog = await this.blogQueryRepository.findBlogById(blogId);
     if (!foundBlog) return null;
 
-    const newPost: TPostDb = {
+    const newPost: PostModel = {
       id: randomUUID(),
       title,
       shortDescription,
@@ -45,16 +45,13 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, TPostDb | nu
       reactions: [],
     };
 
-    const postFromDb = await this.postRepository.createPost(newPost);
-    if (!postFromDb) return null;
-
-    return postFromDb;
+    return this.postRepository.createPost(newPost);
   }
 
   async executeFromDto(input: CreatePostDto): Promise<PostViewModel | null> {
     await validateOrRejectModel(input, CreatePostDto, 'CreatePostUseCase.executeFromDto');
     const post = await this.execute(input);
     if (!post) return null;
-    return getMappedPostViewModel(post);
+    return this.postViewMapper.toPostViewModel(post);
   }
 }

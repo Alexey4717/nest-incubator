@@ -3,10 +3,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
 import { CoreConfig } from '@/shared/core/core.config';
@@ -17,7 +17,8 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
 import { CommentModule } from '@/modules/comment/comment.module';
 import { DatabaseModule } from '@/modules/database/database.module';
-import { MongooseConfig } from '@/modules/database/mongoose.config';
+import { TypeOrmEntitiesModule } from '@/modules/database/typeorm-entities.module';
+import { TypeOrmConfig } from '@/modules/database/typeorm.config';
 import { EmailModule } from '@/modules/email/email.module';
 import { MailerConfig } from '@/modules/email/mailer.config';
 import { PostModule } from '@/modules/post/post.module';
@@ -47,21 +48,19 @@ import { AppService } from './app.service';
       inject: [CoreConfig],
     }),
     DatabaseModule,
-    MongooseModule.forRootAsync({
-      imports: [DatabaseModule],
-      useClass: MongooseConfig,
-    }),
+    TypeOrmModule.forRootAsync({ imports: [DatabaseModule], useClass: TypeOrmConfig }),
+    TypeOrmEntitiesModule,
+    UserModule,
+    SessionModule,
+    CommentModule,
+    PostModule,
+    BlogModule,
     MailerModule.forRootAsync({
       imports: [EmailModule],
       useClass: MailerConfig,
     }),
     AuthModule,
-    SessionModule,
     EmailModule,
-    UserModule,
-    PostModule,
-    BlogModule,
-    CommentModule,
     SecurityModule,
   ],
   controllers: [AppController],
@@ -71,7 +70,7 @@ export class AppModule {
   static forRoot(coreConfig: CoreConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [...(coreConfig.includeTestingModule ? [TestingModule] : [])],
+      imports: coreConfig.includeTestingModule ? [TestingModule] : [],
     };
   }
 }

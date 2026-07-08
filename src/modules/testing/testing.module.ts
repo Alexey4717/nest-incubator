@@ -3,19 +3,17 @@ import { CqrsModule } from '@nestjs/cqrs';
 
 import { CoreModule } from '@/shared/core/core.module';
 
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
-
 import { TestingController } from './api/testing.controller';
 import { DeleteAllDataHandler } from './application/commands/delete-all-data.command';
 import { DeleteAllDataUseCase } from './application/use-cases/delete-all-data.use-case';
-import { TestingRepository } from './infrastructure/testing.repository.mongodb';
+import { TestingRepository } from './infrastructure/testing.repository';
 
 const testingUseCases = [DeleteAllDataUseCase];
 
 const testingCommandHandlers = [DeleteAllDataHandler];
 
 @Module({
-  imports: [CqrsModule, CoreModule, MongooseModelsModule],
+  imports: [CqrsModule, CoreModule],
   controllers: [TestingController],
   providers: [TestingRepository, ...testingUseCases, ...testingCommandHandlers],
 })

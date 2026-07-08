@@ -19,9 +19,9 @@ import { CreateUserCommand } from '../application/commands/create-user.command';
 import { DeleteUserCommand } from '../application/commands/delete-user.command';
 import { GetUsersQuery } from '../application/queries/get-users.query';
 import { CreateUserDTO } from '../dto/create-user.dto';
-import { getMappedUserViewModel } from '../helpers';
 import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
 import { GetUsersInputModel } from '../models/GetUsersInputModel';
+import { toUserViewModel } from '../utils/user.view-mapper';
 
 @UseGuards(BasicAuthGuard)
 @Controller('users')
@@ -41,7 +41,7 @@ export class UserController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createUser(@Body() inputModel: CreateUserDTO) {
     const createdUser = await this.commandBus.execute(new CreateUserCommand(inputModel));
-    return getMappedUserViewModel(createdUser);
+    return toUserViewModel(createdUser);
   }
 
   @Delete(':id')

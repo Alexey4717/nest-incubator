@@ -5,8 +5,8 @@ import { IUseCase } from '@/shared/types/use-case';
 import { createBadRequestErrors } from '@/shared/utils/bad-request-errors';
 
 import { EmailService } from '@/modules/email/email.service';
-import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository.mongodb';
-import { UserRepository } from '@/modules/user/infrastructure/user.repository.mongodb';
+import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
+import { UserRepository } from '@/modules/user/infrastructure/user.repository';
 
 @Injectable()
 export class RegistrationEmailResendingUseCase implements IUseCase<string, void> {
@@ -23,7 +23,7 @@ export class RegistrationEmailResendingUseCase implements IUseCase<string, void>
         createBadRequestErrors({ message: 'email not registered', field: 'email' }),
       );
     }
-    if (user.emailConfirmation.isConfirmed) {
+    if (user.isConfirmed) {
       throw new BadRequestException(
         createBadRequestErrors({ message: 'email already confirmed', field: 'email' }),
       );
@@ -34,11 +34,7 @@ export class RegistrationEmailResendingUseCase implements IUseCase<string, void>
       newCode: newConfirmationCode,
     });
     void this.emailService
-      .sendEmailWithNewConfirmationCode(
-        user.accountData.email,
-        user.accountData.login,
-        newConfirmationCode,
-      )
+      .sendEmailWithNewConfirmationCode(user.email, user.login, newConfirmationCode)
       .catch((error) => {
         console.log(`RegistrationEmailResendingUseCase.sendEmail error: ${error}`);
       });

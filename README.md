@@ -1,6 +1,6 @@
 # nest-incubator
 
-REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **MongoDB** (Mongoose), использует модульную архитектуру и покрывает домены: аутентификация, управление устройствами и сессиями, пользователи, блоги, посты, комментарии, email-уведомления.
+REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **PostgreSQL** ([TypeORM](https://typeorm.io/)), использует модульную архитектуру и покрывает домены: аутентификация, управление устройствами и сессиями, пользователи, блоги, посты, комментарии, email-уведомления.
 
 Основные модули: `auth`, `security`, `user`, `post`, `blog`, `comment`, `like`, `session`, `email`, `testing`. Swagger доступен по пути `/swagger` (в development — также статика на `/`).
 
@@ -20,20 +20,20 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл                                   | Назначение                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------ |
-| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, Mongoose, Mailer) |
-| `app.settings.ts`                      | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e       |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                 |
+| Файл                                   | Назначение                                                                    |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer) |
+| `app.settings.ts`                      | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e      |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
 
-| Регистрация                                              | Назначение                                     |
-| -------------------------------------------------------- | ---------------------------------------------- |
-| `ScheduleModule.forRoot()`                               | Cron-планировщик (очистка просроченных сессий) |
-| `ThrottlerModule.forRoot({ ttl: 10, limit: 5 })`         | Rate limiting: 5 запросов за 10 секунд на IP   |
-| `{ provide: APP_GUARD, useClass: ThrottlerGuard }`       | Глобальный throttling для всех маршрутов       |
-| `CqrsModule.forRoot()`, `MongooseModule`, `MailerModule` | CQRS, MongoDB, SMTP                            |
+| Регистрация                                             | Назначение                                     |
+| ------------------------------------------------------- | ---------------------------------------------- |
+| `ScheduleModule.forRoot()`                              | Cron-планировщик (очистка просроченных сессий) |
+| `ThrottlerModule.forRoot({ ttl: 10, limit: 5 })`        | Rate limiting: 5 запросов за 10 секунд на IP   |
+| `{ provide: APP_GUARD, useClass: ThrottlerGuard }`      | Глобальный throttling для всех маршрутов       |
+| `CqrsModule.forRoot()`, `TypeOrmModule`, `MailerModule` | CQRS, PostgreSQL, SMTP                         |
 
 `app/` импортирует `modules/*` и `shared/*`, но **не содержит бизнес-логики** доменов.
 
@@ -65,9 +65,9 @@ modules/<feature>/
 │   ├── queries/            # CQRS query + thin @QueryHandler
 │   ├── use-cases/          # *UseCase с методом execute()
 │   └── services/           # domain services (JWT, hashing, owner-check и т.п.)
-├── infrastructure/         # repositories, работа с БД
+├── infrastructure/         # TypeORM entities, repositories, mappers
 ├── dto/                    # class-validator DTO для HTTP
-├── models/                 # Mongoose-схемы, input/output-модели
+├── models/                 # domain-модели, input/output для слоя данных
 ├── guards/ / strategies/   # при необходимости (auth)
 ├── decorators/             # декораторы, специфичные для модуля
 └── <feature>.module.ts
@@ -84,7 +84,7 @@ modules/<feature>/
 | `like`                      | Reactions (subdomain, без HTTP)                                        |
 | `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`) |
 | `email`                     | Отправка писем (SMTP, шаблоны)                                         |
-| `database`                  | Регистрация Mongoose-моделей                                           |
+| `database`                  | TypeORM, миграции, seed для локальной разработки                       |
 | `testing`                   | Служебные эндпoинты для e2e                                            |
 
 ### Направление зависимостей
@@ -111,7 +111,7 @@ main.ts → app/ → modules/ → shared/
 | **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                                               |
 | **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                                                            |
 | **Domain service**  | Переиспользуемая доменная/техническая логика без привязки к HTTP (например `JwtTokenService`, `PasswordHasherService`, `CommentOwnerCheckerService`) |
-| **Repository**      | Доступ к данным (MongoDB)                                                                                                                            |
+| **Repository**      | Доступ к данным (PostgreSQL через TypeORM)                                                                                                           |
 
 **Поток запроса:**
 
@@ -189,14 +189,91 @@ Path alias `@/*` → `src/*` настроен в `tsconfig.json`. При сбо�
 ## Требования
 
 - **Node.js 24.x** (см. `engines` в `package.json`)
-- **MongoDB** — для запуска приложения и e2e-тестов
+- **Docker** — для локального PostgreSQL (см. `docker-compose.yml`)
 - **Yarn 1.x** (см. `packageManager` в `package.json`)
+
+Для production/staging БД размещается во внешнем сервисе (например, [Neon](https://neon.tech/)); credentials задаются через env (Vercel Dashboard и т.п.).
 
 ## Установка
 
 ```bash
 yarn install
 ```
+
+## База данных (PostgreSQL)
+
+### Окружения
+
+| Окружение      | `NODE_ENV`               | Где PostgreSQL            | База данных           |
+| -------------- | ------------------------ | ------------------------- | --------------------- |
+| Разработка     | `development`            | Docker (`localhost:5433`) | `nest_incubator`      |
+| E2e / CI       | `testing`                | Docker (`localhost:5433`) | `nest_incubator_test` |
+| Staging / Prod | `staging` / `production` | Neon                      | из env (`DB_NAME`)    |
+
+Локально dev и test используют **один контейнер**, но **разные базы** — e2e не затирают dev-данные.
+
+Docker поднимается на порту **5433**, чтобы не конфликтовать с локально установленным PostgreSQL на `5432`.
+
+### Быстрый старт (локально)
+
+```bash
+# 1. Поднять PostgreSQL, накатить миграции dev + test
+yarn db:setup
+
+# 2. (опционально) Заполнить dev-БД тестовыми данными
+yarn db:seed
+
+# 3. Запустить приложение
+yarn start:dev
+```
+
+### Миграции
+
+Схема БД управляется **только миграциями** (`synchronize: false`). Миграции не накатываются автоматически при старте приложения.
+
+| Скрипт                           | Описание                                                        |
+| -------------------------------- | --------------------------------------------------------------- |
+| `yarn migration:run`             | Применить миграции (по умолчанию `NODE_ENV=development`)        |
+| `yarn migration:revert`          | Откатить последнюю миграцию                                     |
+| `yarn migration:generate <Name>` | Сгенерировать файл миграции по diff entities ↔ текущая схема БД |
+| `yarn db:migrate`                | Алиас для `migration:run` (dev-БД)                              |
+| `yarn db:migrate:test`           | Миграции для test-БД (`NODE_ENV=testing`)                       |
+
+**Production (Neon):**
+
+```bash
+yarn cross-env NODE_ENV=production yarn migration:run
+```
+
+Credentials для prod храните в `src/env/.env.production.local` (локально) или в Vercel Dashboard. Обязательно: `POSTGRES_SSL=true`.
+
+`migration:generate` **не пишет данные в БД** — только создаёт TypeScript-файл. Чтобы применить изменения схемы, выполните `yarn migration:run`.
+
+### Docker и seed
+
+| Скрипт          | Описание                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `yarn db:up`    | `docker compose up -d` — запустить PostgreSQL                                                  |
+| `yarn db:down`  | Остановить контейнер                                                                           |
+| `yarn db:reset` | Удалить volume и поднять контейнер заново (чистая БД)                                          |
+| `yarn db:setup` | `db:up` + миграции dev + test                                                                  |
+| `yarn db:seed`  | Очистить dev-БД и создать дефолтные users/blogs/posts/comments (только `NODE_ENV=development`) |
+
+Фикстуры seed: `src/modules/database/seeds/fixtures/seed.constants.ts`.
+
+### Структура модуля `database`
+
+```
+modules/database/
+├── database.config.ts       # DatabaseConfig (POSTGRES_* из env)
+├── typeorm.config.ts        # TypeOrmModule.forRootAsync
+├── data-source.ts           # DataSource для CLI TypeORM
+├── migrations/              # SQL-миграции
+├── seeds/                   # seed для локальной разработки
+└── typeorm-entities.module.ts
+```
+
+Слой данных в feature-модулях: **entity** (TypeORM) → **mapper** → **domain model** → **repository**.
 
 ## Запуск
 
@@ -218,21 +295,32 @@ yarn build && yarn start:prod
 
 ## Скрипты
 
-| Скрипт          | Описание                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `build`         | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                                             |
-| `format`        | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                                       |
-| `start`         | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                                      |
-| `start:dev`     | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                                   |
-| `start:debug`   | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                                        |
-| `start:staging` | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                                  |
-| `start:prod`    | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                                    |
-| `lint`          | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                                        |
-| `test`          | Unit-тесты (Jest)                                                                                                  |
-| `test:watch`    | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                                     |
-| `test:cov`      | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                                 |
-| `test:debug`    | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                               |
-| `test:e2e`      | E2e-тесты (`test/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** доступная MongoDB (см. `src/env/.env.testing`) |
+| Скрипт                      | Описание                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `build`                     | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                               |
+| `format`                    | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                         |
+| `start`                     | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                        |
+| `start:dev`                 | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                     |
+| `start:debug`               | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                          |
+| `start:staging`             | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                    |
+| `start:prod`                | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                      |
+| `lint`                      | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                          |
+| `test`                      | Unit-тесты (Jest)                                                                                    |
+| `test:watch`                | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                       |
+| `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                   |
+| `test:debug`                | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                 |
+| `test:e2e`                  | E2e-тесты (`test/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** PostgreSQL (см. `yarn db:setup`) |
+| `typeorm`                   | CLI TypeORM с `data-source.ts`                                                                       |
+| `migration:run`             | Применить миграции                                                                                   |
+| `migration:revert`          | Откатить последнюю миграцию                                                                          |
+| `migration:generate <Name>` | Сгенерировать миграцию по diff entities и БД                                                         |
+| `db:up`                     | Запустить PostgreSQL в Docker                                                                        |
+| `db:down`                   | Остановить PostgreSQL в Docker                                                                       |
+| `db:reset`                  | Пересоздать Docker volume (чистая БД)                                                                |
+| `db:migrate`                | Миграции для dev-БД                                                                                  |
+| `db:migrate:test`           | Миграции для test-БД                                                                                 |
+| `db:setup`                  | `db:up` + `db:migrate` + `db:migrate:test`                                                           |
+| `db:seed`                   | Seed dev-БД дефолтными данными                                                                       |
 
 ## Конфигурация и settings
 
@@ -250,13 +338,13 @@ yarn build && yarn start:prod
 
 В прикладном коде **не используйте `process.env` и `ConfigService.get()`** — только типизированные `*Config`-классы с валидацией через `class-validator`:
 
-| Config-класс     | Модуль        | Переменные                                                     |
-| ---------------- | ------------- | -------------------------------------------------------------- |
-| `CoreConfig`     | `shared/core` | `PORT`, `NODE_ENV`                                             |
-| `DatabaseConfig` | `database`    | `MONGO_URI`, `DB_NAME`, `DB_TYPE`                              |
-| `AuthConfig`     | `auth`        | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD` |
-| `EmailConfig`    | `email`       | `NODEMAILER_*`, `MAIN_URL`                                     |
-| `SessionConfig`  | `session`     | `REFRESH_TOKEN_LIFE_TIME`                                      |
+| Config-класс     | Модуль        | Переменные                                                                                        |
+| ---------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| `CoreConfig`     | `shared/core` | `PORT`, `NODE_ENV`                                                                                |
+| `DatabaseConfig` | `database`    | `DB_NAME`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSL` |
+| `AuthConfig`     | `auth`        | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD`                                    |
+| `EmailConfig`    | `email`       | `NODEMAILER_*`, `MAIN_URL`                                                                        |
+| `SessionConfig`  | `session`     | `REFRESH_TOKEN_LIFE_TIME`                                                                         |
 
 `CoreModule` **не глобальный** — модуль, которому нужен `CoreConfig` или другой config, явно импортирует `CoreModule` / модуль-владелец config. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
 
@@ -282,10 +370,10 @@ this.authConfig.ACCESS_TOKEN_SECRET
 
 **Factory-классы:** некоторые config-классы не читают env напрямую, а потребляют другой `*Config`:
 
-| Factory-класс    | Использует       | Назначение                    |
-| ---------------- | ---------------- | ----------------------------- |
-| `MongooseConfig` | `DatabaseConfig` | `MongooseModule.forRootAsync` |
-| `MailerConfig`   | `EmailConfig`    | `MailerModule.forRootAsync`   |
+| Factory-класс   | Использует       | Назначение                   |
+| --------------- | ---------------- | ---------------------------- |
+| `TypeOrmConfig` | `DatabaseConfig` | `TypeOrmModule.forRootAsync` |
+| `MailerConfig`  | `EmailConfig`    | `MailerModule.forRootAsync`  |
 
 ### Создание нового *Config
 
@@ -314,6 +402,7 @@ this.authConfig.ACCESS_TOKEN_SECRET
 | `src/env/.env.development`       | да    | **Config + secrets (fake)** для локальной разработки                        |
 | `src/env/.env.testing`           | да    | **Config + secrets (fake)** для e2e; settings наследуются из production     |
 | `src/env/.env.development.local` | нет   | Локальные переопределения разработчика                                      |
+| `src/env/.env.production.local`  | нет   | Neon/prod credentials для локального `migration:run`                        |
 | `src/env/.env.testing.local`     | нет   | Локальные переопределения для e2e                                           |
 
 Файлы `src/env/.env.*.local` перечислены в `.gitignore` и **никогда не коммитятся**.
@@ -336,18 +425,27 @@ this.authConfig.ACCESS_TOKEN_SECRET
 ### Локальная разработка
 
 ```bash
+# Поднять БД и миграции
+yarn db:setup
+
+# (опционально) дефолтные данные
+yarn db:seed
+
 # Старт с src/env/.env.development (NODE_ENV=development)
 yarn start:dev
 
 # Переопределить только нужные ключи — создайте файл:
 # src/env/.env.development.local
-# MONGO_URI=mongodb://127.0.0.1:27018
+# POSTGRES_PORT=5434
 # PORT=5000
 ```
 
 ### E2e-тесты
 
 ```bash
+# PostgreSQL + миграции test-БД
+yarn db:setup
+
 # Читает src/env/.env.testing (+ .env.testing.local при наличии)
 yarn test:e2e
 ```
@@ -415,7 +513,7 @@ POST /auth/login
   → req.user = { userId }
   → LoginUseCase.execute({ userId, ip, userAgent })
       → JwtTokenService.signAccessAndRefreshToken(userId, deviceId)
-      → создание сессии в MongoDB (deviceId, lastActiveDate)
+      → создание сессии в PostgreSQL (deviceId, lastActiveDate)
   → refreshToken в httpOnly cookie
   → { accessToken } в теле ответа
 ```
@@ -436,7 +534,7 @@ Cookie `refreshToken`: `httpOnly`, `secure` только в production, `sameSit
 Access и refresh токены подписываются **разными секретами** (`ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET`):
 
 ```json
-{ "userId": "<mongoId>", "deviceId": "<uuid>", "lastActiveDate": "<ISO string>" }
+{ "userId": "<uuid>", "deviceId": "<uuid>", "lastActiveDate": "<ISO string>" }
 ```
 
 После успешной JWT-стратегии пользователь доступен через декоратор `@User()` (`req.user`). Для logout дополнительно используется `@RefreshTokenJwtPayload()` с полным payload refresh-токена (`userId`, `deviceId`, `lastActiveDate`).
@@ -481,7 +579,7 @@ Access и refresh токены подписываются **разными се�
 
 ## Testing module
 
-`DELETE /testing/all-data` (только при `NODE_ENV=testing`) очищает данные в MongoDB для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам.
+`DELETE /testing/all-data` (только при `NODE_ENV=testing`) очищает данные в PostgreSQL для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам.
 
 ## Лицензия
 

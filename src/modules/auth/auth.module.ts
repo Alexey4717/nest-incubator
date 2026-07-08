@@ -7,7 +7,6 @@ import { CoreModule } from '@/shared/core/core.module';
 
 import { DatabaseModule } from '@/modules/database/database.module';
 import { EmailModule } from '@/modules/email/email.module';
-import { SessionModule } from '@/modules/session/session.module';
 import { UserModule } from '@/modules/user/user.module';
 
 import { AuthController } from './api/auth.controller';
@@ -76,7 +75,6 @@ const authDomainServices = [JwtTokenService];
     AuthConfigModule,
     DatabaseModule,
     EmailModule,
-    SessionModule,
     forwardRef(() => UserModule),
     PassportModule.register({ defaultStrategy: 'jwt-access' }),
     JwtModule.registerAsync({

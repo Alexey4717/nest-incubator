@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { UserRepository } from '../../infrastructure/user.repository.mongodb';
-import { GetUserOutputModelFromMongoDB } from '../../models/GetUserOutputModel';
+import { UserRepository } from '../../infrastructure/user.repository';
+import { UserModel } from '../../models/user.model';
 import { UserFactoryService } from '../services/user-factory.service';
 
 type RegisterUserInput = {
@@ -13,16 +13,13 @@ type RegisterUserInput = {
 };
 
 @Injectable()
-export class RegisterUserUseCase implements IUseCase<
-  RegisterUserInput,
-  GetUserOutputModelFromMongoDB
-> {
+export class RegisterUserUseCase implements IUseCase<RegisterUserInput, UserModel> {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly userFactory: UserFactoryService,
   ) {}
 
-  async execute(input: RegisterUserInput): Promise<GetUserOutputModelFromMongoDB> {
+  async execute(input: RegisterUserInput): Promise<UserModel> {
     const { login, email, password } = input;
     const newUser = await this.userFactory.createNewUser({
       login,
@@ -31,6 +28,6 @@ export class RegisterUserUseCase implements IUseCase<
       isConfirmed: false,
     });
 
-    return this.userRepository.createUser({ ...newUser });
+    return this.userRepository.createUser(newUser);
   }
 }

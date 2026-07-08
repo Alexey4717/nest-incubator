@@ -4,7 +4,7 @@ import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { UpdatePostDto } from '../../dto/update-post.dto';
-import { PostRepository } from '../../infrastructure/post.repository.mongodb';
+import { PostRepository } from '../../infrastructure/post.repository';
 
 type UpdatePostInput = {
   id: string;

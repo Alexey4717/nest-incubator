@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionRepository } from '../../infrastructure/session.repository.mongodb';
-import { Session } from '../../models/session.schema';
+import { SessionRepository } from '../../infrastructure/session.repository';
+import { SessionModel } from '../../models/session.model';
 
 @Injectable()
-export class CreateSessionUseCase implements IUseCase<Session, Session> {
+export class CreateSessionUseCase implements IUseCase<SessionModel, SessionModel> {
   constructor(private readonly sessionRepository: SessionRepository) {}
 
-  execute(newSession: Session): Promise<Session> {
+  execute(newSession: SessionModel): Promise<SessionModel> {
     return this.sessionRepository.createNewSession(newSession);
   }
 }

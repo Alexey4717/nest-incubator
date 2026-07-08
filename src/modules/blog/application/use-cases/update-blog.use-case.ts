@@ -4,7 +4,7 @@ import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { UpdateBlogDto } from '../../dto/update-blog.dto';
-import { BlogRepository } from '../../infrastructure/blog.repository.mongodb';
+import { BlogRepository } from '../../infrastructure/blog.repository';
 
 type UpdateBlogInput = {
   id: string;

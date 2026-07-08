@@ -5,7 +5,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 
-import { BlogQueryRepository } from '../infrastructure/blog-query.repository.mongodb';
+import { BlogQueryRepository } from '../infrastructure/blog-query.repository';
 
 // TODO вероятно удалить этот валидатор, т.к. он не используется
 @ValidatorConstraint({ name: 'BlogExists', async: true })

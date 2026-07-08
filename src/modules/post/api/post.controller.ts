@@ -20,6 +20,7 @@ import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard'
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { CreateCommentInPostCommand } from '@/modules/comment/application/commands/create-comment-in-post.command';
+import { GetPostCommentsInputModel } from '@/modules/comment/models/GetPostCommentsInputModel';
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
 
@@ -69,7 +70,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getCommentsOfPost(
     @Param() params: { postId: string },
-    @Query() query: GetPostsInputModel,
+    @Query() query: GetPostCommentsInputModel,
     @CurrentUserId() currentUserId: string | null,
   ) {
     const resData = await this.queryBus.execute(
@@ -102,7 +103,7 @@ export class PostController {
     if (!user) throw new NotFoundException();
 
     const createdCommentInPost = await this.commandBus.execute(
-      new CreateCommentInPostCommand(params.postId, body.content, userId, user.accountData.login),
+      new CreateCommentInPostCommand(params.postId, body.content, userId, user.login),
     );
 
     if (!createdCommentInPost) throw new NotFoundException();
@@ -121,7 +122,7 @@ export class PostController {
     if (!user) throw new NotFoundException();
 
     const isPostUpdated = await this.commandBus.execute(
-      new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus, user.accountData.login),
+      new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus, user.login),
     );
 
     if (!isPostUpdated) throw new NotFoundException();

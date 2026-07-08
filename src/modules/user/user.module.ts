@@ -2,7 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { AuthModule } from '@/modules/auth/auth.module';
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
 import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
 import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
 
@@ -25,8 +24,8 @@ import { DeleteUserUseCase } from './application/use-cases/delete-user.use-case'
 import { FindUserByIdUseCase } from './application/use-cases/find-user-by-id.use-case';
 import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
-import { UserQueryRepository } from './infrastructure/user-query.repository.mongodb';
-import { UserRepository } from './infrastructure/user.repository.mongodb';
+import { UserQueryRepository } from './infrastructure/user-query.repository';
+import { UserRepository } from './infrastructure/user.repository';
 
 const userUseCases = [
   CreateUserUseCase,
@@ -52,7 +51,7 @@ const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredential
 const userDomainServices = [PasswordHasherService, UserFactoryService];
 
 @Module({
-  imports: [CqrsModule, MongooseModelsModule, forwardRef(() => AuthModule)],
+  imports: [CqrsModule, forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [
     UserRepository,

@@ -4,16 +4,15 @@ import { Paginator, SortDirections } from '@/shared/types/common';
 import { IUseCase } from '@/shared/types/use-case';
 import { normalizePaginationQuery } from '@/shared/utils/pagination';
 
-import { getMappedBlogViewModel } from '../../helpers';
-import { BlogQueryRepository } from '../../infrastructure/blog-query.repository.mongodb';
+import { BlogQueryRepository } from '../../infrastructure/blog-query.repository';
+import { BlogModel } from '../../models/blog.model';
 import { GetBlogsInputModel, SortBlogsBy } from '../../models/GetBlogsInputModel';
-import { BlogViewModel } from '../../types/view-models';
 
 @Injectable()
-export class GetBlogsUseCase implements IUseCase<GetBlogsInputModel, Paginator<BlogViewModel[]>> {
+export class GetBlogsUseCase implements IUseCase<GetBlogsInputModel, Paginator<BlogModel[]>> {
   constructor(private readonly blogQueryRepository: BlogQueryRepository) {}
 
-  async execute(input: GetBlogsInputModel): Promise<Paginator<BlogViewModel[]>> {
+  async execute(input: GetBlogsInputModel): Promise<Paginator<BlogModel[]>> {
     const { searchNameTerm, sortBy, sortDirection, pageNumber, pageSize } = input;
 
     const pagination = normalizePaginationQuery<SortBlogsBy>(
@@ -41,7 +40,7 @@ export class GetBlogsUseCase implements IUseCase<GetBlogsInputModel, Paginator<B
       page,
       pageSize: responsePageSize,
       totalCount,
-      items: items.map(getMappedBlogViewModel),
+      items,
     };
   }
 }

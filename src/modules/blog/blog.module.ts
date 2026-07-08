@@ -1,9 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { AuthModule } from '@/modules/auth/auth.module';
-import { MongooseModelsModule } from '@/modules/database/mongoose-models.module';
-import { PostModule } from '@/modules/post/post.module';
 
 import { BlogController } from './api/blog.controller';
 import { CreateBlogHandler } from './application/commands/create-blog.command';
@@ -20,8 +18,8 @@ import { GetBlogByIdUseCase } from './application/use-cases/get-blog-by-id.use-c
 import { GetBlogPostsUseCase } from './application/use-cases/get-blog-posts.use-case';
 import { GetBlogsUseCase } from './application/use-cases/get-blogs.use-case';
 import { UpdateBlogUseCase } from './application/use-cases/update-blog.use-case';
-import { BlogQueryRepository } from './infrastructure/blog-query.repository.mongodb';
-import { BlogRepository } from './infrastructure/blog.repository.mongodb';
+import { BlogQueryRepository } from './infrastructure/blog-query.repository';
+import { BlogRepository } from './infrastructure/blog.repository';
 
 const blogUseCases = [
   GetBlogsUseCase,
@@ -42,8 +40,9 @@ const blogCommandHandlers = [
 
 const blogQueryHandlers = [GetBlogsHandler, GetBlogByIdHandler, GetBlogPostsHandler];
 
+@Global()
 @Module({
-  imports: [CqrsModule, MongooseModelsModule, AuthModule, PostModule],
+  imports: [CqrsModule, AuthModule],
   controllers: [BlogController],
   providers: [
     BlogRepository,
@@ -52,5 +51,6 @@ const blogQueryHandlers = [GetBlogsHandler, GetBlogByIdHandler, GetBlogPostsHand
     ...blogCommandHandlers,
     ...blogQueryHandlers,
   ],
+  exports: [BlogQueryRepository, CreateBlogUseCase, CreatePostInBlogUseCase],
 })
 export class BlogModule {}

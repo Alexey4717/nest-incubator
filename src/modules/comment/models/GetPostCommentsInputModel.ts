@@ -1,32 +1,12 @@
 import { SortDirections } from '@/shared/types/common';
 
-import { GetCommentOutputModel } from './GetCommentOutputModel';
+import { CommentModel } from './comment.model';
 
-export type SortPostCommentsBy = keyof GetCommentOutputModel;
+export type SortPostCommentsBy = keyof Pick<CommentModel, 'content' | 'createdAt'>;
 
-export type GetPostsInputModel = {
-  /**
-   * Set sortBy for sorting post comments by field in query-params. Default value: createdAt.
-   */
-  sortBy: SortPostCommentsBy;
-
-  /**
-   * Set sortDirection for sorting post comments by direction in query-params. Default value: desc.
-   */
-  sortDirection: SortDirections;
-
-  /**
-   * PageNumber is number of portions that should be returned. Default value : 1.
-   */
-  pageNumber: number;
-
-  /**
-   * PageSize is portions size that should be returned. Default value : 10.
-   */
-  pageSize: number;
-
-  /**
-   * Id of post that contain comments.
-   */
-  postId: string;
+export type GetPostCommentsInputModel = {
+  sortBy?: SortPostCommentsBy;
+  sortDirection?: SortDirections;
+  pageNumber?: number;
+  pageSize?: number;
 };

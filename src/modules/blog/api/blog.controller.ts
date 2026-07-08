@@ -18,8 +18,8 @@ import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
-import { getMappedPostViewModel } from '@/modules/post/helpers';
 import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
+import { PostViewMapper } from '@/modules/post/post.view-mapper';
 
 import { CreateBlogCommand } from '../application/commands/create-blog.command';
 import { CreatePostInBlogCommand } from '../application/commands/create-post-in-blog.command';
@@ -31,7 +31,6 @@ import { GetBlogsQuery } from '../application/queries/get-blogs.query';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
-import { getMappedBlogViewModel } from '../helpers';
 import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
 @Controller('blogs')
@@ -39,6 +38,7 @@ export class BlogController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly postViewMapper: PostViewMapper,
   ) {}
 
   @Get()
@@ -76,8 +76,7 @@ export class BlogController {
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   async createBlog(@Body() body: CreateBlogDTO) {
-    const createdBlog = await this.commandBus.execute(new CreateBlogCommand(body));
-    return getMappedBlogViewModel(createdBlog);
+    return this.commandBus.execute(new CreateBlogCommand(body));
   }
 
   @UseGuards(BasicAuthGuard)
@@ -90,7 +89,7 @@ export class BlogController {
 
     if (!createdPostInBlog) throw new NotFoundException();
 
-    return getMappedPostViewModel(createdPostInBlog);
+    return this.postViewMapper.toPostViewModel(createdPostInBlog);
   }
 
   @UseGuards(BasicAuthGuard)

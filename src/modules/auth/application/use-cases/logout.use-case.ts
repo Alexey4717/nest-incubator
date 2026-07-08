@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/shared/types/use-case';
 
-import { SessionRepository } from '@/modules/session/infrastructure/session.repository.mongodb';
+import { SessionRepository } from '@/modules/session/infrastructure/session.repository';
 
 import { IRefreshTokenJwtPayload } from '../../models/refresh-token-jwt-payload.model';
 

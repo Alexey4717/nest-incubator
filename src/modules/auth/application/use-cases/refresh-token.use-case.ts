@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
-import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository.mongodb';
+import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository';
 import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
 
 import { AuthTokensViewModel } from '../../types/view-models';

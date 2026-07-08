@@ -1,0 +1,24 @@
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+
+import { LikeStatus } from '@/modules/like/types/like-status';
+
+import { CommentEntity } from './comment.entity';
+
+@Entity('comment_reactions')
+export class CommentReactionEntity {
+  @PrimaryColumn({ name: 'comment_id', type: 'uuid' })
+  commentId: string;
+
+  @PrimaryColumn({ name: 'user_id', type: 'varchar' })
+  userId: string;
+
+  @Column({ name: 'like_status', type: 'varchar' })
+  likeStatus: LikeStatus;
+
+  @Column({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
+
+  @ManyToOne(() => CommentEntity, (comment) => comment.reactions, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'comment_id' })
+  comment: CommentEntity;
+}
