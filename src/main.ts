@@ -6,7 +6,7 @@ import './register-paths';
 
 import { CoreConfig } from '@/shared/core/core.config';
 
-import { appSettings } from '@/app/app.settings';
+import { appSettings, setupClassValidatorContainer } from '@/app/app.settings';
 import { initAppModule } from '@/app/init-app-module';
 
 async function downloadSwaggerStaticIfDev(coreConfig: CoreConfig, port: number) {
@@ -36,6 +36,8 @@ async function bootstrap() {
   const dynamicAppModule = await initAppModule();
   const app = await NestFactory.create(dynamicAppModule);
   appSettings(app);
+  await app.init();
+  setupClassValidatorContainer(app);
 
   const coreConfig = app.get(CoreConfig);
   const port = coreConfig.PORT;

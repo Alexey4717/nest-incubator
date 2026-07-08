@@ -20,6 +20,7 @@ import { GetBlogsUseCase } from './application/use-cases/get-blogs.use-case';
 import { UpdateBlogUseCase } from './application/use-cases/update-blog.use-case';
 import { BlogQueryRepository } from './infrastructure/blog-query.repository';
 import { BlogRepository } from './infrastructure/blog.repository';
+import { BlogExistsValidator } from './validators/blog-exists.validator';
 
 const blogUseCases = [
   GetBlogsUseCase,
@@ -47,6 +48,7 @@ const blogQueryHandlers = [GetBlogsHandler, GetBlogByIdHandler, GetBlogPostsHand
   providers: [
     BlogRepository,
     BlogQueryRepository,
+    BlogExistsValidator,
     ...blogUseCases,
     ...blogCommandHandlers,
     ...blogQueryHandlers,

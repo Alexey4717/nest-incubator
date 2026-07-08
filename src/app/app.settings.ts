@@ -1,9 +1,24 @@
 import { BadRequestException, INestApplication, ValidationPipe } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
 import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
+
+/** Подключает class-validator к Nest DI; вызывать после app.init(). */
+export function setupClassValidatorContainer(app: INestApplication): void {
+  const moduleRef = app.get(ModuleRef);
+  useContainer(
+    {
+      get<T>(type: new (...args: unknown[]) => T): T {
+        const instance = moduleRef.get(type, { strict: false });
+        return instance ?? new type();
+      },
+    },
+    { fallback: true, fallbackOnErrors: true },
+  );
+}
 
 /** Глобальная настройка HTTP-приложения (pipes, фильтры, Swagger, CORS); вызывается из main и e2e. */
 export function appSettings(app: INestApplication): void {
@@ -14,8 +29,6 @@ export function appSettings(app: INestApplication): void {
 
   app.use(cookieParser());
 
-  // AppModule — dynamic root; app.select(AppModule) недоступен, используем контекст приложения
-  useContainer(app, { fallbackOnErrors: true });
   app.enableCors();
 
   app.useGlobalPipes(

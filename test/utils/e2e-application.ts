@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { appSettings } from '../../src/app/app.settings';
+import { appSettings, setupClassValidatorContainer } from '../../src/app/app.settings';
 import { initAppModule } from '../../src/app/init-app-module';
 import { EmailService } from '../../src/modules/email/email.service';
 
@@ -32,5 +32,6 @@ export async function createE2eApplication(): Promise<INestApplication> {
   const app = moduleFixture.createNestApplication();
   appSettings(app);
   await app.init();
+  setupClassValidatorContainer(app);
   return app;
 }
