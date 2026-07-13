@@ -41,6 +41,9 @@ export class BlogRepository {
 
   async updateBlog({ id, input }: UpdateBlogArgs): Promise<boolean> {
     try {
+      const existingBlog = await this.blogsRepository.findOne({ where: { id } });
+      if (!existingBlog) return false;
+
       const blogWithSameName = await this.blogsRepository
         .createQueryBuilder('blog')
         .where('blog.name = :name', { name: input.name })

@@ -8,8 +8,6 @@ export class DropBlogsNameUniqueConstraint1783494000000 implements MigrationInte
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "blogs" ADD CONSTRAINT "UQ_blogs_name" UNIQUE ("name")`,
-    );
+    await queryRunner.query(`ALTER TABLE "blogs" ADD CONSTRAINT "UQ_blogs_name" UNIQUE ("name")`);
   }
 }

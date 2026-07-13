@@ -458,6 +458,15 @@ window.onload = function() {
         }
       },
       "/sa/blogs": {
+        "get": {
+          "operationId": "SaBlogController_getBlogs",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        },
         "post": {
           "operationId": "SaBlogController_createBlog",
           "parameters": [],
