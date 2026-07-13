@@ -1,0 +1,42 @@
+name: Migrate Production DB
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/modules/database/migrations/**'
+      - 'src/modules/database/data-source.ts'
+      - 'src/modules/database/postgres-options.utility.ts'
+      - '.github/workflows/migrate-production.yml'
+
+jobs:
+  migrate:
+    name: Apply TypeORM migrations (Neon)
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          NODE_ENV: production
+          DB_NAME: ${{ secrets.DB_NAME }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_SSL: 'true'
+        run: yarn migration:run

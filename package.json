@@ -11,6 +11,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build && tsc-alias -p tsconfig.build.json",
+    "vercel-build": "cross-env NODE_ENV=production yarn migration:run && yarn build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "cross-env NODE_ENV=development nest start --watch",
@@ -32,6 +33,7 @@
     "db:reset": "docker compose down -v && docker compose up -d",
     "db:migrate": "yarn migration:run",
     "db:migrate:test": "cross-env NODE_ENV=testing yarn migration:run",
+    "db:migrate:prod": "cross-env NODE_ENV=production yarn migration:run",
     "db:setup": "yarn db:up && yarn db:migrate && yarn db:migrate:test",
     "db:seed": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/seed.ts"
   },

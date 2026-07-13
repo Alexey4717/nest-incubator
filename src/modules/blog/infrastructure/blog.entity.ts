@@ -5,7 +5,7 @@ export class BlogEntity {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', unique: true })
+  @Column({ type: 'varchar' })
   name: string;
 
   @Column({ name: 'website_url', type: 'varchar' })

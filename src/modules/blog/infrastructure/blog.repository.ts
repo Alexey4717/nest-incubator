@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { PostRepository } from '@/modules/post/infrastructure/post.repository';
 import { PostModel } from '@/modules/post/models/post.model';
@@ -29,39 +29,9 @@ export class BlogRepository {
       const saved = await this.blogsRepository.save(entity);
       return toDomain(saved);
     } catch (error: unknown) {
-      if (error instanceof QueryFailedError) {
-        const pgError = error.driverError as {
-          code?: string;
-          detail?: string;
-          constraint?: string;
-        };
-        if (pgError?.code === '23505') {
-          const errs = this.uniqueViolationToErrorsMessages(
-            pgError.detail ?? '',
-            pgError.constraint ?? '',
-          );
-          throw new BadRequestException({
-            message: errs,
-            error: 'Bad Request',
-          });
-        }
-      }
       console.log(`blogsRepository.createBlog error is occurred: ${error}`);
       return null;
     }
-  }
-
-  private uniqueViolationToErrorsMessages(
-    detail: string,
-    constraint: string,
-  ): { message: string; field: string }[] {
-    const normalized = `${detail} ${constraint}`.toLowerCase();
-
-    if (normalized.includes('name')) {
-      return [{ message: 'This name already exists', field: 'name' }];
-    }
-
-    return [{ message: 'Duplicate key constraint violated', field: 'name' }];
   }
 
   async createPostInBlog(newPost: PostModel): Promise<boolean> {
@@ -71,9 +41,25 @@ export class BlogRepository {
 
   async updateBlog({ id, input }: UpdateBlogArgs): Promise<boolean> {
     try {
+      const blogWithSameName = await this.blogsRepository
+        .createQueryBuilder('blog')
+        .where('blog.name = :name', { name: input.name })
+        .andWhere('blog.id != :id', { id })
+        .getOne();
+
+      if (blogWithSameName) {
+        throw new BadRequestException({
+          message: [{ message: 'This name already exists', field: 'name' }],
+          error: 'Bad Request',
+        });
+      }
+
       const result = await this.blogsRepository.update({ id }, input);
       return (result.affected ?? 0) === 1;
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       console.log(`blogsRepository.updateBlog error is occurred: ${error}`);
       return false;
     }
