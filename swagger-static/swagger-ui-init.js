@@ -33,7 +33,7 @@ window.onload = function() {
           }
         }
       },
-      "/users": {
+      "/sa/users": {
         "get": {
           "operationId": "UserController_getUsers",
           "parameters": [],
@@ -63,7 +63,7 @@ window.onload = function() {
           }
         }
       },
-      "/users/{id}": {
+      "/sa/users/{id}": {
         "delete": {
           "operationId": "UserController_deleteUser",
           "parameters": [],
@@ -433,9 +433,33 @@ window.onload = function() {
               "description": ""
             }
           }
-        },
+        }
+      },
+      "/blogs/{blogId}/posts": {
+        "get": {
+          "operationId": "BlogController_getPostsOfBlog",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/blogs/{id}": {
+        "get": {
+          "operationId": "BlogController_getBlog",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/sa/blogs": {
         "post": {
-          "operationId": "BlogController_createBlog",
+          "operationId": "SaBlogController_createBlog",
           "parameters": [],
           "requestBody": {
             "required": true,
@@ -454,48 +478,9 @@ window.onload = function() {
           }
         }
       },
-      "/blogs/{blogId}/posts": {
-        "get": {
-          "operationId": "BlogController_getPostsOfBlog",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
-        "post": {
-          "operationId": "BlogController_createPostInBlog",
-          "parameters": [],
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostInBlogDTO"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": ""
-            }
-          }
-        }
-      },
-      "/blogs/{id}": {
-        "get": {
-          "operationId": "BlogController_getBlog",
-          "parameters": [],
-          "responses": {
-            "200": {
-              "description": ""
-            }
-          }
-        },
+      "/sa/blogs/{id}": {
         "put": {
-          "operationId": "BlogController_updateBlog",
+          "operationId": "SaBlogController_updateBlog",
           "parameters": [],
           "requestBody": {
             "required": true,
@@ -514,7 +499,58 @@ window.onload = function() {
           }
         },
         "delete": {
-          "operationId": "BlogController_deleteBlog",
+          "operationId": "SaBlogController_deleteBlog",
+          "parameters": [],
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/sa/blogs/{blogId}/posts": {
+        "post": {
+          "operationId": "SaBlogController_createPostInBlog",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostInBlogDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          }
+        }
+      },
+      "/sa/blogs/{blogId}/posts/{postId}": {
+        "put": {
+          "operationId": "SaBlogController_updatePost",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostInBlogDTO"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": ""
+            }
+          }
+        },
+        "delete": {
+          "operationId": "SaBlogController_deletePost",
           "parameters": [],
           "responses": {
             "204": {
@@ -645,11 +681,11 @@ window.onload = function() {
           "type": "object",
           "properties": {}
         },
-        "CreatePostInBlogDTO": {
+        "UpdateBlogDto": {
           "type": "object",
           "properties": {}
         },
-        "UpdateBlogDto": {
+        "CreatePostInBlogDTO": {
           "type": "object",
           "properties": {}
         }

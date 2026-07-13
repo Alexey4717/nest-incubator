@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from '@/modules/auth/auth.module';
 
 import { BlogController } from './api/blog.controller';
+import { SaBlogController } from './api/sa-blog.controller';
 import { CreateBlogHandler } from './application/commands/create-blog.command';
 import { CreatePostInBlogHandler } from './application/commands/create-post-in-blog.command';
 import { DeleteBlogHandler } from './application/commands/delete-blog.command';
@@ -44,7 +45,7 @@ const blogQueryHandlers = [GetBlogsHandler, GetBlogByIdHandler, GetBlogPostsHand
 @Global()
 @Module({
   imports: [CqrsModule, AuthModule],
-  controllers: [BlogController],
+  controllers: [BlogController, SaBlogController],
   providers: [
     BlogRepository,
     BlogQueryRepository,

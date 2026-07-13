@@ -1,45 +1,28 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
   NotFoundException,
   Param,
-  Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { QueryBus } from '@nestjs/cqrs';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
 
-import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
-import { PostViewMapper } from '@/modules/post/post.view-mapper';
 
-import { CreateBlogCommand } from '../application/commands/create-blog.command';
-import { CreatePostInBlogCommand } from '../application/commands/create-post-in-blog.command';
-import { DeleteBlogCommand } from '../application/commands/delete-blog.command';
-import { UpdateBlogCommand } from '../application/commands/update-blog.command';
 import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query';
 import { GetBlogPostsQuery } from '../application/queries/get-blog-posts.query';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query';
-import { CreateBlogDTO } from '../dto/create-blog.dto';
-import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
-import { UpdateBlogDto } from '../dto/update-blog.dto';
 import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
 @Controller('blogs')
 export class BlogController {
-  constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
-    private readonly postViewMapper: PostViewMapper,
-  ) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
@@ -70,45 +53,5 @@ export class BlogController {
     const resData = await this.queryBus.execute(new GetBlogByIdQuery(params.id));
     if (!resData) throw new NotFoundException();
     return resData;
-  }
-
-  @UseGuards(BasicAuthGuard)
-  @Post()
-  @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createBlog(@Body() body: CreateBlogDTO) {
-    return this.commandBus.execute(new CreateBlogCommand(body));
-  }
-
-  @UseGuards(BasicAuthGuard)
-  @Post(':blogId/posts')
-  @HttpCode(constants.HTTP_STATUS_CREATED)
-  async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
-    const createdPostInBlog = await this.commandBus.execute(
-      new CreatePostInBlogCommand(params.blogId, body),
-    );
-
-    if (!createdPostInBlog) throw new NotFoundException();
-
-    return this.postViewMapper.toPostViewModel(createdPostInBlog);
-  }
-
-  @UseGuards(BasicAuthGuard)
-  @Put(':id')
-  @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
-  async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
-    const isBlogUpdated = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
-
-    if (!isBlogUpdated) throw new NotFoundException();
-
-    return isBlogUpdated;
-  }
-
-  @UseGuards(BasicAuthGuard)
-  @Delete(':id')
-  @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
-  async deleteBlog(@Param() params: { id: string }) {
-    const isBlogDeleted = await this.commandBus.execute(new DeleteBlogCommand(params.id));
-    if (!isBlogDeleted) throw new NotFoundException();
-    return isBlogDeleted;
   }
 }
