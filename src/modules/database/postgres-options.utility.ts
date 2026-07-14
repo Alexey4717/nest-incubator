@@ -15,7 +15,12 @@ export function buildPostgresConnectionOptions(config: {
   password: string;
   database: string;
   ssl?: string | boolean;
+  poolMax?: number;
+  connectionTimeoutMs?: number;
 }) {
+  const poolMax = config.poolMax ?? 10;
+  const connectionTimeoutMs = config.connectionTimeoutMs ?? 5000;
+
   return {
     type: 'postgres' as const,
     host: config.host,
@@ -24,5 +29,10 @@ export function buildPostgresConnectionOptions(config: {
     password: config.password,
     database: config.database,
     ssl: resolvePostgresSsl(config.ssl),
+    extra: {
+      max: poolMax,
+      connectionTimeoutMillis: connectionTimeoutMs,
+      idleTimeoutMillis: 30_000,
+    },
   };
 }

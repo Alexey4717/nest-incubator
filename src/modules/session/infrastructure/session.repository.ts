@@ -22,12 +22,19 @@ export class SessionRepository {
   async updateSessionAfterRefreshToken(
     userId: string,
     deviceId: string,
+    lastActiveDate: string,
     newLastActiveDate: string,
-  ) {
-    return this.sessionsRepository.update(
-      { userId, deviceId },
+  ): Promise<boolean> {
+    const result = await this.sessionsRepository.update(
+      {
+        userId,
+        deviceId,
+        lastActiveDate: new Date(lastActiveDate),
+      },
       { lastActiveDate: new Date(newLastActiveDate) },
     );
+
+    return (result.affected ?? 0) === 1;
   }
 
   async deleteOneSessionByUserAndDeviceIdAndDate(

@@ -18,6 +18,8 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
   constructor(private readonly databaseConfig: DatabaseConfig) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    const poolMax = process.env.NODE_ENV === 'production' ? 1 : 10;
+
     return {
       ...buildPostgresConnectionOptions({
         host: this.databaseConfig.POSTGRES_HOST,
@@ -26,6 +28,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
         password: this.databaseConfig.POSTGRES_PASSWORD,
         database: this.databaseConfig.DB_NAME,
         ssl: this.databaseConfig.POSTGRES_SSL,
+        poolMax,
       }),
       entities: [
         UserEntity,

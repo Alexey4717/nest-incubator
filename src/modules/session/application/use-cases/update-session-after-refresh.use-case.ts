@@ -7,24 +7,27 @@ import { SessionRepository } from '../../infrastructure/session.repository';
 type UpdateSessionAfterRefreshInput = {
   userId: string;
   deviceId: string;
+  lastActiveDate: string;
   newLastActiveDate: string;
 };
 
 @Injectable()
 export class UpdateSessionAfterRefreshUseCase implements IUseCase<
   UpdateSessionAfterRefreshInput,
-  void
+  boolean
 > {
   constructor(private readonly sessionRepository: SessionRepository) {}
 
-  async execute({
+  execute({
     userId,
     deviceId,
+    lastActiveDate,
     newLastActiveDate,
-  }: UpdateSessionAfterRefreshInput): Promise<void> {
-    await this.sessionRepository.updateSessionAfterRefreshToken(
+  }: UpdateSessionAfterRefreshInput): Promise<boolean> {
+    return this.sessionRepository.updateSessionAfterRefreshToken(
       userId,
       deviceId,
+      lastActiveDate,
       newLastActiveDate,
     );
   }
