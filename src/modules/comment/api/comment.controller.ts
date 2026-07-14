@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
@@ -27,6 +28,7 @@ import { UpdateCommentDTO } from '../dto/update-comment.dto';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
 import { CommentManageStatuses } from '../types/types';
 
+@SkipThrottle()
 @Controller('comments')
 export class CommentController {
   constructor(

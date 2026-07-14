@@ -4,7 +4,6 @@ import { IUseCase } from '@/shared/types/use-case';
 
 import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
 import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository';
-import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
 
 import { AuthTokensViewModel } from '../../types/view-models';
 import { JwtTokenService } from '../services/jwt-token.service';
@@ -13,7 +12,6 @@ import { JwtTokenService } from '../services/jwt-token.service';
 export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel | null> {
   constructor(
     private readonly jwtTokenService: JwtTokenService,
-    private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly sessionQueryRepository: SessionQueryRepository,
     private readonly updateSessionAfterRefreshUseCase: UpdateSessionAfterRefreshUseCase,
   ) {}
@@ -25,8 +23,6 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
     const userId = jwtPayload.userId;
     const deviceId = jwtPayload.deviceId;
     const lastActiveDate = jwtPayload.lastActiveDate;
-    const user = await this.findUserByIdUseCase.execute(userId);
-    if (!user) return null;
 
     const device = await this.sessionQueryRepository.findOneByDeviceAndUserIdAndDate(
       deviceId,

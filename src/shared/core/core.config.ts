@@ -38,10 +38,7 @@ export class CoreConfig {
         PORT: process.env.PORT || 4000,
         env: process.env.NODE_ENV || Environments.Development,
         includeTestingModule: convertToBoolean(process.env.INCLUDE_TESTING_MODULE),
-        ipRestrictionEnabled:
-          process.env.IP_RESTRICTION_ENABLED === undefined
-            ? true
-            : convertToBoolean(process.env.IP_RESTRICTION_ENABLED),
+        ipRestrictionEnabled: convertToBoolean(process.env.IP_RESTRICTION_ENABLED ?? 'false'),
       },
       CoreEnvironmentVariables,
     );

@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
@@ -37,6 +38,7 @@ import { UpdatePostDto } from '../dto/update-post.dto';
 import { GetPostInputModel } from '../models/GetPostInputModel';
 import { GetPostsInputModel } from '../models/GetPostsInputModel';
 
+@SkipThrottle()
 @Controller('posts')
 export class PostController {
   constructor(
@@ -118,11 +120,8 @@ export class PostController {
     @Body() body: LikeInputDto,
     @CurrentUserId() userId: string,
   ) {
-    const user = await this.findUserByIdUseCase.execute(userId);
-    if (!user) throw new NotFoundException();
-
     const isPostUpdated = await this.commandBus.execute(
-      new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus, user.login),
+      new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus),
     );
 
     if (!isPostUpdated) throw new NotFoundException();

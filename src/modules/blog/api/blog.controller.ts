@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
@@ -20,6 +21,7 @@ import { GetBlogPostsQuery } from '../application/queries/get-blog-posts.query';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query';
 import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
+@SkipThrottle()
 @Controller('blogs')
 export class BlogController {
   constructor(private readonly queryBus: QueryBus) {}

@@ -4,13 +4,14 @@ import { Repository } from 'typeorm';
 
 import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
 import { LikeStatus } from '@/modules/like/types/like-status';
+import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
 
 import { PostModel } from '../models/post.model';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostQueryRepository } from './post-query.repository';
 import { PostReactionEntity } from './post-reaction.entity';
 import { PostEntity } from './post.entity';
-import { toDomain, toOrm } from './post.mapper';
+import { reactionToDomain, toDomain, toOrm } from './post.mapper';
 
 export interface UpdatePostArgs {
   id: string;
@@ -20,7 +21,6 @@ export interface UpdatePostArgs {
 export interface UpdateLikeStatusPostArgs {
   postId: string;
   userId: string;
-  userLogin: string;
   likeStatus: LikeStatus;
 }
 
@@ -33,6 +33,7 @@ export class PostRepository {
     private readonly postReactionsRepository: Repository<PostReactionEntity>,
     private readonly postQueryRepository: PostQueryRepository,
     private readonly reactionUpdateService: ReactionUpdateService,
+    private readonly userQueryRepository: UserQueryRepository,
   ) {}
 
   async createPost(newPost: PostModel): Promise<PostModel | null> {
@@ -59,19 +60,35 @@ export class PostRepository {
   async updatePostLikeStatus({
     postId,
     userId,
-    userLogin,
     likeStatus,
   }: UpdateLikeStatusPostArgs): Promise<boolean> {
     try {
-      const foundPost = await this.postQueryRepository.findPostById(postId);
-      if (!foundPost) return false;
+      const postExists = await this.postsRepository.exists({ where: { id: postId } });
+      if (!postExists) return false;
 
-      const plan = this.reactionUpdateService.planReactionUpdate({
-        reactions: foundPost.reactions ?? [],
+      const existingReactionEntity = await this.postReactionsRepository.findOne({
+        where: { postId, userId },
+      });
+      const reactions = existingReactionEntity ? [reactionToDomain(existingReactionEntity)] : [];
+
+      let plan = this.reactionUpdateService.planReactionUpdate({
+        reactions,
         userId,
         likeStatus,
-        userLogin,
       });
+
+      let userLogin: string | null = null;
+      if (plan.action === 'push' || plan.action === 'update') {
+        userLogin = await this.userQueryRepository.findUserLoginById(userId);
+        if (!userLogin) return false;
+
+        plan = this.reactionUpdateService.planReactionUpdate({
+          reactions,
+          userId,
+          likeStatus,
+          userLogin,
+        });
+      }
 
       if (plan.action === 'noop') return true;
 
@@ -79,7 +96,7 @@ export class PostRepository {
         const reaction = new PostReactionEntity();
         reaction.postId = postId;
         reaction.userId = plan.reaction.userId;
-        reaction.userLogin = plan.reaction.userLogin ?? userLogin;
+        reaction.userLogin = plan.reaction.userLogin ?? userLogin ?? '';
         reaction.likeStatus = plan.reaction.likeStatus;
         reaction.createdAt = new Date(plan.reaction.createdAt);
         await this.postReactionsRepository.save(reaction);
@@ -99,7 +116,7 @@ export class PostRepository {
         {
           likeStatus: plan.likeStatus,
           createdAt: new Date(plan.createdAt),
-          userLogin,
+          userLogin: userLogin ?? '',
         },
       );
       return (result.affected ?? 0) === 1;

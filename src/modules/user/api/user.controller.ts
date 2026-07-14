@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -23,6 +24,7 @@ import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
 import { GetUsersInputModel } from '../models/GetUsersInputModel';
 import { toUserViewModel } from '../utils/user.view-mapper';
 
+@SkipThrottle()
 @UseGuards(BasicAuthGuard)
 @Controller('sa/users')
 export class UserController {

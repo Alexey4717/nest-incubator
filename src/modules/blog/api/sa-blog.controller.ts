@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -32,6 +33,7 @@ import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
 import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
+@SkipThrottle()
 @UseGuards(BasicAuthGuard)
 @Controller('sa/blogs')
 export class SaBlogController {

@@ -74,6 +74,14 @@ export class UserQueryRepository {
     return entity ? toDomain(entity) : null;
   }
 
+  async findUserLoginById(id: string): Promise<string | null> {
+    const entity = await this.usersRepository.findOne({
+      where: { id },
+      select: { login: true },
+    });
+    return entity?.login ?? null;
+  }
+
   async findUserByLogin(login: string): Promise<UserModel | null> {
     const entity = await this.usersRepository.findOne({ where: { login } });
     return entity ? toDomain(entity) : null;
