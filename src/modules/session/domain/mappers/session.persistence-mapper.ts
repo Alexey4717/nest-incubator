@@ -14,6 +14,7 @@ export const SessionPersistenceMapper = {
     orm.ip = data.ip;
     orm.title = data.title;
     orm.lastActiveDate = data.lastActiveDate;
+    orm.currentRefreshTokenJti = data.currentRefreshTokenJti;
     return orm;
   },
 };

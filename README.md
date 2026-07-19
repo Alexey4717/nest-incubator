@@ -659,12 +659,12 @@ POST /auth/login
   → req.user = { userId }
   → LoginUseCase.execute({ userId, ip, userAgent })
       → JwtTokenService.signAccessAndRefreshToken(userId, deviceId)
-      → создание сессии в PostgreSQL (deviceId, lastActiveDate)
+      → создание сессии в PostgreSQL (deviceId, currentRefreshTokenJti, lastActiveDate)
   → refreshToken в httpOnly cookie
   → { accessToken } в теле ответа
 ```
 
-`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `RefreshTokenUseCase`: проверка JWT, поиск сессии по `deviceId` + `userId` + `lastActiveDate` из payload; при успехе — ротация refresh (старый refresh становится невалидным).
+`POST /auth/refresh-token` обновляет пару токенов по cookie `refreshToken` через `RefreshTokenUseCase`: проверка JWT, поиск сессии по `deviceId` + `userId`, сравнение `jti` из payload с `currentRefreshTokenJti` в БД; при успехе — ротация refresh (старый refresh становится невалидным, `lastActiveDate` обновляется для sliding expiration).
 
 Cookie `refreshToken`: `httpOnly`, `secure` только в production, `sameSite: 'strict'`, `maxAge` из `REFRESH_TOKEN_LIFE_TIME`.
 
@@ -679,11 +679,21 @@ Cookie `refreshToken`: `httpOnly`, `secure` только в production, `sameSit
 
 Access и refresh токены подписываются **разными секретами** (`ACCESS_TOKEN_SECRET` / `REFRESH_TOKEN_SECRET`):
 
+Access token:
+
 ```json
-{ "userId": "<uuid>", "deviceId": "<uuid>", "lastActiveDate": "<ISO string>" }
+{ "userId": "<uuid>", "deviceId": "<uuid>" }
 ```
 
-После успешной JWT-стратегии пользователь доступен через декоратор `@User()` (`req.user`). Для logout дополнительно используется `@RefreshTokenJwtPayload()` с полным payload refresh-токена (`userId`, `deviceId`, `lastActiveDate`).
+Refresh token:
+
+```json
+{ "userId": "<uuid>", "deviceId": "<uuid>", "jti": "<uuid>" }
+```
+
+`jti` — уникальный ID текущего refresh-токена; в БД хранится как `currentRefreshTokenJti` (по одному на deviceId). `lastActiveDate` в JWT не используется — только в таблице `sessions` для sliding expiration.
+
+После успешной JWT-стратегии пользователь доступен через декоратор `@User()` (`req.user`). Для logout дополнительно используется `@RefreshTokenJwtPayload()` с полным payload refresh-токена (`userId`, `deviceId`, `jti`).
 
 ### Эндпоинты auth (без guard)
 

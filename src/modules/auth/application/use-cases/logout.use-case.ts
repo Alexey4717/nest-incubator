@@ -20,17 +20,15 @@ export class LogoutUseCase implements IUseCase<LogoutInput, boolean> {
   ) {}
 
   async execute({ userId, refreshTokenJWTPayload }: LogoutInput): Promise<boolean> {
-    const found = await this.sessionQueryRepository.findOneByDeviceAndUserIdAndDate(
+    const found = await this.sessionQueryRepository.findOneByDeviceAndUserId(
       refreshTokenJWTPayload.deviceId,
       userId,
-      refreshTokenJWTPayload.lastActiveDate,
     );
-    if (!found) return false;
+    if (!found || found.currentRefreshTokenJti !== refreshTokenJWTPayload.jti) return false;
 
-    return this.sessionRepository.deleteOneSessionByUserAndDeviceIdAndDate(
+    return this.sessionRepository.deleteOneSessionByUserAndDeviceId(
       userId,
       refreshTokenJWTPayload.deviceId,
-      refreshTokenJWTPayload.lastActiveDate,
     );
   }
 }

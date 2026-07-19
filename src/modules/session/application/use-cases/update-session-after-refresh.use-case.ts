@@ -10,8 +10,9 @@ import { SessionRepository } from '../../infrastructure/session.repository';
 type UpdateSessionAfterRefreshInput = {
   userId: string;
   deviceId: string;
+  expectedJti: string;
+  newJti: string;
   lastActiveDate: string;
-  newLastActiveDate: string;
 };
 
 @Injectable()
@@ -27,8 +28,9 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
   async execute({
     userId,
     deviceId,
+    expectedJti,
+    newJti,
     lastActiveDate,
-    newLastActiveDate,
   }: UpdateSessionAfterRefreshInput): Promise<boolean> {
     const found = await this.sessionQueryRepository.findOneByDeviceAndUserId(deviceId, userId);
     if (!found) return false;
@@ -36,11 +38,11 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
     const session = SessionEntity.reconstitute(modelToDb(found));
 
     try {
-      session.updateLastActiveDate(lastActiveDate, newLastActiveDate);
+      session.rotateRefreshToken(expectedJti, newJti, lastActiveDate);
     } catch {
       return false;
     }
 
-    return this.sessionRepository.save(session);
+    return this.sessionRepository.rotateRefreshToken(userId, deviceId, expectedJti, session);
   }
 }

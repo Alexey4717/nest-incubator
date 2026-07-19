@@ -16,4 +16,7 @@ export class SessionOrmEntity {
 
   @Column({ name: 'last_active_date', type: 'timestamptz' })
   lastActiveDate: Date;
+
+  @Column({ name: 'current_refresh_token_jti', type: 'varchar' })
+  currentRefreshTokenJti: string;
 }

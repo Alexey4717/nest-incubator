@@ -14,34 +14,6 @@ export class SessionQueryRepository {
     private readonly sessionsRepository: Repository<SessionOrmEntity>,
   ) {}
 
-  async findOneByDeviceAndUserIdAndDate(
-    deviceId: string,
-    userId: string,
-    lastActiveDate: string,
-  ): Promise<SessionModel | null> {
-    const entity = await this.sessionsRepository.findOne({
-      where: {
-        deviceId,
-        userId,
-        lastActiveDate: new Date(lastActiveDate),
-      },
-    });
-    return entity ? toDomain(entity) : null;
-  }
-
-  async findOneByDeviceIdAndDate(
-    deviceId: string,
-    lastActiveDate: string,
-  ): Promise<SessionModel | null> {
-    const entity = await this.sessionsRepository.findOne({
-      where: {
-        deviceId,
-        lastActiveDate: new Date(lastActiveDate),
-      },
-    });
-    return entity ? toDomain(entity) : null;
-  }
-
   async findOneByDeviceId(deviceId: string): Promise<SessionModel | null> {
     const entity = await this.sessionsRepository.findOne({ where: { deviceId } });
     return entity ? toDomain(entity) : null;

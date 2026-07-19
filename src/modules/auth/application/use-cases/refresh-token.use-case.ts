@@ -22,22 +22,24 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
 
     const userId = jwtPayload.userId;
     const deviceId = jwtPayload.deviceId;
-    const lastActiveDate = jwtPayload.lastActiveDate;
+    const jti = jwtPayload.jti;
 
     const device = await this.sessionQueryRepository.findOneByDeviceAndUserId(deviceId, userId);
-    if (!device || device.lastActiveDate !== lastActiveDate) return null;
+    if (!device || device.currentRefreshTokenJti !== jti) return null;
 
     const {
       accessToken,
       refreshToken,
-      lastActiveDate: newLastActiveDate,
+      jti: newJti,
+      lastActiveDate,
     } = this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
 
     const isSessionUpdated = await this.updateSessionAfterRefreshUseCase.execute({
       userId,
       deviceId,
+      expectedJti: jti,
+      newJti,
       lastActiveDate,
-      newLastActiveDate,
     });
     if (!isSessionUpdated) return null;
 

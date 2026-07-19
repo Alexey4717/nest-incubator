@@ -1,6 +1,6 @@
 export class IRefreshTokenJwtPayload {
   userId: string;
   deviceId: string;
-  lastActiveDate: string;
+  jti: string;
   iat: number;
 }

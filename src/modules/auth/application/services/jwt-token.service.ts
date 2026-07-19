@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService as NestJwtService } from '@nestjs/jwt';
+import { randomUUID } from 'crypto';
 
 import { AuthConfig } from '../../auth.config';
 import { IRefreshTokenJwtPayload } from '../../models/refresh-token-jwt-payload.model';
@@ -12,22 +13,23 @@ export class JwtTokenService {
   ) {}
 
   signAccessAndRefreshToken(userId: string, deviceId: string) {
+    const jti = randomUUID();
     const lastActiveDate = new Date().toISOString();
     const accessToken = this.nestJwtService.sign(
-      { userId, deviceId, lastActiveDate },
+      { userId, deviceId },
       {
         secret: this.authConfig.ACCESS_TOKEN_SECRET,
         expiresIn: this.authConfig.ACCESS_TOKEN_LIFE_TIME,
       },
     );
     const refreshToken = this.nestJwtService.sign(
-      { userId, deviceId, lastActiveDate },
+      { userId, deviceId, jti },
       {
         secret: this.authConfig.REFRESH_TOKEN_SECRET,
         expiresIn: this.authConfig.REFRESH_TOKEN_LIFE_TIME,
       },
     );
-    return { accessToken, refreshToken, lastActiveDate };
+    return { accessToken, refreshToken, jti, lastActiveDate };
   }
 
   verifyRefreshToken(token: string): IRefreshTokenJwtPayload | null {

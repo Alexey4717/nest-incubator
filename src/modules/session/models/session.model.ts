@@ -4,4 +4,5 @@ export type SessionModel = {
   ip: string;
   title: string;
   lastActiveDate: string;
+  currentRefreshTokenJti: string;
 };

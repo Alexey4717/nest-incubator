@@ -10,6 +10,7 @@ export function toDomain(entity: SessionOrmEntity): SessionModel {
     ip: entity.ip,
     title: entity.title,
     lastActiveDate: entity.lastActiveDate.toISOString(),
+    currentRefreshTokenJti: entity.currentRefreshTokenJti,
   };
 }
 
@@ -20,6 +21,7 @@ export function toOrm(model: SessionModel): SessionOrmEntity {
   entity.ip = model.ip;
   entity.title = model.title;
   entity.lastActiveDate = new Date(model.lastActiveDate);
+  entity.currentRefreshTokenJti = model.currentRefreshTokenJti;
   return entity;
 }
 
@@ -30,6 +32,7 @@ export function modelToDb(model: SessionModel): SessionDb {
     ip: model.ip,
     title: model.title,
     lastActiveDate: new Date(model.lastActiveDate),
+    currentRefreshTokenJti: model.currentRefreshTokenJti,
   };
 }
 
@@ -41,6 +44,7 @@ export function fromEntity(entity: SessionEntity): SessionModel {
     ip: data.ip,
     title: data.title,
     lastActiveDate: data.lastActiveDate.toISOString(),
+    currentRefreshTokenJti: data.currentRefreshTokenJti,
   };
 }
 

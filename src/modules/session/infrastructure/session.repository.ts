@@ -29,38 +29,26 @@ export class SessionRepository {
     return entity ? SessionPersistenceMapper.toDomain(entity) : null;
   }
 
-  async save(session: SessionEntity): Promise<boolean> {
+  async rotateRefreshToken(
+    userId: string,
+    deviceId: string,
+    expectedJti: string,
+    session: SessionEntity,
+  ): Promise<boolean> {
     const data = session.toDb();
     const result = await this.sessionsRepository.update(
-      { deviceId: data.deviceId },
-      { lastActiveDate: data.lastActiveDate },
+      { deviceId, userId, currentRefreshTokenJti: expectedJti },
+      {
+        currentRefreshTokenJti: data.currentRefreshTokenJti,
+        lastActiveDate: data.lastActiveDate,
+      },
     );
     return (result.affected ?? 0) === 1;
   }
 
-  async deleteOneSessionByUserAndDeviceIdAndDate(
-    userId: string,
-    deviceId: string,
-    lastActiveDate: string,
-  ): Promise<boolean> {
-    try {
-      const result = await this.sessionsRepository.delete({
-        userId,
-        deviceId,
-        lastActiveDate: new Date(lastActiveDate),
-      });
-      return (result.affected ?? 0) === 1;
-    } catch (error) {
-      console.log(
-        `sessionsRepository.deleteOneSessionByUserAndDeviceIdAndDate error is occurred: ${error}`,
-      );
-      return false;
-    }
-  }
-
   async deleteOneSessionByUserAndDeviceId(userId: string, deviceId: string): Promise<boolean> {
     try {
-      const result = await this.sessionsRepository.delete({ deviceId });
+      const result = await this.sessionsRepository.delete({ userId, deviceId });
       return (result.affected ?? 0) === 1;
     } catch (error) {
       console.log(

@@ -27,7 +27,7 @@ describe('Auth refresh token flow (e2e)', () => {
       await ctx.users.createSaUser({ login, password, email });
     });
 
-    it('login → refresh-token with cookie → 200 + new accessToken', async () => {
+    it('login → refresh-token with cookie → 200 + rotated refresh cookie', async () => {
       const agent = ctx.auth.createSupertestAgent();
 
       const loginRes = await ctx.auth.loginWithAgent(agent, login, password);
@@ -38,7 +38,16 @@ describe('Auth refresh token flow (e2e)', () => {
       const refreshRes = await agent.post('/auth/refresh-token').expect(constants.HTTP_STATUS_OK);
 
       expect(refreshRes.body.accessToken).toEqual(expect.any(String));
-      expect(refreshRes.body.accessToken).not.toBe(loginRes.accessToken);
+
+      const loginCookie = Array.isArray(loginRes.setCookie)
+        ? loginRes.setCookie.join(';')
+        : loginRes.setCookie;
+      const refreshCookie = refreshRes.headers['set-cookie'];
+      expect(refreshCookie).toBeDefined();
+      const refreshCookieStr = Array.isArray(refreshCookie)
+        ? refreshCookie.join(';')
+        : refreshCookie;
+      expect(refreshCookieStr).not.toBe(loginCookie);
     });
 
     it('refresh with old refresh after rotation → 401', async () => {

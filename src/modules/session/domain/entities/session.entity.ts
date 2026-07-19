@@ -9,6 +9,7 @@ export type SessionCreateProps = {
   ip: string;
   title: string;
   lastActiveDate: string;
+  currentRefreshTokenJti: string;
 };
 
 export type SessionDb = {
@@ -17,6 +18,7 @@ export type SessionDb = {
   ip: string;
   title: string;
   lastActiveDate: Date;
+  currentRefreshTokenJti: string;
 };
 
 export class SessionEntity {
@@ -29,6 +31,7 @@ export class SessionEntity {
       ip: props.ip,
       title: props.title,
       lastActiveDate: new Date(props.lastActiveDate),
+      currentRefreshTokenJti: props.currentRefreshTokenJti,
     });
   }
 
@@ -40,6 +43,7 @@ export class SessionEntity {
       title: raw.title,
       lastActiveDate:
         raw.lastActiveDate instanceof Date ? raw.lastActiveDate : new Date(raw.lastActiveDate),
+      currentRefreshTokenJti: raw.currentRefreshTokenJti,
     });
   }
 
@@ -53,6 +57,10 @@ export class SessionEntity {
 
   get lastActiveDate(): string {
     return this.data.lastActiveDate.toISOString();
+  }
+
+  get currentRefreshTokenJti(): string {
+    return this.data.currentRefreshTokenJti;
   }
 
   toDb(): SessionDb {
@@ -69,12 +77,14 @@ export class SessionEntity {
     }
   }
 
-  updateLastActiveDate(expectedLastActiveDate: string, newLastActiveDate: string): void {
-    const expected = new Date(expectedLastActiveDate).getTime();
-    const current = this.data.lastActiveDate.getTime();
-    if (expected !== current) {
+  rotateRefreshToken(expectedJti: string, newJti: string, lastActiveDate: string): void {
+    if (this.data.currentRefreshTokenJti !== expectedJti) {
       throw new DomainException(DomainExceptionCode.NotFound);
     }
-    this.data = { ...this.data, lastActiveDate: new Date(newLastActiveDate) };
+    this.data = {
+      ...this.data,
+      currentRefreshTokenJti: newJti,
+      lastActiveDate: new Date(lastActiveDate),
+    };
   }
 }

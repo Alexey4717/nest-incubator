@@ -24,12 +24,13 @@ export class LoginUseCase implements IUseCase<LoginInput, AuthTokensViewModel> {
 
   async execute({ userId, ip, userAgent }: LoginInput): Promise<AuthTokensViewModel> {
     const deviceId = randomUUID();
-    const { accessToken, refreshToken, lastActiveDate } =
+    const { accessToken, refreshToken, jti, lastActiveDate } =
       this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
     const sessionInfo: SessionModel = {
       ip,
       title: userAgent,
       lastActiveDate,
+      currentRefreshTokenJti: jti,
       deviceId,
       userId,
     };
