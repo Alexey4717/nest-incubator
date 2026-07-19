@@ -3,12 +3,12 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Paginator } from '@/shared/types/common';
 import { TypedQuery } from '@/shared/types/cqrs-augmentation';
 
-import { GetUsersInputModel } from '../../models/GetUsersInputModel';
+import { GetUsersQueryParamsDto } from '../../dto/get-users-query-params.dto';
 import { UserViewModel } from '../../types/view-models';
 import { GetUsersUseCase } from '../use-cases/get-users.use-case';
 
 export class GetUsersQuery extends TypedQuery<Paginator<UserViewModel[]>> {
-  constructor(public readonly input: GetUsersInputModel) {
+  constructor(public readonly input: GetUsersQueryParamsDto) {
     super();
   }
 }

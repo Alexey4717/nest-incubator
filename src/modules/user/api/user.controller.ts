@@ -20,8 +20,8 @@ import { CreateUserCommand } from '../application/commands/create-user.command';
 import { DeleteUserCommand } from '../application/commands/delete-user.command';
 import { GetUsersQuery } from '../application/queries/get-users.query';
 import { CreateUserDTO } from '../dto/create-user.dto';
+import { GetUsersQueryParamsDto } from '../dto/get-users-query-params.dto';
 import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
-import { GetUsersInputModel } from '../models/GetUsersInputModel';
 import { toUserViewModel } from '../utils/user.view-mapper';
 
 @SkipThrottle()
@@ -35,7 +35,7 @@ export class UserController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getUsers(@Query() query: GetUsersInputModel) {
+  async getUsers(@Query() query: GetUsersQueryParamsDto) {
     return this.queryBus.execute(new GetUsersQuery(query));
   }
 

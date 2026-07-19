@@ -2,19 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 
-import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
-import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+import { PaginatedViewDto } from '@/shared/dto/paginated-view.dto';
+import { Paginator } from '@/shared/types/common';
+import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 
-import { SortUsersBy } from '../models/GetUsersInputModel';
+import { GetUsersQueryParamsDto, SortUsersBy } from '../dto/get-users-query-params.dto';
 import { UserModel } from '../models/user.model';
 import { UserEntity } from './user.entity';
 import { toDomain } from './user.mapper';
-
-type GetUsersArgs = CommonQueryParamsTypes & {
-  searchLoginTerm: string | null;
-  searchEmailTerm: string | null;
-  sortBy: SortUsersBy;
-};
 
 const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserEntity> = {
   createdAt: 'createdAt',
@@ -29,14 +24,9 @@ export class UserQueryRepository {
     private readonly usersRepository: Repository<UserEntity>,
   ) {}
 
-  async getUsers({
-    searchLoginTerm,
-    searchEmailTerm,
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-  }: GetUsersArgs): Promise<Paginator<UserModel[]>> {
+  async getUsers(query: GetUsersQueryParamsDto): Promise<Paginator<UserModel[]>> {
+    const { searchLoginTerm, searchEmailTerm, sortBy, sortDirection, pageNumber, pageSize } = query;
+
     const qb = this.usersRepository.createQueryBuilder('user');
 
     if (searchLoginTerm && !searchEmailTerm) {
@@ -54,19 +44,17 @@ export class UserQueryRepository {
     }
 
     const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-    qb.orderBy(`user.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC');
+    applySort(qb, 'user', sortColumn, sortDirection);
+    applyPagination(qb, query.calculateSkip(), pageSize);
 
-    const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-    const [entities, totalCount] = await qb.skip(skipValue).take(pageSize).getManyAndCount();
-    const pagesCount = Math.ceil(totalCount / pageSize);
+    const [entities, totalCount] = await qb.getManyAndCount();
 
-    return {
-      page: pageNumber,
-      pageSize,
-      totalCount,
-      pagesCount,
+    return PaginatedViewDto.mapToView({
       items: entities.map(toDomain),
-    };
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
   }
 
   async findUserById(id: string): Promise<UserModel | null> {

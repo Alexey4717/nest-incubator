@@ -3,7 +3,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Paginator } from '@/shared/types/common';
 import { TypedQuery } from '@/shared/types/cqrs-augmentation';
 
-import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
+import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
 import { PostViewModel } from '@/modules/post/types/view-models';
 
 import { GetBlogPostsUseCase } from '../use-cases/get-blog-posts.use-case';
@@ -11,7 +11,7 @@ import { GetBlogPostsUseCase } from '../use-cases/get-blog-posts.use-case';
 export class GetBlogPostsQuery extends TypedQuery<Paginator<PostViewModel[]> | null> {
   constructor(
     public readonly blogId: string,
-    public readonly query: GetPostsInputModel,
+    public readonly query: GetPostsQueryParamsDto,
     public readonly currentUserId: string | null = null,
   ) {
     super();

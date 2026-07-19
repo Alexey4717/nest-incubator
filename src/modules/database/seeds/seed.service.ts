@@ -6,6 +6,7 @@ import { CreateBlogUseCase } from '@/modules/blog/application/use-cases/create-b
 import { CreateBlogDTO } from '@/modules/blog/dto/create-blog.dto';
 import { CreateCommentInPostUseCase } from '@/modules/comment/application/use-cases/create-comment-in-post.use-case';
 import { CreatePostUseCase } from '@/modules/post/application/use-cases/create-post.use-case';
+import { PostModel } from '@/modules/post/models/post.model';
 import { TestingRepository } from '@/modules/testing/infrastructure/testing.repository';
 import { CreateUserUseCase } from '@/modules/user/application/use-cases/create-user.use-case';
 import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';
@@ -49,7 +50,7 @@ export class SeedService {
     const blog = await this.createBlogUseCase.execute(this.toCreateBlogDto(SEED_BLOGS.main));
 
     this.logger.log('Creating posts…');
-    const posts = [];
+    const posts: PostModel[] = [];
     for (const post of SEED_POSTS) {
       const created = await this.createPostUseCase.execute({ ...post, blogId: blog.id });
       if (!created) {

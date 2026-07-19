@@ -30,8 +30,8 @@ import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query';
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
+import { GetBlogsQueryParamsDto } from '../dto/get-blogs-query-params.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
-import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
 
 @SkipThrottle()
 @UseGuards(BasicAuthGuard)
@@ -46,7 +46,7 @@ export class SaBlogController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getBlogs(@Query() query: GetBlogsInputModel) {
+  async getBlogs(@Query() query: GetBlogsQueryParamsDto) {
     return this.queryBus.execute(new GetBlogsQuery(query));
   }
 

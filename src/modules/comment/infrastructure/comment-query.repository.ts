@@ -2,24 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
-import { Paginator, SortDirections } from '@/shared/types/common';
-import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+import { PaginatedViewDto } from '@/shared/dto/paginated-view.dto';
+import { Paginator } from '@/shared/types/common';
+import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';
 
+import {
+  GetPostCommentsQueryParamsDto,
+  SortPostCommentsBy,
+} from '../dto/get-post-comments-query-params.dto';
 import { CommentModel } from '../models/comment.model';
-import { SortPostCommentsBy } from '../models/GetPostCommentsInputModel';
 import { CommentReactionEntity } from './comment-reaction.entity';
 import { CommentEntity } from './comment.entity';
 import { toDomain } from './comment.mapper';
-
-export type GetPostCommentsArgs = {
-  sortBy: SortPostCommentsBy;
-  sortDirection: SortDirections;
-  pageNumber: number;
-  pageSize: number;
-  postId: string;
-};
 
 const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentEntity> = {
   content: 'content',
@@ -36,14 +32,12 @@ export class CommentQueryRepository {
     private readonly postQueryRepository: PostQueryRepository,
   ) {}
 
-  async getPostComments({
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-    postId,
-  }: GetPostCommentsArgs): Promise<Paginator<CommentModel[]> | null> {
+  async getPostComments(
+    postId: string,
+    query: GetPostCommentsQueryParamsDto,
+  ): Promise<Paginator<CommentModel[]> | null> {
     try {
+      const { sortBy, sortDirection, pageNumber, pageSize } = query;
       const foundPost = await this.postQueryRepository.findPostById(postId);
       if (!foundPost) return null;
 
@@ -51,27 +45,25 @@ export class CommentQueryRepository {
       qb.andWhere('comment.postId = :postId', { postId });
 
       const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-      qb.orderBy(`comment.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC');
+      applySort(qb, 'comment', sortColumn, sortDirection);
+      applyPagination(qb, query.calculateSkip(), pageSize);
 
-      const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-      const [entities, totalCount] = await qb.skip(skipValue).take(pageSize).getManyAndCount();
-      const pagesCount = Math.ceil(totalCount / pageSize);
+      const [entities, totalCount] = await qb.getManyAndCount();
 
       const commentIds = entities.map((entity) => entity.id);
       const reactionsByCommentId = await this.loadReactionsByCommentIds(commentIds);
 
-      return {
-        pagesCount,
-        page: pageNumber,
-        pageSize,
-        totalCount,
+      return PaginatedViewDto.mapToView({
         items: entities.map((entity) =>
           toDomain(entity, reactionsByCommentId.get(entity.id) ?? []),
         ),
-      };
+        page: pageNumber,
+        size: pageSize,
+        totalCount,
+      });
     } catch (error) {
       console.log(`commentsQueryRepository.getPostComments error is occurred: ${error}`);
-      return {} as Paginator<CommentModel[]>;
+      return null;
     }
   }
 

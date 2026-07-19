@@ -21,7 +21,7 @@ import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard'
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { CreateCommentInPostCommand } from '@/modules/comment/application/commands/create-comment-in-post.command';
-import { GetPostCommentsInputModel } from '@/modules/comment/models/GetPostCommentsInputModel';
+import { GetPostCommentsQueryParamsDto } from '@/modules/comment/dto/get-post-comments-query-params.dto';
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
 
@@ -34,9 +34,9 @@ import { GetPostCommentsQuery } from '../application/queries/get-post-comments.q
 import { GetPostsQuery } from '../application/queries/get-posts.query';
 import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { CreatePostDto } from '../dto/create-post.dto';
+import { GetPostsQueryParamsDto } from '../dto/get-posts-query-params.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { GetPostInputModel } from '../models/GetPostInputModel';
-import { GetPostsInputModel } from '../models/GetPostsInputModel';
 
 @SkipThrottle()
 @Controller('posts')
@@ -51,10 +51,10 @@ export class PostController {
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPosts(
-    @Query() query: GetPostsInputModel,
+    @Query() query: GetPostsQueryParamsDto,
     @CurrentUserId() currentUserId: string | null,
   ) {
-    return this.queryBus.execute(new GetPostsQuery({ ...query, currentUserId }));
+    return this.queryBus.execute(new GetPostsQuery(query, currentUserId));
   }
 
   @UseGuards(GetUserIdFromBearerToken)
@@ -72,7 +72,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getCommentsOfPost(
     @Param() params: { postId: string },
-    @Query() query: GetPostCommentsInputModel,
+    @Query() query: GetPostCommentsQueryParamsDto,
     @CurrentUserId() currentUserId: string | null,
   ) {
     const resData = await this.queryBus.execute(

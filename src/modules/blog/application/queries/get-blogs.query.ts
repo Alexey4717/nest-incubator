@@ -3,12 +3,12 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Paginator } from '@/shared/types/common';
 import { TypedQuery } from '@/shared/types/cqrs-augmentation';
 
+import { GetBlogsQueryParamsDto } from '../../dto/get-blogs-query-params.dto';
 import { BlogModel } from '../../models/blog.model';
-import { GetBlogsInputModel } from '../../models/GetBlogsInputModel';
 import { GetBlogsUseCase } from '../use-cases/get-blogs.use-case';
 
 export class GetBlogsQuery extends TypedQuery<Paginator<BlogModel[]>> {
-  constructor(public readonly input: GetBlogsInputModel) {
+  constructor(public readonly input: GetBlogsQueryParamsDto) {
     super();
   }
 }

@@ -2,22 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 
-import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
-import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+import { PaginatedViewDto } from '@/shared/dto/paginated-view.dto';
+import { Paginator } from '@/shared/types/common';
+import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 
-import { SortPostsBy } from '../models/GetPostsInputModel';
+import { GetPostsQueryParamsDto, SortPostsBy } from '../dto/get-posts-query-params.dto';
 import { PostModel } from '../models/post.model';
 import { PostReactionEntity } from './post-reaction.entity';
 import { PostEntity } from './post.entity';
 import { toDomain } from './post.mapper';
-
-export type GetPostsArgs = CommonQueryParamsTypes & {
-  sortBy: SortPostsBy;
-};
-
-export type GetPostsByBlogIdArgs = GetPostsArgs & {
-  blogId: string;
-};
 
 const SORT_COLUMN_MAP: Record<SortPostsBy, keyof PostEntity> = {
   title: 'title',
@@ -34,13 +27,8 @@ export class PostQueryRepository {
     private readonly postReactionsRepository: Repository<PostReactionEntity>,
   ) {}
 
-  async getPosts({
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-  }: GetPostsArgs): Promise<Paginator<PostModel[]>> {
-    return this.getPaginatedPosts({ sortBy, sortDirection, pageNumber, pageSize });
+  async getPosts(query: GetPostsQueryParamsDto): Promise<Paginator<PostModel[]>> {
+    return this.getPaginatedPosts(query);
   }
 
   async findPostById(id: string): Promise<PostModel | null> {
@@ -51,14 +39,18 @@ export class PostQueryRepository {
     return toDomain(entity, reactions);
   }
 
-  async getPostsByBlogId(args: GetPostsByBlogIdArgs): Promise<Paginator<PostModel[]>> {
-    return this.getPaginatedPosts(args, args.blogId);
+  async getPostsByBlogId(
+    blogId: string,
+    query: GetPostsQueryParamsDto,
+  ): Promise<Paginator<PostModel[]>> {
+    return this.getPaginatedPosts(query, blogId);
   }
 
   private async getPaginatedPosts(
-    { sortBy, sortDirection, pageNumber, pageSize }: GetPostsArgs,
+    query: GetPostsQueryParamsDto,
     blogId?: string,
   ): Promise<Paginator<PostModel[]>> {
+    const { sortBy, sortDirection, pageNumber, pageSize } = query;
     const qb = this.postsRepository.createQueryBuilder('post');
 
     if (blogId) {
@@ -66,22 +58,20 @@ export class PostQueryRepository {
     }
 
     const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-    qb.orderBy(`post.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC');
+    applySort(qb, 'post', sortColumn, sortDirection);
+    applyPagination(qb, query.calculateSkip(), pageSize);
 
-    const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-    const [entities, totalCount] = await qb.skip(skipValue).take(pageSize).getManyAndCount();
-    const pagesCount = Math.ceil(totalCount / pageSize);
+    const [entities, totalCount] = await qb.getManyAndCount();
 
     const postIds = entities.map((entity) => entity.id);
     const reactionsByPostId = await this.loadReactionsByPostIds(postIds);
 
-    return {
-      page: pageNumber,
-      pageSize,
-      totalCount,
-      pagesCount,
+    return PaginatedViewDto.mapToView({
       items: entities.map((entity) => toDomain(entity, reactionsByPostId.get(entity.id) ?? [])),
-    };
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
   }
 
   private async loadReactionsByPostIds(

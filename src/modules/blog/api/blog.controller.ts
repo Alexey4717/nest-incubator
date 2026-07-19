@@ -14,12 +14,12 @@ import { constants } from 'http2';
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
 
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
-import { GetPostsInputModel } from '@/modules/post/models/GetPostsInputModel';
+import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
 
 import { GetBlogByIdQuery } from '../application/queries/get-blog-by-id.query';
 import { GetBlogPostsQuery } from '../application/queries/get-blog-posts.query';
 import { GetBlogsQuery } from '../application/queries/get-blogs.query';
-import { GetBlogsInputModel } from '../models/GetBlogsInputModel';
+import { GetBlogsQueryParamsDto } from '../dto/get-blogs-query-params.dto';
 
 @SkipThrottle()
 @Controller('blogs')
@@ -28,7 +28,7 @@ export class BlogController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
-  async getBlogs(@Query() query: GetBlogsInputModel) {
+  async getBlogs(@Query() query: GetBlogsQueryParamsDto) {
     return this.queryBus.execute(new GetBlogsQuery(query));
   }
 
@@ -37,7 +37,7 @@ export class BlogController {
   @HttpCode(constants.HTTP_STATUS_OK)
   async getPostsOfBlog(
     @Param() params: { blogId: string },
-    @Query() query: GetPostsInputModel,
+    @Query() query: GetPostsQueryParamsDto,
     @CurrentUserId() currentUserId: string | null,
   ) {
     const resData = await this.queryBus.execute(

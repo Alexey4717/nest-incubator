@@ -44,11 +44,13 @@ src/
 ```
 shared/
 ├── core/                   # CoreConfig, CoreModule, validateConfig utility
+├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
+├── dto/                    # BaseQueryParamsDto, PaginatedViewDto
 ├── exception-filters/      # глобальные HTTP-фильтры ошибок
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
 ├── validators/             # class-validator constraints + Injectable-валидаторы
-└── utils/                  # утилиты (helpers)
+└── utils/                  # утилиты (helpers, typeorm-pagination)
 ```
 
 **Правило:** код в `shared/` не импортирует из `modules/*`. Если декоратор или валидатор нужен только одному модулю — он живёт внутри этого модуля (например, `modules/auth/decorators/`).
@@ -66,7 +68,7 @@ modules/<feature>/
 │   ├── use-cases/          # *UseCase с методом execute()
 │   └── services/           # domain services (JWT, hashing, owner-check и т.п.)
 ├── infrastructure/         # TypeORM entities, repositories, mappers
-├── dto/                    # class-validator DTO для HTTP
+├── dto/                    # class-validator DTO для HTTP (body и query params list-эндпоинтов)
 ├── models/                 # domain-модели, input/output для слоя данных
 ├── guards/ / strategies/   # при необходимости (auth)
 ├── decorators/             # декораторы, специфичные для модуля
@@ -153,7 +155,7 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 
 **Отдельная колонка `salt` не нужна:** bcrypt сохраняет соль внутри строки `passwordHash` (формат `$2b$10$...`). При `compare()` соль извлекается из хеша автоматически — достаточно одного поля в таблице `users`.
 
-Общие утилиты: `normalizePaginationQuery` (`shared/utils/pagination`).
+Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`shared/utils/typeorm-pagination.ts`).
 
 ### Subdomain-модули
 
@@ -183,7 +185,7 @@ modules/<name>/
 
 ### Импорты и алиасы
 
-Path alias `@/*` → `src/*` настроен в `tsconfig.json`. При сборке алиасы разрешаются через `tsc-alias`.
+Path alias `@/*` → `src/*` настроен в `tsconfig.json` (`strictNullChecks: true`). При сборке алиасы разрешаются через `tsc-alias`.
 
 | Контекст                     | Стиль импорта     | Пример                       |
 | ---------------------------- | ----------------- | ---------------------------- |

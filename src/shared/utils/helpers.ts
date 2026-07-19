@@ -1,17 +1,5 @@
 import { validateOrReject } from 'class-validator';
 
-type CalculateAndGetSkipValueArgs = {
-  pageNumber: number;
-  pageSize: number;
-};
-
-export const calculateAndGetSkipValue = ({
-  pageNumber,
-  pageSize,
-}: CalculateAndGetSkipValueArgs) => {
-  return (pageNumber - 1) * pageSize;
-};
-
 export const validateOrRejectModel = async (
   model: any,
   classConstructor: { new (): any },
@@ -24,8 +12,8 @@ export const validateOrRejectModel = async (
   }
   try {
     await validateOrReject(model);
-  } catch (error) {
+  } catch (error: unknown) {
     // регенерация ошибки, чтобы она попала в exception filter внутренних ошибок сервера
-    throw new Error(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 };

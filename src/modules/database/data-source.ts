@@ -19,11 +19,11 @@ loadEnvFiles(join(__dirname, '../../env'), nodeEnv);
 
 export default new DataSource({
   ...buildPostgresConnectionOptions({
-    host: process.env.POSTGRES_HOST,
+    host: process.env.POSTGRES_HOST ?? '',
     port: Number(process.env.POSTGRES_PORT || 5432),
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.DB_NAME,
+    username: process.env.POSTGRES_USER ?? '',
+    password: process.env.POSTGRES_PASSWORD ?? '',
+    database: process.env.DB_NAME ?? '',
     ssl: process.env.POSTGRES_SSL,
   }),
   entities: [

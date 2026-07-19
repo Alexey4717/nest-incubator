@@ -134,6 +134,21 @@ describe('User API (e2e)', () => {
       expectPaginatorItemsCount(res.body, 1);
       expect(res.body.items[0].email).toBe('unique@test.dev');
     });
+
+    it.each([
+      { query: 'pageNumber=0', field: 'pageNumber' },
+      { query: 'pageSize=101', field: 'pageSize' },
+      { query: 'sortDirection=invalid', field: 'sortDirection' },
+      { query: 'sortBy=invalidField', field: 'sortBy' },
+    ])('should return 400 for invalid query — $query', async ({ query, field }) => {
+      const res = await request(ctx.app.getHttpServer())
+        .get(`/sa/users?${query}`)
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .expect(constants.HTTP_STATUS_BAD_REQUEST);
+
+      const fields = res.body.errorsMessages.map((e: { field: string }) => e.field);
+      expect(fields).toContain(field);
+    });
   });
 
   // testing post '/sa/users' api

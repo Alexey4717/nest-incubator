@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 
-import { Paginator, SortDirections } from '@/shared/types/common';
+import { Paginator } from '@/shared/types/common';
 import { IUseCase } from '@/shared/types/use-case';
-import { normalizePaginationQuery } from '@/shared/utils/pagination';
 
+import { GetPostsQueryParamsDto } from '../../dto/get-posts-query-params.dto';
 import { PostQueryRepository } from '../../infrastructure/post-query.repository';
-import { GetPostsInputModel, SortPostsBy } from '../../models/GetPostsInputModel';
 import { PostViewMapper } from '../../post.view-mapper';
 import { PostViewModel } from '../../types/view-models';
 
-type GetPostsInput = GetPostsInputModel & {
+type GetPostsInput = {
+  query: GetPostsQueryParamsDto;
   currentUserId?: string | null;
 };
 
@@ -20,34 +20,12 @@ export class GetPostsUseCase implements IUseCase<GetPostsInput, Paginator<PostVi
     private readonly postViewMapper: PostViewMapper,
   ) {}
 
-  async execute(input: GetPostsInput): Promise<Paginator<PostViewModel[]>> {
-    const { sortBy, sortDirection, pageNumber, pageSize, currentUserId } = input;
-
-    const pagination = normalizePaginationQuery<SortPostsBy>(
-      { sortBy, sortDirection, pageNumber, pageSize },
-      {
-        sortBy: 'createdAt' as SortPostsBy,
-        sortDirection: SortDirections.desc,
-        pageNumber: 1,
-        pageSize: 10,
-      },
-    );
-
-    const resData = await this.postQueryRepository.getPosts({
-      sortBy: pagination.sortBy,
-      sortDirection: pagination.sortDirection,
-      pageNumber: pagination.pageNumber,
-      pageSize: pagination.pageSize,
-    });
-
-    const { pagesCount, page, pageSize: responsePageSize, totalCount, items } = resData || {};
+  async execute({ query, currentUserId }: GetPostsInput): Promise<Paginator<PostViewModel[]>> {
+    const resData = await this.postQueryRepository.getPosts(query);
 
     return {
-      pagesCount,
-      page,
-      pageSize: responsePageSize,
-      totalCount,
-      items: items.map((item) => this.postViewMapper.toPostViewModel(item, currentUserId)),
+      ...resData,
+      items: resData.items.map((item) => this.postViewMapper.toPostViewModel(item, currentUserId)),
     };
   }
 }

@@ -2,30 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { CommonQueryParamsTypes, Paginator, SortDirections } from '@/shared/types/common';
-import { calculateAndGetSkipValue } from '@/shared/utils/helpers';
+import { PaginatedViewDto } from '@/shared/dto/paginated-view.dto';
+import { Paginator } from '@/shared/types/common';
+import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 
+import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';
-import { SortPostsBy } from '@/modules/post/models/GetPostsInputModel';
 import { PostModel } from '@/modules/post/models/post.model';
 
+import { GetBlogsQueryParamsDto, SortBlogsBy } from '../dto/get-blogs-query-params.dto';
 import { BlogModel } from '../models/blog.model';
-import { SortBlogsBy } from '../models/GetBlogsInputModel';
 import { BlogEntity } from './blog.entity';
 import { toDomain } from './blog.mapper';
-
-type GetPostsArgs = CommonQueryParamsTypes & {
-  sortBy: SortPostsBy;
-};
-
-type GetPostsInBlogArgs = GetPostsArgs & {
-  blogId: string;
-};
-
-type GetBlogsArgs = CommonQueryParamsTypes & {
-  searchNameTerm: string | null;
-  sortBy: SortBlogsBy;
-};
 
 const SORT_COLUMN_MAP: Record<SortBlogsBy, keyof BlogEntity> = {
   name: 'name',
@@ -43,13 +31,8 @@ export class BlogQueryRepository {
     private readonly postQueryRepository: PostQueryRepository,
   ) {}
 
-  async getBlogs({
-    searchNameTerm,
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-  }: GetBlogsArgs): Promise<Paginator<BlogModel[]>> {
+  async getBlogs(query: GetBlogsQueryParamsDto): Promise<Paginator<BlogModel[]>> {
+    const { searchNameTerm, sortBy, sortDirection, pageNumber, pageSize } = query;
     const qb = this.blogsRepository.createQueryBuilder('blog');
 
     if (searchNameTerm) {
@@ -57,39 +40,28 @@ export class BlogQueryRepository {
     }
 
     const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-    qb.orderBy(`blog.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC');
+    applySort(qb, 'blog', sortColumn, sortDirection);
+    applyPagination(qb, query.calculateSkip(), pageSize);
 
-    const skipValue = calculateAndGetSkipValue({ pageNumber, pageSize });
-    const [entities, totalCount] = await qb.skip(skipValue).take(pageSize).getManyAndCount();
-    const pagesCount = Math.ceil(totalCount / pageSize);
+    const [entities, totalCount] = await qb.getManyAndCount();
 
-    return {
-      page: pageNumber,
-      pageSize,
-      totalCount,
-      pagesCount,
+    return PaginatedViewDto.mapToView({
       items: entities.map(toDomain),
-    };
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
   }
 
-  async getPostsInBlog({
-    blogId,
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-  }: GetPostsInBlogArgs): Promise<Paginator<PostModel[]> | null> {
+  async getPostsInBlog(
+    blogId: string,
+    query: GetPostsQueryParamsDto,
+  ): Promise<Paginator<PostModel[]> | null> {
     try {
       const foundBlog = await this.blogsRepository.findOne({ where: { id: blogId } });
       if (!foundBlog) return null;
 
-      return this.postQueryRepository.getPostsByBlogId({
-        blogId,
-        sortBy,
-        sortDirection,
-        pageNumber,
-        pageSize,
-      });
+      return this.postQueryRepository.getPostsByBlogId(blogId, query);
     } catch (error) {
       console.log(`BlogsQueryRepository.getPostsInBlog error is occurred: ${error}`);
       return null;

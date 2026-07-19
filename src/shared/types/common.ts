@@ -10,9 +10,3 @@ export type Paginator<T> = {
   totalCount: number;
   items: T;
 };
-
-export type CommonQueryParamsTypes = {
-  sortDirection: SortDirections;
-  pageNumber: number;
-  pageSize: number;
-};
