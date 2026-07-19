@@ -1,9 +1,11 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 
-import { appSettings, setupClassValidatorContainer } from '../../src/app/app.settings';
+import { configApp } from '../../src/app/app.settings';
 import { initAppModule } from '../../src/app/init-app-module';
 import { EmailService } from '../../src/modules/email/email.service';
+import { AuthTestManager } from './auth-test-manager';
+import { UsersTestManager } from './users-test-manager';
 
 export function createEmailServiceMock(): EmailServiceMock {
   return {
@@ -30,25 +32,40 @@ export type EmailServiceMock = {
 
 export type E2eContext = {
   app: INestApplication;
+  httpServer: ReturnType<INestApplication['getHttpServer']>;
   emailMock: EmailServiceMock;
+  users: UsersTestManager;
+  auth: AuthTestManager;
 };
 
 /** E2e-приложение с теми же middleware/pipes/swagger, что и в main; почта заглушена. */
-export async function createE2eApplication(): Promise<E2eContext> {
+export async function initSettings(
+  configureModule?: (builder: TestingModuleBuilder) => void,
+): Promise<E2eContext> {
   const emailMock = createEmailServiceMock();
 
   const dynamicAppModule = await initAppModule();
 
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+  const builder = Test.createTestingModule({
     imports: [dynamicAppModule],
   })
     .overrideProvider(EmailService)
-    .useValue(emailMock)
-    .compile();
+    .useValue(emailMock);
+
+  configureModule?.(builder);
+
+  const moduleFixture: TestingModule = await builder.compile();
 
   const app = moduleFixture.createNestApplication();
-  appSettings(app);
-  await app.init();
-  setupClassValidatorContainer(app);
-  return { app, emailMock };
+  await configApp(app);
+
+  const httpServer = app.getHttpServer();
+
+  return {
+    app,
+    httpServer,
+    emailMock,
+    users: new UsersTestManager(app),
+    auth: new AuthTestManager(app, emailMock),
+  };
 }

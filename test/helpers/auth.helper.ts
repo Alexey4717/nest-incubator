@@ -4,8 +4,8 @@ import request, { SuperAgentTest } from 'supertest';
 
 import { UserViewModel } from '../../src/modules/user/types/view-models';
 import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
-import { EmailServiceMock } from './e2e-application';
 import { getLastConfirmationCode, getLastRecoveryCode } from './email-mock.helper';
+import { EmailServiceMock } from './init-settings';
 
 export type SaUserInput = {
   login: string;

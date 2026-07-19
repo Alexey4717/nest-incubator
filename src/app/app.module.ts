@@ -9,14 +9,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
-
-
 import { CoreConfig } from '@/shared/core/core.config';
 import { CoreModule } from '@/shared/core/core.module';
 import { AllHttpExceptionsFilter } from '@/shared/core/filters/all-http-exceptions.filter';
 import { DomainHttpExceptionsFilter } from '@/shared/core/filters/domain-http-exceptions.filter';
-
-
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
@@ -32,93 +28,9 @@ import { SessionModule } from '@/modules/session/session.module';
 import { TestingModule } from '@/modules/testing/testing.module';
 import { UserModule } from '@/modules/user/user.module';
 
-
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SWAGGER_PATH } from './setup/swagger.setup';
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @Module({
   imports: [

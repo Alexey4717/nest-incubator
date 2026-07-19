@@ -1,9 +1,9 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { setupCommentE2eContext } from './utils/comment-setup.helper';
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
-import { invalidInputData } from './utils/invalid-input-data';
+import { setupCommentE2eContext } from './helpers/comment-setup.helper';
+import { E2eContext, initSettings } from './helpers/init-settings';
+import { invalidInputData } from './helpers/invalid-input-data';
 
 describe('Comment API (e2e)', () => {
   let ctx: E2eContext;
@@ -16,9 +16,9 @@ describe('Comment API (e2e)', () => {
   let ownerLogin: string;
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
 
-    const setup = await setupCommentE2eContext(ctx.app);
+    const setup = await setupCommentE2eContext(ctx.app, ctx.users, ctx.auth);
     ownerToken = setup.ownerToken;
     otherToken = setup.otherToken;
     postId = setup.postId;
@@ -34,7 +34,7 @@ describe('Comment API (e2e)', () => {
   // testing get '/comments/:id' api
   describe('GET /comments/:id', () => {
     it('should return comment by id — 200', async () => {
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/comments/${ownerCommentId}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -43,7 +43,7 @@ describe('Comment API (e2e)', () => {
     });
 
     it('should return 404 for non-existent comment', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get('/comments/00000000-0000-0000-0000-000000000001')
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -52,20 +52,20 @@ describe('Comment API (e2e)', () => {
   // testing put '/comments/:commentId' api
   describe('PUT /comments/:commentId', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/comments/${ownerCommentId}`)
         .send({ content: 'Updated comment content here' })
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should update own comment — 204', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/comments/${ownerCommentId}`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ content: 'Updated owner comment content' })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/comments/${ownerCommentId}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -73,7 +73,7 @@ describe('Comment API (e2e)', () => {
     });
 
     it('should return 403 if not owner', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/comments/${ownerCommentId}`)
         .set('Authorization', `Bearer ${otherToken}`)
         .send({ content: 'Trying to update others comment' })
@@ -83,7 +83,7 @@ describe('Comment API (e2e)', () => {
     it.each(invalidInputData.comment)(
       'should return 400 for invalid input — $description',
       async ({ payload, expectedFields }) => {
-        const res = await request(ctx.app.getHttpServer())
+        const res = await request(ctx.httpServer)
           .put(`/comments/${ownerCommentId}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send(payload)
@@ -98,31 +98,31 @@ describe('Comment API (e2e)', () => {
   // testing delete '/comments/:commentId' api
   describe('DELETE /comments/:commentId', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete(`/comments/${otherCommentId}`)
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should return 403 if not owner', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete(`/comments/${ownerCommentId}`)
         .set('Authorization', `Bearer ${otherToken}`)
         .expect(constants.HTTP_STATUS_FORBIDDEN);
     });
 
     it('should delete own comment — 204', async () => {
-      const commentRes = await request(ctx.app.getHttpServer())
+      const commentRes = await request(ctx.httpServer)
         .post(`/posts/${postId}/comments`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ content: 'Comment to delete content here' })
         .expect(constants.HTTP_STATUS_CREATED);
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete(`/comments/${commentRes.body.id}`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get(`/comments/${commentRes.body.id}`)
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -131,20 +131,20 @@ describe('Comment API (e2e)', () => {
   // testing put '/comments/:commentId/like-status' api
   describe('PUT /comments/:commentId/like-status', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/comments/${ownerCommentId}/like-status`)
         .send({ likeStatus: 'Like' })
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should update like status — 204', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/comments/${otherCommentId}/like-status`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({ likeStatus: 'Like' })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/comments/${otherCommentId}`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(constants.HTTP_STATUS_OK);

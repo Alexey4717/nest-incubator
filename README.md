@@ -20,11 +20,11 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл                                   | Назначение                                                                                     |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                  |
-| `app.settings.ts`                      | Глобальные pipes (через `setup/pipes.setup.ts`), CORS, Swagger — вызывается из `main.ts` и e2e |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                 |
+| Файл                                   | Назначение                                                                                                        |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                     |
+| `app.settings.ts`                      | `configApp` — глобальные pipes (через `setup/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                    |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
 
@@ -500,6 +500,32 @@ yarn db:setup
 # Читает src/env/.env.testing (+ .env.testing.local при наличии)
 yarn test:e2e
 ```
+
+#### Структура e2e
+
+| Компонент                  | Файл                                 | Назначение                                                                                                              |
+| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `configApp`                | `src/app/app.settings.ts`            | Единая настройка HTTP-приложения (pipes, CORS, Swagger, `app.init()`, class-validator) — используется в `main.ts` и e2e |
+| `initSettings`             | `test/helpers/init-settings.ts`      | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком                                          |
+| `UsersTestManager`         | `test/helpers/users-test-manager.ts` | SA-создание пользователей, CRUD `/sa/users`                                                                             |
+| `AuthTestManager`          | `test/helpers/auth-test-manager.ts`  | Регистрация, login, confirm, password recovery                                                                          |
+| `configureModule` callback | аргумент `initSettings`              | Переопределение провайдеров на уровне describe (например, `JwtService`)                                                 |
+
+Пример инициализации с callback:
+
+```typescript
+import { JwtService } from '@nestjs/jwt';
+
+import { initSettings } from './helpers/init-settings';
+
+const ctx = await initSettings((builder) => {
+  builder.overrideProvider(JwtService).useValue({ sign: jest.fn() });
+});
+
+// ctx.app, ctx.httpServer, ctx.emailMock, ctx.users, ctx.auth
+```
+
+Вспомогательные модули (`db.helper`, `auth.helper`, `invalid-input-data`, …) лежат в `test/helpers/`.
 
 Файлы e2e в `test/`:
 

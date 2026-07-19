@@ -1,17 +1,17 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
-import { clearAllData } from './utils/db.helper';
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
-import { invalidInputData, validInputData } from './utils/invalid-input-data';
-import { expectPaginatorItemsCount, expectPaginatorShape } from './utils/response.helpers';
+import { ADMIN_BASIC_AUTH_HEADER } from './helpers/basic-auth.helper';
+import { clearAllData } from './helpers/db.helper';
+import { E2eContext, initSettings } from './helpers/init-settings';
+import { invalidInputData, validInputData } from './helpers/invalid-input-data';
+import { expectPaginatorItemsCount, expectPaginatorShape } from './helpers/response.helpers';
 
 describe('Blog API (e2e)', () => {
   let ctx: E2eContext;
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
   }, 120000);
 
   afterAll(async () => {
@@ -23,7 +23,7 @@ describe('Blog API (e2e)', () => {
   });
 
   async function createBlogViaSa(overrides: Record<string, string> = {}) {
-    const res = await request(ctx.app.getHttpServer())
+    const res = await request(ctx.httpServer)
       .post('/sa/blogs')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send({ ...validInputData.blog, ...overrides })
@@ -42,16 +42,14 @@ describe('Blog API (e2e)', () => {
   // testing get '/sa/blogs' api
   describe('GET /sa/blogs', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
-        .get('/sa/blogs')
-        .expect(constants.HTTP_STATUS_UNAUTHORIZED);
+      await request(ctx.httpServer).get('/sa/blogs').expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should return paginated blogs — 200', async () => {
       await createBlogViaSa({ name: 'Blog A' });
       await createBlogViaSa({ name: 'Blog B' });
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get('/sa/blogs')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .expect(constants.HTTP_STATUS_OK);
@@ -63,14 +61,14 @@ describe('Blog API (e2e)', () => {
   // testing post '/sa/blogs' api
   describe('POST /sa/blogs', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post('/sa/blogs')
         .send(validInputData.blog)
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should create blog — 201', async () => {
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .post('/sa/blogs')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send(validInputData.blog)
@@ -89,7 +87,7 @@ describe('Blog API (e2e)', () => {
     it.each(invalidInputData.blog)(
       'should return 400 for invalid input — $description',
       async ({ payload, expectedFields }) => {
-        const res = await request(ctx.app.getHttpServer())
+        const res = await request(ctx.httpServer)
           .post('/sa/blogs')
           .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
           .send(payload)
@@ -104,7 +102,7 @@ describe('Blog API (e2e)', () => {
   // testing put '/sa/blogs/:id' api
   describe('PUT /sa/blogs/:id', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put('/sa/blogs/00000000-0000-0000-0000-000000000001')
         .send(validInputData.blog)
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -113,7 +111,7 @@ describe('Blog API (e2e)', () => {
     it('should update blog — 204', async () => {
       const blog = await createBlogViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/sa/blogs/${blog.id}`)
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
@@ -123,7 +121,7 @@ describe('Blog API (e2e)', () => {
         })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/blogs/${blog.id}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -131,7 +129,7 @@ describe('Blog API (e2e)', () => {
     });
 
     it('should return 404 for non-existent blog', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put('/sa/blogs/00000000-0000-0000-0000-000000000001')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send(validInputData.blog)
@@ -142,7 +140,7 @@ describe('Blog API (e2e)', () => {
   // testing delete '/sa/blogs/:id' api
   describe('DELETE /sa/blogs/:id', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete('/sa/blogs/00000000-0000-0000-0000-000000000001')
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
@@ -150,12 +148,12 @@ describe('Blog API (e2e)', () => {
     it('should delete blog — 204', async () => {
       const blog = await createBlogViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete(`/sa/blogs/${blog.id}`)
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get(`/blogs/${blog.id}`)
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -167,9 +165,7 @@ describe('Blog API (e2e)', () => {
       await createBlogViaSa({ name: 'Public A' });
       await createBlogViaSa({ name: 'Public B' });
 
-      const res = await request(ctx.app.getHttpServer())
-        .get('/blogs')
-        .expect(constants.HTTP_STATUS_OK);
+      const res = await request(ctx.httpServer).get('/blogs').expect(constants.HTTP_STATUS_OK);
 
       expectPaginatorItemsCount(res.body, 2);
     });
@@ -178,7 +174,7 @@ describe('Blog API (e2e)', () => {
       await createBlogViaSa({ name: 'SearchableBlog' });
       await createBlogViaSa({ name: 'OtherBlog' });
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get('/blogs?searchNameTerm=Search')
         .expect(constants.HTTP_STATUS_OK);
 
@@ -192,7 +188,7 @@ describe('Blog API (e2e)', () => {
     it('should return blog by id — 200', async () => {
       const blog = await createBlogViaSa();
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/blogs/${blog.id}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -201,7 +197,7 @@ describe('Blog API (e2e)', () => {
     });
 
     it('should return 404 for non-existent blog', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get('/blogs/00000000-0000-0000-0000-000000000001')
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });

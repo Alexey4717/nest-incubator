@@ -2,10 +2,11 @@ import { INestApplication } from '@nestjs/common';
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createSaUser, loginAndGetToken } from './auth.helper';
+import { AuthTestManager } from './auth-test-manager';
 import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
 import { clearAllData } from './db.helper';
 import { validInputData } from './invalid-input-data';
+import { UsersTestManager } from './users-test-manager';
 
 export type CommentE2eSetup = {
   ownerToken: string;
@@ -17,7 +18,11 @@ export type CommentE2eSetup = {
   otherLogin: string;
 };
 
-export async function setupCommentE2eContext(app: INestApplication): Promise<CommentE2eSetup> {
+export async function setupCommentE2eContext(
+  app: INestApplication,
+  users: UsersTestManager,
+  auth: AuthTestManager,
+): Promise<CommentE2eSetup> {
   await clearAllData(app);
 
   const ownerLogin = 'cmntowner';
@@ -36,19 +41,19 @@ export async function setupCommentE2eContext(app: INestApplication): Promise<Com
     .send({ ...validInputData.post, blogId: blogRes.body.id })
     .expect(constants.HTTP_STATUS_CREATED);
 
-  await createSaUser(app, {
+  await users.createSaUser({
     login: ownerLogin,
     email: 'cmntowner@test.dev',
     password,
   });
-  await createSaUser(app, {
+  await users.createSaUser({
     login: otherLogin,
     email: 'cmntother@test.dev',
     password,
   });
 
-  const ownerToken = await loginAndGetToken(app, ownerLogin, password);
-  const otherToken = await loginAndGetToken(app, otherLogin, password);
+  const ownerToken = await auth.loginAndGetToken(ownerLogin, password);
+  const otherToken = await auth.loginAndGetToken(otherLogin, password);
 
   const ownerCommentRes = await request(app.getHttpServer())
     .post(`/posts/${postRes.body.id}/comments`)

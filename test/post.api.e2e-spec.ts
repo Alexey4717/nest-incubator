@@ -1,12 +1,11 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createSaUser, loginAndGetToken } from './utils/auth.helper';
-import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
-import { clearAllData } from './utils/db.helper';
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
-import { invalidInputData, validInputData } from './utils/invalid-input-data';
-import { expectPaginatorItemsCount, expectPaginatorShape } from './utils/response.helpers';
+import { ADMIN_BASIC_AUTH_HEADER } from './helpers/basic-auth.helper';
+import { clearAllData } from './helpers/db.helper';
+import { E2eContext, initSettings } from './helpers/init-settings';
+import { invalidInputData, validInputData } from './helpers/invalid-input-data';
+import { expectPaginatorItemsCount, expectPaginatorShape } from './helpers/response.helpers';
 
 export { invalidInputData };
 
@@ -18,7 +17,7 @@ describe('Post API (e2e)', () => {
   const userPassword = 'qwerty12';
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
   }, 120000);
 
   afterAll(async () => {
@@ -28,7 +27,7 @@ describe('Post API (e2e)', () => {
   beforeEach(async () => {
     await clearAllData(ctx.app);
 
-    const blogRes = await request(ctx.app.getHttpServer())
+    const blogRes = await request(ctx.httpServer)
       .post('/sa/blogs')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send(validInputData.blog)
@@ -36,17 +35,17 @@ describe('Post API (e2e)', () => {
 
     blogId = blogRes.body.id;
 
-    await createSaUser(ctx.app, {
+    await ctx.users.createSaUser({
       login: userLogin,
       email: 'postuser@test.dev',
       password: userPassword,
     });
 
-    accessToken = await loginAndGetToken(ctx.app, userLogin, userPassword);
+    accessToken = await ctx.auth.loginAndGetToken(userLogin, userPassword);
   });
 
   async function createPostViaSa(overrides: Record<string, unknown> = {}) {
-    const res = await request(ctx.app.getHttpServer())
+    const res = await request(ctx.httpServer)
       .post('/posts')
       .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
       .send({ ...validInputData.post, blogId, ...overrides })
@@ -61,9 +60,7 @@ describe('Post API (e2e)', () => {
       await createPostViaSa({ title: 'Post 1' });
       await createPostViaSa({ title: 'Post 2' });
 
-      const res = await request(ctx.app.getHttpServer())
-        .get('/posts')
-        .expect(constants.HTTP_STATUS_OK);
+      const res = await request(ctx.httpServer).get('/posts').expect(constants.HTTP_STATUS_OK);
 
       expectPaginatorItemsCount(res.body, 2);
     });
@@ -73,7 +70,7 @@ describe('Post API (e2e)', () => {
         await createPostViaSa({ title: `PagPost ${i}` });
       }
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get('/posts?pageSize=2&pageNumber=2')
         .expect(constants.HTTP_STATUS_OK);
 
@@ -88,7 +85,7 @@ describe('Post API (e2e)', () => {
       { query: 'sortDirection=invalid', field: 'sortDirection' },
       { query: 'sortBy=invalidField', field: 'sortBy' },
     ])('should return 400 for invalid query — $query', async ({ query, field }) => {
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/posts?${query}`)
         .expect(constants.HTTP_STATUS_BAD_REQUEST);
 
@@ -102,7 +99,7 @@ describe('Post API (e2e)', () => {
     it('should return post by id — 200', async () => {
       const post = await createPostViaSa();
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/posts/${post.id}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -111,7 +108,7 @@ describe('Post API (e2e)', () => {
     });
 
     it('should return 404 for non-existent post', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get('/posts/00000000-0000-0000-0000-000000000001')
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -120,14 +117,14 @@ describe('Post API (e2e)', () => {
   // testing post '/posts' api
   describe('POST /posts', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post('/posts')
         .send({ ...validInputData.post, blogId })
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
 
     it('should create post — 201', async () => {
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .post('/posts')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({ ...validInputData.post, blogId })
@@ -153,7 +150,7 @@ describe('Post API (e2e)', () => {
           : { ...item.payload, blogId },
       })),
     )('should return 400 for invalid input — $description', async ({ payload, expectedFields }) => {
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .post('/posts')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send(payload)
@@ -164,7 +161,7 @@ describe('Post API (e2e)', () => {
     });
 
     it('should return 404 for non-existent blogId', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post('/posts')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
@@ -178,7 +175,7 @@ describe('Post API (e2e)', () => {
   // testing put '/posts/:id' api
   describe('PUT /posts/:id', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put('/posts/00000000-0000-0000-0000-000000000001')
         .send({ ...validInputData.post, blogId })
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -187,7 +184,7 @@ describe('Post API (e2e)', () => {
     it('should update post — 204', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/posts/${post.id}`)
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .send({
@@ -198,7 +195,7 @@ describe('Post API (e2e)', () => {
         })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/posts/${post.id}`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -209,7 +206,7 @@ describe('Post API (e2e)', () => {
   // testing delete '/posts/:id' api
   describe('DELETE /posts/:id', () => {
     it('should return 401 if not auth', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete('/posts/00000000-0000-0000-0000-000000000001')
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
@@ -217,12 +214,12 @@ describe('Post API (e2e)', () => {
     it('should delete post — 204', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .delete(`/posts/${post.id}`)
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get(`/posts/${post.id}`)
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -233,13 +230,13 @@ describe('Post API (e2e)', () => {
     it('should return paginated comments — 200', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post(`/posts/${post.id}/comments`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send(validInputData.comment)
         .expect(constants.HTTP_STATUS_CREATED);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/posts/${post.id}/comments`)
         .expect(constants.HTTP_STATUS_OK);
 
@@ -247,7 +244,7 @@ describe('Post API (e2e)', () => {
     });
 
     it('should return 404 for non-existent post', async () => {
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .get('/posts/00000000-0000-0000-0000-000000000001/comments')
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
@@ -258,7 +255,7 @@ describe('Post API (e2e)', () => {
     it('should return 401 if not auth', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post(`/posts/${post.id}/comments`)
         .send(validInputData.comment)
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -267,7 +264,7 @@ describe('Post API (e2e)', () => {
     it('should create comment — 201', async () => {
       const post = await createPostViaSa();
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .post(`/posts/${post.id}/comments`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send(validInputData.comment)
@@ -294,7 +291,7 @@ describe('Post API (e2e)', () => {
       async ({ payload, expectedFields }) => {
         const post = await createPostViaSa();
 
-        const res = await request(ctx.app.getHttpServer())
+        const res = await request(ctx.httpServer)
           .post(`/posts/${post.id}/comments`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send(payload)
@@ -311,7 +308,7 @@ describe('Post API (e2e)', () => {
     it('should return 401 if not auth', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/posts/${post.id}/like-status`)
         .send({ likeStatus: 'Like' })
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -320,13 +317,13 @@ describe('Post API (e2e)', () => {
     it('should update like status — 204', async () => {
       const post = await createPostViaSa();
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .put(`/posts/${post.id}/like-status`)
         .set('Authorization', `Bearer ${accessToken}`)
         .send({ likeStatus: 'Like' })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const res = await request(ctx.app.getHttpServer())
+      const res = await request(ctx.httpServer)
         .get(`/posts/${post.id}`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(constants.HTTP_STATUS_OK);

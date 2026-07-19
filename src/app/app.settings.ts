@@ -20,8 +20,7 @@ export function setupClassValidatorContainer(app: INestApplication): void {
   );
 }
 
-/** Глобальная настройка HTTP-приложения (pipes, фильтры, Swagger, CORS); вызывается из main и e2e. */
-export function appSettings(app: INestApplication): void {
+function applyHttpSettings(app: INestApplication): void {
   const server = app.getHttpAdapter().getInstance();
   if (server && typeof server.set === 'function') {
     server.set('trust proxy', 1);
@@ -34,4 +33,11 @@ export function appSettings(app: INestApplication): void {
   setupValidationPipe(app);
 
   swaggerSetup(app);
+}
+
+/** Глобальная настройка приложения (HTTP + init + class-validator); вызывается из main и e2e. */
+export async function configApp(app: INestApplication): Promise<void> {
+  applyHttpSettings(app);
+  await app.init();
+  setupClassValidatorContainer(app);
 }

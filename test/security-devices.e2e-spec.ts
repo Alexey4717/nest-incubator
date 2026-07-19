@@ -1,16 +1,8 @@
 import { randomUUID } from 'crypto';
 import { constants } from 'http2';
-import request from 'supertest';
 
-import {
-  createSaUser,
-  createSupertestAgent,
-  loginSameUserOnTwoDevices,
-  loginWithAgent,
-} from './utils/auth.helper';
-import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
-import { clearAllData } from './utils/db.helper';
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
+import { clearAllData } from './helpers/db.helper';
+import { E2eContext, initSettings } from './helpers/init-settings';
 
 describe('Security devices (e2e)', () => {
   let ctx: E2eContext;
@@ -20,7 +12,7 @@ describe('Security devices (e2e)', () => {
   const email = 'secuser@test.dev';
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
   }, 120000);
 
   afterAll(async () => {
@@ -32,11 +24,12 @@ describe('Security devices (e2e)', () => {
   describe('GET /security/devices', () => {
     beforeAll(async () => {
       await clearAllData(ctx.app);
-      await createSaUser(ctx.app, { login, password, email });
+      await ctx.users.createSaUser({ login, password, email });
     });
 
     it('should return 401 if not auth — GET /security/devices without cookie', async () => {
-      await request(ctx.app.getHttpServer())
+      await ctx.auth
+        .createSupertestAgent()
         .get('/security/devices')
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     });
@@ -45,7 +38,7 @@ describe('Security devices (e2e)', () => {
       const ua1 = 'Mozilla/5.0 E2E-Device-One';
       const ua2 = 'Mozilla/5.0 E2E-Device-Two';
 
-      const { agent1 } = await loginSameUserOnTwoDevices(ctx.app, login, password, [ua1, ua2]);
+      const { agent1 } = await ctx.auth.loginSameUserOnTwoDevices(login, password, [ua1, ua2]);
 
       const devicesRes = await agent1.get('/security/devices').expect(constants.HTTP_STATUS_OK);
 
@@ -59,24 +52,24 @@ describe('Security devices (e2e)', () => {
   describe('DELETE /security/devices/:deviceId', () => {
     beforeEach(async () => {
       await clearAllData(ctx.app);
-      await createSaUser(ctx.app, { login, password, email });
+      await ctx.users.createSaUser({ login, password, email });
     });
 
     it('DELETE /security/devices/:deviceId for other user device → 403', async () => {
       const otherLogin = 'secuser2';
       const otherEmail = 'secuser2@test.dev';
 
-      await request(ctx.app.getHttpServer())
-        .post('/sa/users')
-        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-        .send({ login: otherLogin, password, email: otherEmail })
+      await ctx.users
+        .createUser({ login: otherLogin, password, email: otherEmail })
         .expect(constants.HTTP_STATUS_CREATED);
 
-      const user1Agent = createSupertestAgent(ctx.app);
-      const user2Agent = createSupertestAgent(ctx.app);
+      const user1Agent = ctx.auth.createSupertestAgent();
+      const user2Agent = ctx.auth.createSupertestAgent();
 
-      await loginWithAgent(user1Agent, login, password, { userAgent: 'User1-Device' });
-      await loginWithAgent(user2Agent, otherLogin, password, { userAgent: 'User2-Device' });
+      await ctx.auth.loginWithAgent(user1Agent, login, password, { userAgent: 'User1-Device' });
+      await ctx.auth.loginWithAgent(user2Agent, otherLogin, password, {
+        userAgent: 'User2-Device',
+      });
 
       const user2Devices = await user2Agent
         .get('/security/devices')
@@ -90,9 +83,9 @@ describe('Security devices (e2e)', () => {
     });
 
     it('DELETE non-existent deviceId → 404', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      await loginWithAgent(agent, login, password);
+      await ctx.auth.loginWithAgent(agent, login, password);
 
       await agent
         .delete(`/security/devices/${randomUUID()}`)
@@ -103,11 +96,11 @@ describe('Security devices (e2e)', () => {
   describe('DELETE /security/devices and session revoke', () => {
     beforeEach(async () => {
       await clearAllData(ctx.app);
-      await createSaUser(ctx.app, { login, password, email });
+      await ctx.users.createSaUser({ login, password, email });
     });
 
     it('DELETE /security/devices → current device remains, others deleted', async () => {
-      const { agent1 } = await loginSameUserOnTwoDevices(ctx.app, login, password, [
+      const { agent1 } = await ctx.auth.loginSameUserOnTwoDevices(login, password, [
         'E2E-Current-Device',
         'E2E-Other-Device',
       ]);
@@ -121,9 +114,9 @@ describe('Security devices (e2e)', () => {
     });
 
     it('refresh with revoked device → 401', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      await loginWithAgent(agent, login, password, { userAgent: 'E2E-Revoked-Device' });
+      await ctx.auth.loginWithAgent(agent, login, password, { userAgent: 'E2E-Revoked-Device' });
 
       const devicesRes = await agent.get('/security/devices').expect(constants.HTTP_STATUS_OK);
 

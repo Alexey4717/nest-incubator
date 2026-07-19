@@ -1,9 +1,8 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createSaUser, createSupertestAgent, loginWithAgent } from './utils/auth.helper';
-import { clearAllData } from './utils/db.helper';
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
+import { clearAllData } from './helpers/db.helper';
+import { E2eContext, initSettings } from './helpers/init-settings';
 
 describe('Auth refresh token flow (e2e)', () => {
   let ctx: E2eContext;
@@ -13,7 +12,7 @@ describe('Auth refresh token flow (e2e)', () => {
   const email = 'refuser01@test.dev';
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
   }, 120000);
 
   afterAll(async () => {
@@ -25,13 +24,13 @@ describe('Auth refresh token flow (e2e)', () => {
   describe('POST /auth/refresh-token', () => {
     beforeAll(async () => {
       await clearAllData(ctx.app);
-      await createSaUser(ctx.app, { login, password, email });
+      await ctx.users.createSaUser({ login, password, email });
     });
 
     it('login → refresh-token with cookie → 200 + new accessToken', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      const loginRes = await loginWithAgent(agent, login, password);
+      const loginRes = await ctx.auth.loginWithAgent(agent, login, password);
 
       expect(loginRes.accessToken).toEqual(expect.any(String));
       expect(loginRes.setCookie).toBeDefined();
@@ -43,14 +42,14 @@ describe('Auth refresh token flow (e2e)', () => {
     });
 
     it('refresh with old refresh after rotation → 401', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      const loginRes = await loginWithAgent(agent, login, password);
+      const loginRes = await ctx.auth.loginWithAgent(agent, login, password);
       const oldRefreshCookie = loginRes.setCookie!;
 
       await agent.post('/auth/refresh-token').expect(constants.HTTP_STATUS_OK);
 
-      await request(ctx.app.getHttpServer())
+      await request(ctx.httpServer)
         .post('/auth/refresh-token')
         .set('Cookie', oldRefreshCookie as string[])
         .expect(constants.HTTP_STATUS_UNAUTHORIZED);
@@ -60,13 +59,13 @@ describe('Auth refresh token flow (e2e)', () => {
   describe('POST /auth/logout', () => {
     beforeAll(async () => {
       await clearAllData(ctx.app);
-      await createSaUser(ctx.app, { login, password, email });
+      await ctx.users.createSaUser({ login, password, email });
     });
 
     it('logout → refresh → 401', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      await loginWithAgent(agent, login, password);
+      await ctx.auth.loginWithAgent(agent, login, password);
 
       await agent.post('/auth/logout').expect(constants.HTTP_STATUS_NO_CONTENT);
 
@@ -74,9 +73,9 @@ describe('Auth refresh token flow (e2e)', () => {
     });
 
     it('logout clears cookie', async () => {
-      const agent = createSupertestAgent(ctx.app);
+      const agent = ctx.auth.createSupertestAgent();
 
-      await loginWithAgent(agent, login, password);
+      await ctx.auth.loginWithAgent(agent, login, password);
 
       const logoutRes = await agent.post('/auth/logout').expect(constants.HTTP_STATUS_NO_CONTENT);
 

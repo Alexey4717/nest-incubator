@@ -1,4 +1,4 @@
-import { EmailServiceMock } from './e2e-application';
+import { EmailServiceMock } from './init-settings';
 
 export function getLastConfirmationCode(emailMock: EmailServiceMock): string {
   const regOrder = emailMock.sendRegistrationEmail.mock.invocationCallOrder.at(-1) ?? -1;

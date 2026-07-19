@@ -1,13 +1,13 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createE2eApplication, E2eContext } from './utils/e2e-application';
+import { E2eContext, initSettings } from './helpers/init-settings';
 
 describe('App (e2e)', () => {
   let ctx: E2eContext;
 
   beforeAll(async () => {
-    ctx = await createE2eApplication();
+    ctx = await initSettings();
   }, 60000);
 
   afterAll(async () => {
@@ -15,9 +15,6 @@ describe('App (e2e)', () => {
   });
 
   it('/ (GET)', async () => {
-    await request(ctx.app.getHttpServer())
-      .get('/')
-      .expect(constants.HTTP_STATUS_OK)
-      .expect('Hello Nest22!');
+    await request(ctx.httpServer).get('/').expect(constants.HTTP_STATUS_OK).expect('Hello Nest22!');
   });
 });
