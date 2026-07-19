@@ -1,6 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiForbiddenResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -33,5 +35,7 @@ export function ApiTerminateDevice() {
     ApiParam({ name: 'deviceId', description: 'Device id' }),
     ApiNoContentResponse({ description: 'Session terminated' }),
     ApiUnauthorizedResponse({ description: UNAUTHORIZED_DESCRIPTION }),
+    ApiNotFoundResponse({ description: 'Device not found' }),
+    ApiForbiddenResponse({ description: 'Cannot terminate current device session' }),
   );
 }

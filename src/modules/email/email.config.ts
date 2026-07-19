@@ -11,6 +11,10 @@ class EmailEnvironmentVariables {
   NODEMAILER_PASSWORD_TRANSPORT: string;
 
   @IsString()
+  @IsNotEmpty({ message: 'Set NODEMAILER_FROM env variable' })
+  NODEMAILER_FROM: string;
+
+  @IsString()
   @IsNotEmpty({ message: 'Set MAIN_URL env variable' })
   MAIN_URL: string;
 }
@@ -19,6 +23,7 @@ class EmailEnvironmentVariables {
 export class EmailConfig {
   NODEMAILER_USER_TRANSPORT: string;
   NODEMAILER_PASSWORD_TRANSPORT: string;
+  NODEMAILER_FROM: string;
   MAIN_URL: string;
 
   constructor() {

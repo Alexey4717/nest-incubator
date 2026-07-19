@@ -11,11 +11,6 @@ import { CommentQueryRepository } from './comment-query.repository';
 import { CommentReactionEntity } from './comment-reaction.entity';
 import { CommentOrmEntity } from './comment.orm-entity';
 
-export interface UpdateCommentByIdArgs {
-  id: string;
-  content: string;
-}
-
 export interface UpdateCommentLikeStatusArgs {
   commentId: string;
   userId: string;
@@ -53,16 +48,6 @@ export class CommentRepository {
     const data = comment.toDb();
     const result = await this.commentsRepository.update({ id: data.id }, { content: data.content });
     return (result.affected ?? 0) === 1;
-  }
-
-  async updateCommentById({ id, content }: UpdateCommentByIdArgs): Promise<boolean> {
-    try {
-      const result = await this.commentsRepository.update({ id }, { content });
-      return (result.affected ?? 0) === 1;
-    } catch (error) {
-      console.log('commentsRepository.updateCommentById error is occurred: ', error);
-      return false;
-    }
   }
 
   async updateCommentLikeStatusByCommentId({

@@ -12,10 +12,10 @@ export class NewPasswordCommand {
 }
 
 @CommandHandler(NewPasswordCommand)
-export class NewPasswordHandler implements ICommandHandler<NewPasswordCommand> {
+export class NewPasswordHandler implements ICommandHandler<NewPasswordCommand, void> {
   constructor(private readonly newPasswordUseCase: NewPasswordUseCase) {}
 
-  execute(command: NewPasswordCommand): Promise<boolean> {
+  execute(command: NewPasswordCommand): Promise<void> {
     return this.newPasswordUseCase.execute(command.input);
   }
 }

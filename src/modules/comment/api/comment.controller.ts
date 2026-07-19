@@ -16,6 +16,7 @@ import { DeleteCommentCommand } from '../application/commands/delete-comment.com
 import { UpdateCommentLikeStatusCommand } from '../application/commands/update-comment-like-status.command';
 import { UpdateCommentCommand } from '../application/commands/update-comment.command';
 import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.query';
+import { CommentViewMapper } from '../comment.view-mapper';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
 import {
@@ -32,6 +33,7 @@ export class CommentController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly commentViewMapper: CommentViewMapper,
   ) {}
 
   @UseGuards(GetUserIdFromBearerToken)
@@ -39,11 +41,11 @@ export class CommentController {
   @HttpCode(constants.HTTP_STATUS_OK)
   @ApiGetComment()
   async getComment(@Param() params: { id: string }, @CurrentUserId() currentUserId: string | null) {
-    const foundComment = await this.queryBus.execute(
-      new GetCommentByIdQuery(params.id, currentUserId),
+    const foundComment = throwIfNotFound(
+      await this.queryBus.execute(new GetCommentByIdQuery(params.id, currentUserId)),
     );
 
-    return throwIfNotFound(foundComment);
+    return this.commentViewMapper.toCommentViewModel(foundComment, currentUserId ?? undefined);
   }
 
   @UseGuards(AccessJwtAuthGuard)

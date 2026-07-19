@@ -80,7 +80,7 @@ export class MailerConfig implements MailerOptionsFactory {
         },
       },
       defaults: {
-        from: 'Alex-4717 it-incubator APP',
+        from: this.emailConfig.NODEMAILER_FROM,
       },
       preview: false,
       template: {

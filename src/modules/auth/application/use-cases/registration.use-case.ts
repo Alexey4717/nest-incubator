@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { resultToDomainException } from '@/core/result/result-to-domain';
 import { IUseCase } from '@/core/types/use-case';
 
 import { EmailService } from '@/modules/email/email.service';
@@ -19,7 +20,7 @@ export class RegistrationUseCase implements IUseCase<RegistrationInput, void> {
   ) {}
 
   async execute(input: RegistrationInput): Promise<void> {
-    const user = await this.registerUserUseCase.execute(input);
+    const user = resultToDomainException(await this.registerUserUseCase.execute(input));
     await this.emailService.sendRegistrationEmail(
       user.email,
       user.login,

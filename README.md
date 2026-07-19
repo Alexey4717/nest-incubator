@@ -106,7 +106,7 @@ modules/<feature>/
 | **Infra**                      | `database`, `email`                                   | config, провайдеры; у `database` — migrations/seeds                                  | Нет domain layer и HTTP                          |
 | **Utility**                    | `testing`                                             | минимальный модуль под одну задачу                                                   | CQRS только для служебного cleanup               |
 
-Subdomain-модули (`like`, `session`) экспортируют services / use cases через `@Module({ exports })`; эндпoинты и обработка HTTP-ошибок — у потребителей (`post`, `comment`, `auth`, `security`). Сводка аудита: [`docs/audits/CONSOLIDATION.md`](docs/audits/CONSOLIDATION.md).
+Subdomain-модули (`like`, `session`) экспортируют services / use cases через `@Module({ exports })`; эндпoинты и обработка HTTP-ошибок — у потребителей (`post`, `comment`, `auth`, `security`).
 
 ### Направление зависимостей
 
@@ -262,9 +262,9 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 | **Infra-сбой** (save/delete вернул null не по бизнес-причине) | use case `throw DomainException(InternalServerError)`  | filter → 500                                                                           |
 | **Subdomain без controller** (`session`, `like`)              | `Result` или throw                                     | потребитель (`auth`, `security`, `post`, `comment`) вызывает `resultToDomainException` |
 
-Эталон mutation: [`UpdateCommentUseCase`](src/modules/comment/application/use-cases/update-comment.use-case.ts) + [`comment.controller.ts`](src/modules/comment/api/comment.controller.ts). Матрица по всем модулям: [`docs/audits/CONSOLIDATION.md`](docs/audits/CONSOLIDATION.md).
+Эталон mutation: [`UpdateCommentUseCase`](src/modules/comment/application/use-cases/update-comment.use-case.ts) + [`comment.controller.ts`](src/modules/comment/api/comment.controller.ts).
 
-**Исключения (временно без Result):** create-flow (`CreateBlogUseCase`, `CreateUserUseCase`, `CreateSessionUseCase`), auth-обёртки над user (`ConfirmEmailUseCase`, `ChangePasswordUseCase`) — throw до filter; миграция в WARN backlog.
+**Исключения (временно без Result):** нет — create-flow и auth-обёртки мигрированы.
 
 #### DomainException — где выбрасывать
 
@@ -376,7 +376,7 @@ flowchart TD
 | `like`    | `post`, `comment`  | `ReactionsMapperService`, `ReactionUpdateService`, `LikeInputDto` |
 | `session` | `auth`, `security` | use cases (`CreateSession`, `DeleteSession`, …); `@Global()`      |
 
-**`session`:** HTTP-слоя нет — мутации возвращают `Result` (delete*) или Model/boolean (create/refresh — см. WARN backlog). `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет просроченные сессии.
+**`session`:** HTTP-слоя нет — мутации возвращают `Result`. `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет просроченные сессии.
 
 **`like`:** `PostModule` / `CommentModule` импортируют `LikeModule` и владеют `PUT .../like-status`; view-mapper потребителей вызывает `ReactionsMapperService`.
 
@@ -557,7 +557,7 @@ yarn build && yarn start:prod
 | `CoreConfig`     | `core`     | `PORT`, `NODE_ENV`                                                                                |
 | `DatabaseConfig` | `database` | `DB_NAME`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSL` |
 | `AuthConfig`     | `auth`     | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD`                                    |
-| `EmailConfig`    | `email`    | `NODEMAILER_*`, `MAIN_URL`                                                                        |
+| `EmailConfig`    | `email`    | `NODEMAILER_*`, `NODEMAILER_FROM`, `MAIN_URL`                                                     |
 | `SessionConfig`  | `session`  | `REFRESH_TOKEN_LIFE_TIME`                                                                         |
 
 `CoreModule` помечен `@Global()` — `CoreConfig`, `BcryptService`, `TrimValidator` и глобальные exception filters доступны после одного импорта `CoreModule` в `AppModule`. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
@@ -804,6 +804,13 @@ Refresh token:
 | `POST` | `/auth/new-password`                 | Установка нового пароля             |
 | `POST` | `/auth/refresh-token`                | Обновление access/refresh по cookie |
 
+### Эндпoинты auth (с guard)
+
+| Метод  | Путь           | Guard       | Описание                                                               |
+| ------ | -------------- | ----------- | ---------------------------------------------------------------------- |
+| `GET`  | `/auth/me`     | Access JWT  | Профиль текущего пользователя; **404**, если пользователь удалён из БД |
+| `POST` | `/auth/logout` | Refresh JWT | Завершение текущей сессии                                              |
+
 ### Rate limiting
 
 Глобально: **5 запросов за 10 секунд на IP** (`ThrottlerModule.forRoot({ ttl: 10, limit: 5 })` + `ThrottlerGuard` через `APP_GUARD`).
@@ -833,7 +840,9 @@ Refresh token:
 
 ## Testing module
 
-`DELETE /testing/all-data` (только при `NODE_ENV=testing`) очищает данные в PostgreSQL для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам.
+Модуль `testing` подключается через **`INCLUDE_TESTING_MODULE=true`** (см. `CoreConfig.includeTestingModule` в [`app.module.ts`](src/app/app.module.ts)). На Vercel и в e2e переменная обычно включена; в production без checker — `false`.
+
+`DELETE /testing/all-data` доступен только когда модуль подключён. Эндпoинт очищает данные в PostgreSQL для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам. Для локального e2e также используйте `NODE_ENV=testing`.
 
 ## Лицензия
 

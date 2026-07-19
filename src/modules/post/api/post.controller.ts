@@ -23,6 +23,7 @@ import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard'
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { CreateCommentInPostCommand } from '@/modules/comment/application/commands/create-comment-in-post.command';
+import { CommentViewMapper } from '@/modules/comment/comment.view-mapper';
 import { GetPostCommentsQueryParamsDto } from '@/modules/comment/dto/get-post-comments-query-params.dto';
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
@@ -58,6 +59,7 @@ export class PostController {
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
     private readonly findUserByIdUseCase: FindUserByIdUseCase,
+    private readonly commentViewMapper: CommentViewMapper,
   ) {}
 
   @UseGuards(GetUserIdFromBearerToken)
@@ -102,9 +104,7 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiCreatePost()
   async createPost(@Body() body: CreatePostDto) {
-    const result = await this.commandBus.execute(new CreatePostCommand(body));
-
-    return resultToDomainException(result);
+    return resultToDomainException(await this.commandBus.execute(new CreatePostCommand(body)));
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -118,12 +118,13 @@ export class PostController {
   ) {
     const user = throwIfNotFound(await this.findUserByIdUseCase.execute(userId));
 
-    const createdCommentInPost = throwIfNotFound(
+    const createdComment = resultToDomainException(
       await this.commandBus.execute(
         new CreateCommentInPostCommand(params.postId, body.content, userId, user.login),
       ),
     );
-    return createdCommentInPost;
+
+    return this.commentViewMapper.toCommentViewModel(createdComment);
   }
 
   @UseGuards(AccessJwtAuthGuard)

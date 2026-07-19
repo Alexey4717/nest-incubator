@@ -8,15 +8,9 @@ import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.re
 
 import { PostEntity } from '../domain/entities/post.entity';
 import { PostPersistenceMapper } from '../domain/mappers/post.persistence-mapper';
-import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
 import { PostReactionEntity } from './post-reaction.entity';
 import { reactionToDomain } from './post.mapper';
 import { PostOrmEntity } from './post.orm-entity';
-
-export interface UpdatePostArgs {
-  id: string;
-  input: UpdatePostInputModel;
-}
 
 export interface UpdateLikeStatusPostArgs {
   postId: string;
@@ -64,16 +58,6 @@ export class PostRepository {
       },
     );
     return (result.affected ?? 0) === 1;
-  }
-
-  async updatePost({ id, input }: UpdatePostArgs): Promise<boolean> {
-    try {
-      const result = await this.postsRepository.update({ id }, input);
-      return (result.affected ?? 0) === 1;
-    } catch (error) {
-      console.log(`postsRepository.updatePost error is occurred: ${error}`);
-      return false;
-    }
   }
 
   async updatePostLikeStatus({

@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { SessionEntity } from '../../domain/entities/session.entity';
@@ -18,7 +22,7 @@ type UpdateSessionAfterRefreshInput = {
 @Injectable()
 export class UpdateSessionAfterRefreshUseCase implements IUseCase<
   UpdateSessionAfterRefreshInput,
-  boolean
+  ResultType<null>
 > {
   constructor(
     private readonly sessionQueryRepository: SessionQueryRepository,
@@ -31,18 +35,33 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
     expectedJti,
     newJti,
     lastActiveDate,
-  }: UpdateSessionAfterRefreshInput): Promise<boolean> {
+  }: UpdateSessionAfterRefreshInput): Promise<ResultType<null>> {
     const found = await this.sessionQueryRepository.findOneByDeviceAndUserId(deviceId, userId);
-    if (!found) return false;
+    if (!found) {
+      return Result.fail(DomainExceptionCode.Unauthorized);
+    }
 
     const session = SessionEntity.reconstitute(modelToDb(found));
 
     try {
       session.rotateRefreshToken(expectedJti, newJti, lastActiveDate);
-    } catch {
-      return false;
+    } catch (error) {
+      if (error instanceof DomainException) {
+        return Result.fail(error.code, error.extensions);
+      }
+      return Result.fail(DomainExceptionCode.Unauthorized);
     }
 
-    return this.sessionRepository.rotateRefreshToken(userId, deviceId, expectedJti, session);
+    const updated = await this.sessionRepository.rotateRefreshToken(
+      userId,
+      deviceId,
+      expectedJti,
+      session,
+    );
+    if (!updated) {
+      return Result.fail(DomainExceptionCode.Unauthorized);
+    }
+
+    return Result.ok(null);
   }
 }

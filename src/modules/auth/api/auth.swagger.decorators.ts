@@ -2,6 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import {
   ApiBody,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiUnauthorizedResponse,
@@ -104,5 +105,7 @@ export function ApiGetMe() {
     ApiBearerProtected(),
     ApiOperation({ summary: 'Get information about current user' }),
     ApiOkResponse({ type: MeViewDto }),
+    ApiUnauthorizedResponse({ description: 'Invalid access token' }),
+    ApiNotFoundResponse({ description: 'User not found' }),
   );
 }

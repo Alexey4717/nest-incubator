@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
+import { resultToDomainException } from '@/core/result/result-to-domain';
 import { IUseCase } from '@/core/types/use-case';
 
 import { CreateSessionUseCase } from '@/modules/session/application/use-cases/create-session.use-case';
@@ -34,7 +35,7 @@ export class LoginUseCase implements IUseCase<LoginInput, AuthTokensViewModel> {
       deviceId,
       userId,
     };
-    await this.createSessionUseCase.execute(sessionInfo);
+    resultToDomainException(await this.createSessionUseCase.execute(sessionInfo));
     return { accessToken, refreshToken };
   }
 }

@@ -14,5 +14,6 @@ const testingCommandHandlers = [DeleteAllDataHandler];
   imports: [CqrsModule],
   controllers: [TestingController],
   providers: [TestingRepository, ...testingUseCases, ...testingCommandHandlers],
+  exports: [DeleteAllDataUseCase],
 })
 export class TestingModule {}

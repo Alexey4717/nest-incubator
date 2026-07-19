@@ -1,5 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { Result as ResultType } from '@/core/result/result.types';
+
 import { ConfirmEmailUseCase } from '../use-cases/confirm-email.use-case';
 
 export class ConfirmEmailCommand {
@@ -7,10 +9,10 @@ export class ConfirmEmailCommand {
 }
 
 @CommandHandler(ConfirmEmailCommand)
-export class ConfirmEmailHandler implements ICommandHandler<ConfirmEmailCommand> {
+export class ConfirmEmailHandler implements ICommandHandler<ConfirmEmailCommand, ResultType<null>> {
   constructor(private readonly confirmEmailUseCase: ConfirmEmailUseCase) {}
 
-  execute(command: ConfirmEmailCommand): Promise<void> {
+  execute(command: ConfirmEmailCommand): Promise<ResultType<null>> {
     return this.confirmEmailUseCase.execute(command.code);
   }
 }

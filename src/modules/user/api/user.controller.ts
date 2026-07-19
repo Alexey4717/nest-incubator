@@ -15,6 +15,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { resultToDomainException } from '@/core/result/result-to-domain';
+import { Paginator } from '@/core/types/common';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 
@@ -24,6 +25,7 @@ import { GetUsersQuery } from '../application/queries/get-users.query';
 import { CreateUserDTO } from '../dto/create-user.dto';
 import { GetUsersQueryParamsDto } from '../dto/get-users-query-params.dto';
 import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
+import { UserViewModel } from '../types/view-models';
 import { toUserViewModel } from '../user.view-mapper';
 import { ApiCreateUser, ApiDeleteUser, ApiGetUsers } from './user.swagger.decorators';
 
@@ -41,15 +43,22 @@ export class UserController {
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
   @ApiGetUsers()
-  async getUsers(@Query() query: GetUsersQueryParamsDto) {
-    return this.queryBus.execute(new GetUsersQuery(query));
+  async getUsers(@Query() query: GetUsersQueryParamsDto): Promise<Paginator<UserViewModel[]>> {
+    const result = await this.queryBus.execute(new GetUsersQuery(query));
+
+    return {
+      ...result,
+      items: result.items.map(toUserViewModel),
+    };
   }
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiCreateUser()
   async createUser(@Body() inputModel: CreateUserDTO) {
-    const createdUser = await this.commandBus.execute(new CreateUserCommand(inputModel));
+    const createdUser = resultToDomainException(
+      await this.commandBus.execute(new CreateUserCommand(inputModel)),
+    );
     return toUserViewModel(createdUser);
   }
 

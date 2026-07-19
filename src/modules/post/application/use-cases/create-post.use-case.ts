@@ -3,7 +3,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
 import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { ResultStatus, Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/helpers';
 
@@ -25,7 +25,7 @@ export type CreatePostInput = {
 };
 
 @Injectable()
-export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | null> {
+export class CreatePostUseCase implements IUseCase<CreatePostInput, ResultType<PostModel>> {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly postViewMapper: PostViewMapper,
@@ -33,11 +33,13 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | 
     private readonly blogQueryRepository: BlogQueryRepository,
   ) {}
 
-  async execute(input: CreatePostInput): Promise<PostModel | null> {
+  async execute(input: CreatePostInput): Promise<ResultType<PostModel>> {
     const { blogId, title, shortDescription, content } = input;
 
     const foundBlog = await this.blogQueryRepository.findBlogById(blogId);
-    if (!foundBlog) return null;
+    if (!foundBlog) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
 
     const newPost = PostEntity.create({ title, shortDescription, content, blogId }, foundBlog.name);
 
@@ -46,17 +48,17 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | 
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return fromEntity(saved);
+    return Result.ok(fromEntity(saved));
   }
 
   async executeFromDto(input: CreatePostDto): Promise<ResultType<PostViewModel>> {
     await validateOrRejectModel(input, CreatePostDto, 'CreatePostUseCase.executeFromDto');
 
-    const post = await this.execute(input);
-    if (!post) {
-      return Result.fail(DomainExceptionCode.NotFound);
+    const result = await this.execute(input);
+    if (result.status === ResultStatus.Failure) {
+      return Result.fail(result.code, result.extensions);
     }
 
-    return Result.ok(this.postViewMapper.toPostViewModel(post));
+    return Result.ok(this.postViewMapper.toPostViewModel(result.data));
   }
 }

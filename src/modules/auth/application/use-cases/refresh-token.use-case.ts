@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { ResultStatus } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
@@ -34,14 +35,14 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
       lastActiveDate,
     } = this.jwtTokenService.signAccessAndRefreshToken(userId, deviceId);
 
-    const isSessionUpdated = await this.updateSessionAfterRefreshUseCase.execute({
+    const updateResult = await this.updateSessionAfterRefreshUseCase.execute({
       userId,
       deviceId,
       expectedJti: jti,
       newJti,
       lastActiveDate,
     });
-    if (!isSessionUpdated) return null;
+    if (updateResult.status === ResultStatus.Failure) return null;
 
     return { accessToken, refreshToken };
   }

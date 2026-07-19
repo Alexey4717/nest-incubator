@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/helpers';
 
@@ -14,13 +15,16 @@ type CreatePostInBlogInput = {
 };
 
 @Injectable()
-export class CreatePostInBlogUseCase implements IUseCase<CreatePostInBlogInput, PostModel | null> {
+export class CreatePostInBlogUseCase implements IUseCase<
+  CreatePostInBlogInput,
+  ResultType<PostModel>
+> {
   constructor(
     @Inject(forwardRef(() => CreatePostUseCase))
     private readonly createPostUseCase: CreatePostUseCase,
   ) {}
 
-  async execute({ blogId, input }: CreatePostInBlogInput): Promise<PostModel | null> {
+  async execute({ blogId, input }: CreatePostInBlogInput): Promise<ResultType<PostModel>> {
     await validateOrRejectModel(input, CreatePostInBlogDTO, 'CreatePostInBlogUseCase.execute');
     const { title, shortDescription, content } = input;
 

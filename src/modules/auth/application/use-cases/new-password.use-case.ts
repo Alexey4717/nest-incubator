@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { resultToDomainException } from '@/core/result/result-to-domain';
 import { IUseCase } from '@/core/types/use-case';
 
 import { ChangePasswordUseCase } from '@/modules/user/application/use-cases/change-password.use-case';
@@ -10,10 +11,10 @@ type NewPasswordInput = {
 };
 
 @Injectable()
-export class NewPasswordUseCase implements IUseCase<NewPasswordInput, boolean> {
+export class NewPasswordUseCase implements IUseCase<NewPasswordInput, void> {
   constructor(private readonly changePasswordUseCase: ChangePasswordUseCase) {}
 
-  execute(input: NewPasswordInput): Promise<boolean> {
-    return this.changePasswordUseCase.execute(input);
+  async execute(input: NewPasswordInput): Promise<void> {
+    resultToDomainException(await this.changePasswordUseCase.execute(input));
   }
 }

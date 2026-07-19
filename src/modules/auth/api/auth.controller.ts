@@ -138,8 +138,10 @@ export class AuthController {
   async registrationEmailResending(
     @Body() registrationEmailResendingDto: RegistrationEmailResendingDto,
   ) {
-    return this.commandBus.execute(
-      new RegistrationEmailResendingCommand(registrationEmailResendingDto.email),
+    resultToDomainException(
+      await this.commandBus.execute(
+        new RegistrationEmailResendingCommand(registrationEmailResendingDto.email),
+      ),
     );
   }
 

@@ -69,7 +69,7 @@ export class SaBlogController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiSaCreateBlog()
   async createBlog(@Body() body: CreateBlogDTO) {
-    return this.commandBus.execute(new CreateBlogCommand(body));
+    return resultToDomainException(await this.commandBus.execute(new CreateBlogCommand(body)));
   }
 
   @Put(':id')
@@ -94,11 +94,11 @@ export class SaBlogController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiSaCreatePostInBlog()
   async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
-    const createdPostInBlog = await this.commandBus.execute(
-      new CreatePostInBlogCommand(params.blogId, body),
+    const createdPostInBlog = resultToDomainException(
+      await this.commandBus.execute(new CreatePostInBlogCommand(params.blogId, body)),
     );
 
-    return this.postViewMapper.toPostViewModel(throwIfNotFound(createdPostInBlog));
+    return this.postViewMapper.toPostViewModel(createdPostInBlog);
   }
 
   @Put(':blogId/posts/:postId')
