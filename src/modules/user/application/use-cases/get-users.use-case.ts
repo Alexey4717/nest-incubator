@@ -6,7 +6,7 @@ import { IUseCase } from '@/core/types/use-case';
 import { GetUsersQueryParamsDto } from '../../dto/get-users-query-params.dto';
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
 import { UserViewModel } from '../../types/view-models';
-import { toUserViewModel } from '../../utils/user.view-mapper';
+import { toUserViewModel } from '../../user.view-mapper';
 
 @Injectable()
 export class GetUsersUseCase implements IUseCase<

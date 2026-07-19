@@ -1,7 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { BasicStrategy as Strategy } from 'passport-http';
+
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
 
 import { AuthConfig } from '../auth.config';
 
@@ -15,6 +18,6 @@ export class BasicStrategy extends PassportStrategy(Strategy, 'basic') {
     if (username === this.authConfig.SA_LOGIN && password === this.authConfig.SA_PASSWORD) {
       return true;
     }
-    throw new UnauthorizedException();
+    throw new DomainException(DomainExceptionCode.Unauthorized);
   }
 }

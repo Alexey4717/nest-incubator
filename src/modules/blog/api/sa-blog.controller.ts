@@ -15,6 +15,7 @@ import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
+import { resultToDomainException } from '@/core/result/result-to-domain';
 import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -75,17 +76,18 @@ export class SaBlogController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiSaUpdateBlog()
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
-    const isBlogUpdated = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
+    const result = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
 
-    throwIfNotFound(isBlogUpdated || null);
+    resultToDomainException(result);
   }
 
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiSaDeleteBlog()
   async deleteBlog(@Param() params: { id: string }) {
-    const isBlogDeleted = await this.commandBus.execute(new DeleteBlogCommand(params.id));
-    throwIfNotFound(isBlogDeleted || null);
+    const result = await this.commandBus.execute(new DeleteBlogCommand(params.id));
+
+    resultToDomainException(result);
   }
 
   @Post(':blogId/posts')

@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectThrottlerStorage, ThrottlerStorage } from '@nestjs/throttler';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { TestingRepository } from '../../infrastructure/testing.repository';
@@ -10,16 +14,20 @@ type ThrottlerStorageServiceLike = ThrottlerStorage & {
 };
 
 @Injectable()
-export class DeleteAllDataUseCase implements IUseCase<void, boolean> {
+export class DeleteAllDataUseCase implements IUseCase<void, ResultType<null>> {
   constructor(
     private readonly testingRepository: TestingRepository,
     @InjectThrottlerStorage() private readonly throttlerStorage: ThrottlerStorage,
   ) {}
 
-  async execute(): Promise<boolean> {
-    const result = await this.testingRepository.deleteAllData();
+  async execute(): Promise<ResultType<null>> {
+    const deleted = await this.testingRepository.deleteAllData();
+    if (!deleted) {
+      throw new DomainException(DomainExceptionCode.InternalServerError);
+    }
+
     this.resetThrottlerStorage();
-    return result;
+    return Result.ok(null);
   }
 
   private resetThrottlerStorage(): void {

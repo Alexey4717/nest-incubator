@@ -40,7 +40,7 @@ export class UpdateCommentUseCase implements IUseCase<UpdateCommentInput, Result
     comment.update(input.content);
     const updateResult = await this.commentRepository.save(comment);
     if (!updateResult) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
     return Result.ok(null);

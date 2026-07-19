@@ -1,12 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { Result as ResultType } from '@/core/result/result.types';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { UpdateCommentLikeStatusUseCase } from '../use-cases/update-comment-like-status.use-case';
 
-export class UpdateCommentLikeStatusCommand extends TypedCommand<boolean> {
+export class UpdateCommentLikeStatusCommand extends TypedCommand<ResultType<null>> {
   constructor(
     public readonly commentId: string,
     public readonly userId: string,
@@ -19,11 +20,11 @@ export class UpdateCommentLikeStatusCommand extends TypedCommand<boolean> {
 @CommandHandler(UpdateCommentLikeStatusCommand)
 export class UpdateCommentLikeStatusHandler implements ICommandHandler<
   UpdateCommentLikeStatusCommand,
-  boolean
+  ResultType<null>
 > {
   constructor(private readonly updateCommentLikeStatusUseCase: UpdateCommentLikeStatusUseCase) {}
 
-  execute(command: UpdateCommentLikeStatusCommand): Promise<boolean> {
+  execute(command: UpdateCommentLikeStatusCommand): Promise<ResultType<null>> {
     return this.updateCommentLikeStatusUseCase.execute({
       commentId: command.commentId,
       userId: command.userId,

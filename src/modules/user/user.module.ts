@@ -4,8 +4,6 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CoreModule } from '@/core/core.module';
 
 import { AuthModule } from '@/modules/auth/auth.module';
-import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
-import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
 
 import { UserController } from './api/user.controller';
 import { ChangePasswordHandler } from './application/commands/change-password.command';
@@ -26,6 +24,8 @@ import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
 import { UserQueryRepository } from './infrastructure/user-query.repository';
 import { UserRepository } from './infrastructure/user.repository';
+import { UserEmailExistsValidator } from './validators/user-email-exists.validator';
+import { UserLoginExistsValidator } from './validators/user-login-exists.validator';
 
 const userUseCases = [
   CreateUserUseCase,

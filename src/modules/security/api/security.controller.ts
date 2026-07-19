@@ -5,6 +5,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 
 import { CurrentDeviceId } from '@/core/decorators/param/currentDeviceId.decorator';
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
+import { resultToDomainException } from '@/core/result/result-to-domain';
 
 import { RefreshJwtAuthGuard } from '@/modules/auth/guards/refresh-jwt-auth.guard';
 
@@ -39,15 +40,24 @@ export class SecurityController {
   @Delete('devices')
   @HttpCode(204)
   @ApiTerminateOtherDevices()
-  terminateOtherDevices(@CurrentUserId() userId: string, @CurrentDeviceId() deviceId: string) {
-    return this.commandBus.execute(new TerminateOtherDevicesCommand({ userId, deviceId }));
+  async terminateOtherDevices(
+    @CurrentUserId() userId: string,
+    @CurrentDeviceId() deviceId: string,
+  ) {
+    const result = await this.commandBus.execute(
+      new TerminateOtherDevicesCommand({ userId, deviceId }),
+    );
+
+    resultToDomainException(result);
   }
 
   @UseGuards(RefreshJwtAuthGuard)
   @Delete('devices/:deviceId')
   @HttpCode(204)
   @ApiTerminateDevice()
-  terminateDevice(@CurrentUserId() userId: string, @Param('deviceId') deviceId: string) {
-    return this.commandBus.execute(new TerminateDeviceCommand({ userId, deviceId }));
+  async terminateDevice(@CurrentUserId() userId: string, @Param('deviceId') deviceId: string) {
+    const result = await this.commandBus.execute(new TerminateDeviceCommand({ userId, deviceId }));
+
+    resultToDomainException(result);
   }
 }

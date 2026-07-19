@@ -23,8 +23,7 @@ export class TestingRepository {
         RESTART IDENTITY CASCADE
       `);
       return true;
-    } catch (error) {
-      console.log(`TestingRepository.deleteAllData error is occurred: ${error}`);
+    } catch {
       return false;
     }
   }

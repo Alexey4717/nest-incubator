@@ -1,5 +1,9 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/helpers';
 
@@ -38,13 +42,21 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | 
     const newPost = PostEntity.create({ title, shortDescription, content, blogId }, foundBlog.name);
 
     const saved = await this.postRepository.createPost(newPost);
-    return saved ? fromEntity(saved) : null;
+    if (!saved) {
+      throw new DomainException(DomainExceptionCode.InternalServerError);
+    }
+
+    return fromEntity(saved);
   }
 
-  async executeFromDto(input: CreatePostDto): Promise<PostViewModel | null> {
+  async executeFromDto(input: CreatePostDto): Promise<ResultType<PostViewModel>> {
     await validateOrRejectModel(input, CreatePostDto, 'CreatePostUseCase.executeFromDto');
+
     const post = await this.execute(input);
-    if (!post) return null;
-    return this.postViewMapper.toPostViewModel(post);
+    if (!post) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
+
+    return Result.ok(this.postViewMapper.toPostViewModel(post));
   }
 }

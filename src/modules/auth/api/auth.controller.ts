@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Ip,
-  Post,
-  Res,
-  UnauthorizedException,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Ip, Post, Res, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -18,6 +8,10 @@ import { CoreConfig } from '@/core/core.config';
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
 import { RefreshToken } from '@/core/decorators/param/refresh-token.decorator';
 import { UserAgent } from '@/core/decorators/param/user-agent.decorator';
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { resultToDomainException } from '@/core/result/result-to-domain';
+import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { LoginCommand } from '../application/commands/login.command';
 import { LogoutCommand } from '../application/commands/logout.command';
@@ -84,15 +78,13 @@ export class AuthController {
     @UserAgent() userAgent: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    try {
-      const tokens = await this.commandBus.execute(new LoginCommand({ userId, ip, userAgent }));
-      if (!tokens) throw new UnauthorizedException();
-      const { accessToken, refreshToken } = tokens;
-      res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
-      return { accessToken };
-    } catch (e) {
-      throw new UnauthorizedException();
+    const tokens = await this.commandBus.execute(new LoginCommand({ userId, ip, userAgent }));
+    if (!tokens) {
+      throw new DomainException(DomainExceptionCode.Unauthorized);
     }
+    const { accessToken, refreshToken } = tokens;
+    res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
+    return { accessToken };
   }
 
   @SkipThrottle(false)
@@ -119,16 +111,16 @@ export class AuthController {
     @Res({ passthrough: true })
     res: Response,
   ) {
-    if (!token) throw new UnauthorizedException();
-    try {
-      const tokens = await this.commandBus.execute(new RefreshTokenCommand(token));
-      if (!tokens) throw new UnauthorizedException();
-      const { accessToken, refreshToken } = tokens;
-      res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
-      return { accessToken };
-    } catch (e) {
-      throw new UnauthorizedException();
+    if (!token) {
+      throw new DomainException(DomainExceptionCode.Unauthorized);
     }
+    const tokens = await this.commandBus.execute(new RefreshTokenCommand(token));
+    if (!tokens) {
+      throw new DomainException(DomainExceptionCode.Unauthorized);
+    }
+    const { accessToken, refreshToken } = tokens;
+    res.cookie('refreshToken', refreshToken, this.getRefreshTokenCookieOptions());
+    return { accessToken };
   }
 
   @SkipThrottle(false)
@@ -170,10 +162,9 @@ export class AuthController {
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const isDeleted = await this.commandBus.execute(
-      new LogoutCommand({ userId, refreshTokenJWTPayload }),
+    resultToDomainException(
+      await this.commandBus.execute(new LogoutCommand({ userId, refreshTokenJWTPayload })),
     );
-    if (!isDeleted) throw new UnauthorizedException();
     res.clearCookie('refreshToken', this.getRefreshTokenCookieOptions());
   }
 
@@ -182,8 +173,6 @@ export class AuthController {
   @HttpCode(200)
   @ApiGetMe()
   async aboutMe(@CurrentUserId() userId: string) {
-    const me = await this.queryBus.execute(new GetMeQuery(userId));
-    if (!me) throw new UnauthorizedException();
-    return me;
+    return throwIfNotFound(await this.queryBus.execute(new GetMeQuery(userId)));
   }
 }

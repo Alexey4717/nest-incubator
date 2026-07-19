@@ -1,5 +1,8 @@
 import { randomUUID } from 'crypto';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+
 import { BlogOrmEntity } from '../../infrastructure/blog.orm-entity';
 
 export type BlogCreateProps = {
@@ -58,6 +61,14 @@ export class BlogEntity {
 
   toDb(): BlogDb {
     return { ...this.data };
+  }
+
+  ensureNameIsUnique(conflictingBlogId: string | null | undefined): void {
+    if (conflictingBlogId && conflictingBlogId !== this.id) {
+      throw new DomainException(DomainExceptionCode.BadRequest, [
+        { message: 'This name already exists', field: 'name' },
+      ]);
+    }
   }
 
   update(props: BlogUpdateProps): void {

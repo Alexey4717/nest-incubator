@@ -34,7 +34,7 @@ export class DeleteCommentUseCase implements IUseCase<DeleteCommentInput, Result
 
     const deleteResult = await this.commentRepository.deleteCommentById(commentId);
     if (!deleteResult) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
     return Result.ok(null);

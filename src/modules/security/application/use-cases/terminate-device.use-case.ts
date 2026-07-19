@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { DeleteSessionUseCase } from '@/modules/session/application/use-cases/delete-session.use-case';
@@ -10,10 +11,10 @@ type TerminateDeviceInput = {
 };
 
 @Injectable()
-export class TerminateDeviceUseCase implements IUseCase<TerminateDeviceInput, void> {
+export class TerminateDeviceUseCase implements IUseCase<TerminateDeviceInput, ResultType<null>> {
   constructor(private readonly deleteSessionUseCase: DeleteSessionUseCase) {}
 
-  async execute({ userId, deviceId }: TerminateDeviceInput): Promise<void> {
-    await this.deleteSessionUseCase.execute({ userId, deviceId });
+  execute({ userId, deviceId }: TerminateDeviceInput): Promise<ResultType<null>> {
+    return this.deleteSessionUseCase.execute({ userId, deviceId });
   }
 }

@@ -1,5 +1,5 @@
-import { UserModel } from '../models/user.model';
-import { UserViewModel } from '../types/view-models';
+import { UserModel } from './models/user.model';
+import { UserViewModel } from './types/view-models';
 
 export function toUserViewModel(model: UserModel): UserViewModel {
   return {

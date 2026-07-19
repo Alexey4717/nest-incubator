@@ -14,7 +14,7 @@ import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
+import { resultToDomainException } from '@/core/result/result-to-domain';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 
@@ -24,7 +24,7 @@ import { GetUsersQuery } from '../application/queries/get-users.query';
 import { CreateUserDTO } from '../dto/create-user.dto';
 import { GetUsersQueryParamsDto } from '../dto/get-users-query-params.dto';
 import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
-import { toUserViewModel } from '../utils/user.view-mapper';
+import { toUserViewModel } from '../user.view-mapper';
 import { ApiCreateUser, ApiDeleteUser, ApiGetUsers } from './user.swagger.decorators';
 
 @SkipThrottle()
@@ -57,7 +57,7 @@ export class UserController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeleteUser()
   async deleteUser(@Param() params: DeleteUserInputModel) {
-    const resData = await this.commandBus.execute(new DeleteUserCommand(params.id));
-    throwIfNotFound(resData || null);
+    const result = await this.commandBus.execute(new DeleteUserCommand(params.id));
+    resultToDomainException(result);
   }
 }

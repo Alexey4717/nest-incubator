@@ -16,6 +16,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
+import { resultToDomainException } from '@/core/result/result-to-domain';
 import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
@@ -101,9 +102,9 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiCreatePost()
   async createPost(@Body() body: CreatePostDto) {
-    const createdPost = await this.commandBus.execute(new CreatePostCommand(body));
+    const result = await this.commandBus.execute(new CreatePostCommand(body));
 
-    return throwIfNotFound(createdPost);
+    return resultToDomainException(result);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -134,11 +135,11 @@ export class PostController {
     @Body() body: LikeInputDto,
     @CurrentUserId() userId: string,
   ) {
-    const isPostUpdated = await this.commandBus.execute(
+    const result = await this.commandBus.execute(
       new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus),
     );
 
-    throwIfNotFound(isPostUpdated || null);
+    resultToDomainException(result);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -146,8 +147,9 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiUpdatePost()
   async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
-    const isPostUpdated = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
-    throwIfNotFound(isPostUpdated || null);
+    const result = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
+
+    resultToDomainException(result);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -155,7 +157,8 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeletePost()
   async deletePost(@Param() params: GetPostInputModel) {
-    const resData = await this.commandBus.execute(new DeletePostCommand(params.id));
-    throwIfNotFound(resData || null);
+    const result = await this.commandBus.execute(new DeletePostCommand(params.id));
+
+    resultToDomainException(result);
   }
 }

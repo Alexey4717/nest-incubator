@@ -97,6 +97,17 @@ modules/<feature>/
 | `database`                  | TypeORM, миграции, seed для локальной разработки                       |
 | `testing`                   | Служебные эндпoинты для e2e                                            |
 
+### Типы модулей
+
+| Тип                            | Модули                                                | Обязательные папки                                                                   | HTTP / CQRS                                      |
+| ------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| **HTTP feature** (полный CQRS) | `user`, `blog`, `post`, `comment`, `auth`, `security` | `api/`, `application/`, `dto/`, `models/`, `infrastructure/`; при domain — `domain/` | Controller → CommandBus / QueryBus               |
+| **Subdomain** (без `api/`)     | `session`, `like`                                     | `application/` (use-cases или services)                                              | Use cases вызываются из feature-модулей напрямую |
+| **Infra**                      | `database`, `email`                                   | config, провайдеры; у `database` — migrations/seeds                                  | Нет domain layer и HTTP                          |
+| **Utility**                    | `testing`                                             | минимальный модуль под одну задачу                                                   | CQRS только для служебного cleanup               |
+
+Subdomain-модули (`like`, `session`) экспортируют services / use cases через `@Module({ exports })`; эндпoинты и обработка HTTP-ошибок — у потребителей (`post`, `comment`, `auth`, `security`). Сводка аудита: [`docs/audits/CONSOLIDATION.md`](docs/audits/CONSOLIDATION.md).
+
 ### Направление зависимостей
 
 ```
@@ -161,6 +172,24 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 | **Model**             | `models/*.model.ts`                        | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                         |
 | **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts` | Контракт HTTP-ответа (Swagger), маппинг из Model                                                                                                |
 
+#### Куда что помещать
+
+| Что                                 | Куда                                                                | Эталон                                                                 |
+| ----------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| HTTP body / query                   | `dto/` + ValidationPipe в controller                                | `CreateBlogDTO`                                                        |
+| Бизнес-инварианты                   | `domain/entities/*.entity.ts` → `throw DomainException`             | `UserEntity.confirmEmail()`                                            |
+| Оркестрация сценария                | `application/use-cases/*UseCase.execute()`                          | `UpdateCommentUseCase`                                                 |
+| OrmEntity ↔ Entity                  | `domain/mappers/*PersistenceMapper`                                 | `blog.persistence-mapper.ts`                                           |
+| OrmEntity → Model (read)            | `infrastructure/*mapper`                                            | `blog.mapper.ts`                                                       |
+| Entity → Model (после write)        | `fromEntity()` в infrastructure mapper                              | create/update use cases                                                |
+| Model → HTTP view                   | `<feature>.view-mapper.ts` в **корне модуля**                       | `post.view-mapper.ts`, `comment.view-mapper.ts`, `user.view-mapper.ts` |
+| Paginated list view                 | `PaginatedViewDto.mapToView()`                                      | списки blog/post/user                                                  |
+| Command CUD + load для мутации      | `infrastructure/*Repository` → Entity                               | `PostRepository.findById`                                              |
+| Read API / фильтры                  | `infrastructure/*QueryRepository` → Model, без NotFound throw       | `PostQueryRepository.findPostById`                                     |
+| Cross-module shared DTO             | в модуле-владельце ресурса; потребители импортируют `@/modules/...` | `GetPostsQueryParamsDto` в `post`                                      |
+| Декоратор / validator одного модуля | `modules/<feature>/decorators/`, `validators/`                      | `@BlogExists()`                                                        |
+| Переиспользуемая логика без HTTP    | subdomain `application/services/`                                   | `ReactionUpdateService` в `like`                                       |
+
 **Поток command (write):**
 
 ```
@@ -212,17 +241,105 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 ### Обработка ошибок
 
-Доменный слой и application-слой **не используют** `HttpException`. Вместо этого:
+Доменный и application-слой **не используют** `HttpException`. Предсказуемые ошибки (400/401/403/404) идут через **`DomainException`** → **`DomainHttpExceptionsFilter`**.
 
-| Компонент                    | Назначение                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------- |
-| `DomainException`            | Базовый класс с `code: DomainExceptionCode` и `extensions: Extension[]`                  |
-| `DomainHttpExceptionsFilter` | `@Catch(DomainException)` — маппинг кода в HTTP-ответ                                    |
-| `AllHttpExceptionsFilter`    | `@Catch()` — fallback для оставшихся `HttpException` (guards) и неизвестных ошибок (500) |
-| `Result` Object              | `Result.ok()` / `Result.fail()` + `resultToDomainException()` в контроллерах             |
-| `throwIfNotFound()`          | Хелпер для контроллеров при `null`/`undefined`                                           |
+| Компонент                    | Назначение                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------ |
+| `DomainException`            | Базовый класс с `code: DomainExceptionCode` и `extensions: Extension[]`                    |
+| `DomainHttpExceptionsFilter` | `@Catch(DomainException)` — основной путь в HTTP-ответ                                     |
+| `AllHttpExceptionsFilter`    | `@Catch()` — fallback: framework `HttpException` (Throttler) + необработанные ошибки → 500 |
+| `Result` Object              | `Result.ok()` / `Result.fail()` — **единый паттерн для mutations**                         |
+| `resultToDomainException()`  | Controller превращает `Result.fail` в `DomainException`                                    |
+| `throwIfNotFound()`          | Controller для query: `null`/`undefined` → `NotFound`                                      |
 
-**Формат HTTP-ответов (контракт API):**
+#### Result — единый паттерн для mutations
+
+| Операция                                                      | Use case                                               | Controller / потребитель                                                               |
+| ------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| **Write (mutation)**                                          | `Result.ok(data)` или `Result.fail(code, extensions?)` | `resultToDomainException(await commandBus.execute(...))`                               |
+| **Read (query)**                                              | `Model \| ViewModel \| null` — **не бросает** NotFound | `throwIfNotFound(await queryBus.execute(...))`                                         |
+| **Entity-инвариант**                                          | entity `throw DomainException`                         | use case **catch** → `Result.fail(error.code, error.extensions)`                       |
+| **Infra-сбой** (save/delete вернул null не по бизнес-причине) | use case `throw DomainException(InternalServerError)`  | filter → 500                                                                           |
+| **Subdomain без controller** (`session`, `like`)              | `Result` или throw                                     | потребитель (`auth`, `security`, `post`, `comment`) вызывает `resultToDomainException` |
+
+Эталон mutation: [`UpdateCommentUseCase`](src/modules/comment/application/use-cases/update-comment.use-case.ts) + [`comment.controller.ts`](src/modules/comment/api/comment.controller.ts). Матрица по всем модулям: [`docs/audits/CONSOLIDATION.md`](docs/audits/CONSOLIDATION.md).
+
+**Исключения (временно без Result):** create-flow (`CreateBlogUseCase`, `CreateUserUseCase`, `CreateSessionUseCase`), auth-обёртки над user (`ConfirmEmailUseCase`, `ChangePasswordUseCase`) — throw до filter; миграция в WARN backlog.
+
+#### DomainException — где выбрасывать
+
+| Слой                                  | Выбрасывать?                               | Как                                                                          | Примеры кодов             |
+| ------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
+| **`core/pipes` (ValidationPipe)**     | Да                                         | `exceptionFactory` → `ValidationError`                                       | 400 + `errorsMessages`    |
+| **`domain/entities/*`**               | **Да — основное место правил**             | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
+| **`infrastructure/*Repository`**      | Только infra-перевод                       | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
+| **`infrastructure/*QueryRepository`** | **Нет**                                    | `null` / пустой результат                                                    | —                         |
+| **`infrastructure/*Mapper`**          | **Нет**                                    | чистое преобразование                                                        | —                         |
+| **mutation use case**                 | Через **`Result`**, не throw (кроме infra) | `Result.fail(code)`; entity catch → `Result.fail`                            | `NotFound`, `Forbidden`   |
+| **query use case**                    | **Нет**                                    | возвращает данные или `null`                                                 | —                         |
+| **`application/services`**            | Да, если сервис — источник ошибки          | аналогично entity                                                            | JWT validation            |
+| **`api/*Controller` (mutation)**      | Через хелпер                               | `resultToDomainException(...)`                                               | —                         |
+| **`api/*Controller` (query)**         | Через хелпер                               | `throwIfNotFound(...)`                                                       | —                         |
+| **`api/*Controller`**                 | **Нет inline throw бизнес-ошибок**         | не `throw new DomainException(...)` в controller                             | —                         |
+| **`guards` / `strategies` (auth)**    | Да                                         | `DomainException(Unauthorized)`                                              | 401                       |
+| **`dto/`**                            | **Нет**                                    | только class-validator                                                       | —                         |
+
+#### HttpException и AllHttpExceptionsFilter
+
+`AllHttpExceptionsFilter` **не выбрасывает** — он ловит необработанные исключения. В коде выбрасывают `HttpException` и подклассы; после аудита **в `src/modules/` — 0 вхождений** (auth мигрирован на `DomainException`).
+
+| Filter                           | `@Catch(...)`     | Что обрабатывает                                                                        |
+| -------------------------------- | ----------------- | --------------------------------------------------------------------------------------- |
+| **`DomainHttpExceptionsFilter`** | `DomainException` | domain, application, ValidationPipe, controller-хелперы, auth guards/strategies         |
+| **`AllHttpExceptionsFilter`**    | _(всё)_           | `ThrottlerGuard` и прочий framework `HttpException`; любой необработанный `Error` → 500 |
+
+Регистрация в `CoreModule` (Nest выполняет фильтры **в обратном порядке** регистрации):
+
+```typescript
+{ provide: APP_FILTER, useClass: AllHttpExceptionsFilter },      // регистрируется 1-м
+{ provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },   // регистрируется 2-м → выполняется первым для DomainException
+```
+
+**Правило:** если ошибка предсказуемая (400/401/403/404) — она должна попадать в **`DomainHttpExceptionsFilter`**, а не в `AllHttpExceptionsFilter`.
+
+#### Поток ошибок
+
+```mermaid
+flowchart TD
+  subgraph sources [Источники]
+    VP[ValidationPipe]
+    Entity[Domain Entity]
+    Repo[Repository infra]
+    UC[Use Case mutation]
+    Ctrl[Controller helpers]
+    Guard[Guards / Strategies]
+  end
+
+  subgraph primary [Основной путь]
+    DE[DomainException]
+    DFilter[DomainHttpExceptionsFilter]
+  end
+
+  subgraph fallback [Fallback]
+    HE[HttpException framework]
+    AFilter[AllHttpExceptionsFilter]
+    Err[Unhandled Error]
+  end
+
+  VP --> DE
+  Entity -->|"catch → Result.fail"| UC
+  UC -->|"resultToDomainException"| DE
+  UC -->|"infra throw"| DE
+  Repo --> DE
+  Ctrl --> DE
+  Guard --> DE
+  DE --> DFilter
+
+  HE --> AFilter
+  Err --> AFilter
+```
+
+#### Формат HTTP-ответов (контракт API)
 
 | Статус                | Тело ответа                                |
 | --------------------- | ------------------------------------------ |
@@ -232,13 +349,6 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 | `500` (prod)          | `'Internal Error'`                         |
 
 **ValidationPipe** (`src/core/pipes/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
-
-Фильтры регистрируются в `CoreModule` через `APP_FILTER` (порядок важен — Nest выполняет в обратном порядке регистрации):
-
-```typescript
-{ provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
-{ provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },
-```
 
 ### Хранение паролей
 
@@ -257,31 +367,18 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`core/utils/typeorm-pagination.ts`).
 
-### Subdomain-модули
+### Subdomain-модули (подробнее)
 
-Некоторые модули в `modules/` — **subdomain / library modules**: переиспользуемая доменная логика **без собственного HTTP-слоя** (`api/` отсутствует). Эндпoинты остаются у feature-модулей-потребителей; subdomain экспортирует services, types и dto через `@Module({ exports })`.
+См. таблицу **«Типы модулей»** выше. Кратко:
 
-**Когда создавать:** cross-cutting доменная логика нужна нескольким модулям, но отдельной группы эндпoинтов в Swagger не требуется.
+| Модуль    | Потребители        | Контракт                                                          |
+| --------- | ------------------ | ----------------------------------------------------------------- |
+| `like`    | `post`, `comment`  | `ReactionsMapperService`, `ReactionUpdateService`, `LikeInputDto` |
+| `session` | `auth`, `security` | use cases (`CreateSession`, `DeleteSession`, …); `@Global()`      |
 
-**Структура:**
+**`session`:** HTTP-слоя нет — мутации возвращают `Result` (delete*) или Model/boolean (create/refresh — см. WARN backlog). `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет просроченные сессии.
 
-```
-modules/<name>/
-├── application/services/     # переиспользуемая логика
-├── types/                    # view models, domain types
-├── dto/                      # DTO для HTTP-потребителей
-└── <name>.module.ts          # без controllers
-```
-
-| Модуль    | Назначение                                                                 |
-| --------- | -------------------------------------------------------------------------- |
-| `like`    | Reactions: mapper (read) + update plan (write); роуты у `post` / `comment` |
-| `session` | Сессии и refresh-токены                                                    |
-| `email`   | Отправка писем (SMTP, шаблоны)                                             |
-
-**Модуль `session`:** HTTP-слоя нет — use cases вызываются из `auth` (login, refresh, logout) и `security` (список/завершение устройств). `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет сессии, у которых `lastActiveDate` старше `REFRESH_TOKEN_LIFE_TIME`.
-
-Пример: `LikeModule` предоставляет `ReactionsMapperService` и `ReactionUpdateService`; `PostModule` и `CommentModule` импортируют его и владеют `PUT .../like-status`.
+**`like`:** `PostModule` / `CommentModule` импортируют `LikeModule` и владеют `PUT .../like-status`; view-mapper потребителей вызывает `ReactionsMapperService`.
 
 ### Импорты и алиасы
 

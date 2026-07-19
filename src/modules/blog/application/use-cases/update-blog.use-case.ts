@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/helpers';
 
-import { BlogEntity } from '../../domain/entities/blog.entity';
 import { UpdateBlogDto } from '../../dto/update-blog.dto';
 import { BlogQueryRepository } from '../../infrastructure/blog-query.repository';
-import { modelToDb } from '../../infrastructure/blog.mapper';
 import { BlogRepository } from '../../infrastructure/blog.repository';
 
 type UpdateBlogInput = {
@@ -17,27 +17,37 @@ type UpdateBlogInput = {
 };
 
 @Injectable()
-export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, boolean> {
+export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, ResultType<null>> {
   constructor(
     private readonly blogQueryRepository: BlogQueryRepository,
     private readonly blogRepository: BlogRepository,
   ) {}
 
-  async execute({ id, input }: UpdateBlogInput): Promise<boolean> {
+  async execute({ id, input }: UpdateBlogInput): Promise<ResultType<null>> {
     await validateOrRejectModel(input, UpdateBlogDto, 'UpdateBlogUseCase.execute');
 
-    const found = await this.blogQueryRepository.findBlogById(id);
-    if (!found) return false;
-
-    const blogWithSameName = await this.blogQueryRepository.findBlogByName(input.name);
-    if (blogWithSameName && blogWithSameName.id !== id) {
-      throw new DomainException(DomainExceptionCode.BadRequest, [
-        { message: 'This name already exists', field: 'name' },
-      ]);
+    const blog = await this.blogRepository.findById(id);
+    if (!blog) {
+      return Result.fail(DomainExceptionCode.NotFound);
     }
 
-    const blog = BlogEntity.reconstitute(modelToDb(found));
+    const blogWithSameName = await this.blogQueryRepository.findBlogByName(input.name);
+
+    try {
+      blog.ensureNameIsUnique(blogWithSameName?.id);
+    } catch (error) {
+      if (error instanceof DomainException) {
+        return Result.fail(error.code, error.extensions);
+      }
+      throw error;
+    }
+
     blog.update(input);
-    return this.blogRepository.save(blog);
+    const updateResult = await this.blogRepository.save(blog);
+    if (!updateResult) {
+      throw new DomainException(DomainExceptionCode.InternalServerError);
+    }
+
+    return Result.ok(null);
   }
 }

@@ -1,5 +1,8 @@
-import { ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
 
 import { IAuthenticatedUser } from '../models/authenticated-user.model';
 import { RefreshJwtValidateResult } from '../strategies/refresh-jwt.strategy';
@@ -13,7 +16,7 @@ export class RefreshJwtAuthGuard extends AuthGuard('jwt-refresh') {
     context: ExecutionContext,
   ): TUser {
     if (err || !result) {
-      throw err || new UnauthorizedException();
+      throw err || new DomainException(DomainExceptionCode.Unauthorized);
     }
 
     const request = context.switchToHttp().getRequest();

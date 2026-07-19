@@ -55,11 +55,11 @@ export class CommentController {
     @Body() body: LikeInputDto,
     @CurrentUserId() userId: string,
   ) {
-    const likeStatusIsUpdated = await this.commandBus.execute(
+    const result = await this.commandBus.execute(
       new UpdateCommentLikeStatusCommand(params.commentId, userId, body.likeStatus),
     );
 
-    throwIfNotFound(likeStatusIsUpdated || null);
+    resultToDomainException(result);
   }
 
   @UseGuards(AccessJwtAuthGuard)

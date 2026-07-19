@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/helpers';
 
@@ -14,22 +17,31 @@ type UpdatePostInput = {
 };
 
 @Injectable()
-export class UpdatePostUseCase implements IUseCase<UpdatePostInput, boolean> {
+export class UpdatePostUseCase implements IUseCase<UpdatePostInput, ResultType<null>> {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly blogQueryRepository: BlogQueryRepository,
   ) {}
 
-  async execute({ id, input }: UpdatePostInput): Promise<boolean> {
+  async execute({ id, input }: UpdatePostInput): Promise<ResultType<null>> {
     await validateOrRejectModel(input, UpdatePostDto, 'UpdatePostUseCase.execute');
 
     const post = await this.postRepository.findById(id);
-    if (!post) return false;
+    if (!post) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
 
     const blog = await this.blogQueryRepository.findBlogById(input.blogId);
-    if (!blog) return false;
+    if (!blog) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
 
     post.update(input, blog.name);
-    return this.postRepository.save(post);
+    const saved = await this.postRepository.save(post);
+    if (!saved) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
+
+    return Result.ok(null);
   }
 }

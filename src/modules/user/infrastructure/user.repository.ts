@@ -64,6 +64,16 @@ export class UserRepository {
     return entity ? UserPersistenceMapper.toDomain(entity) : null;
   }
 
+  async findByConfirmationCode(code: string): Promise<UserEntity | null> {
+    const entity = await this.usersRepository.findOne({ where: { confirmationCode: code } });
+    return entity ? UserPersistenceMapper.toDomain(entity) : null;
+  }
+
+  async findByRecoveryCode(code: string): Promise<UserEntity | null> {
+    const entity = await this.usersRepository.findOne({ where: { recoveryCode: code } });
+    return entity ? UserPersistenceMapper.toDomain(entity) : null;
+  }
+
   private uniqueViolationToErrorsMessages(
     detail: string,
     constraint: string,

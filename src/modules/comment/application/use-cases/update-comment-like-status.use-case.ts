@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { Result } from '@/core/result/result.factory';
+import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
@@ -15,15 +18,25 @@ type UpdateCommentLikeStatusInput = {
 @Injectable()
 export class UpdateCommentLikeStatusUseCase implements IUseCase<
   UpdateCommentLikeStatusInput,
-  boolean
+  ResultType<null>
 > {
   constructor(private readonly commentRepository: CommentRepository) {}
 
-  async execute({ commentId, userId, likeStatus }: UpdateCommentLikeStatusInput): Promise<boolean> {
-    return this.commentRepository.updateCommentLikeStatusByCommentId({
+  async execute({
+    commentId,
+    userId,
+    likeStatus,
+  }: UpdateCommentLikeStatusInput): Promise<ResultType<null>> {
+    const isUpdated = await this.commentRepository.updateCommentLikeStatusByCommentId({
       commentId,
       userId,
       likeStatus,
     });
+
+    if (!isUpdated) {
+      return Result.fail(DomainExceptionCode.NotFound);
+    }
+
+    return Result.ok(null);
   }
 }
