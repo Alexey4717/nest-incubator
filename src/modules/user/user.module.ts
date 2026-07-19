@@ -1,6 +1,8 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
+import { CoreModule } from '@/shared/core/core.module';
+
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';
 import { UserLoginExistsValidator } from '@/modules/user/validators/user-login-exists.validator';
@@ -14,7 +16,6 @@ import { RegisterUserHandler } from './application/commands/register-user.comman
 import { CheckCredentialsHandler } from './application/queries/check-credentials.query';
 import { FindUserByIdHandler } from './application/queries/find-user-by-id.query';
 import { GetUsersHandler } from './application/queries/get-users.query';
-import { PasswordHasherService } from './application/services/password-hasher.service';
 import { UserFactoryService } from './application/services/user-factory.service';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { CheckCredentialsUseCase } from './application/use-cases/check-credentials.use-case';
@@ -48,10 +49,10 @@ const userCommandHandlers = [
 
 const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredentialsHandler];
 
-const userDomainServices = [PasswordHasherService, UserFactoryService];
+const userDomainServices = [UserFactoryService];
 
 @Module({
-  imports: [CqrsModule, forwardRef(() => AuthModule)],
+  imports: [CqrsModule, CoreModule, forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [
     UserRepository,

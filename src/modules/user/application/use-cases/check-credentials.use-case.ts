@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 
+import { BcryptService } from '@/shared/core/application/bcrypt.service';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
@@ -13,13 +13,16 @@ type CheckCredentialsInput = {
 
 @Injectable()
 export class CheckCredentialsUseCase implements IUseCase<CheckCredentialsInput, UserModel | null> {
-  constructor(private readonly userQueryRepository: UserQueryRepository) {}
+  constructor(
+    private readonly userQueryRepository: UserQueryRepository,
+    private readonly bcryptService: BcryptService,
+  ) {}
 
   async execute({ loginOrEmail, password }: CheckCredentialsInput): Promise<UserModel | null> {
     const foundUser = await this.userQueryRepository.findByLoginOrEmail(loginOrEmail);
     if (!foundUser || !foundUser.passwordHash) return null;
     if (!foundUser.isConfirmed) return null;
-    const passwordIsValid = await bcrypt.compare(password, foundUser.passwordHash);
+    const passwordIsValid = await this.bcryptService.compare(password, foundUser.passwordHash);
     if (!passwordIsValid) return null;
     return foundUser;
   }

@@ -105,13 +105,13 @@ main.ts → app/ → modules/ → shared/
 
 Бизнес-логика доменов построена на **@nestjs/cqrs** и паттерне **Use Case**:
 
-| Слой                | Роль                                                                                                                                                 |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                                                     |
-| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                                               |
-| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                                                            |
-| **Domain service**  | Переиспользуемая доменная/техническая логика без привязки к HTTP (например `JwtTokenService`, `PasswordHasherService`, `CommentOwnerCheckerService`) |
-| **Repository**      | Доступ к данным (PostgreSQL через TypeORM)                                                                                                           |
+| Слой                | Роль                                                                                                                                         |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                                             |
+| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                                       |
+| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                                                    |
+| **Domain service**  | Переиспользуемая доменная/техническая логика без привязки к HTTP (например `JwtTokenService`, `BcryptService`, `CommentOwnerCheckerService`) |
+| **Repository**      | Доступ к данным (PostgreSQL через TypeORM)                                                                                                   |
 
 **Поток запроса:**
 
@@ -137,6 +137,21 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 ```
 
 **Use case vs domain service:** use case оркестрирует сценарий (проверки, вызов репозиториев и сервисов, маппинг результата). Domain service инкапсулирует узкую переиспользуемую логику, которую вызывают несколько use cases.
+
+### Хранение паролей
+
+Хеширование и сравнение инкапсулированы в `BcryptService` (`shared/core/application/bcrypt.service.ts`), зарегистрированном в `CoreModule`.
+
+**Точки входа:**
+
+| Use case                  | Операция                                                             |
+| ------------------------- | -------------------------------------------------------------------- |
+| `RegisterUserUseCase`     | создание пользователя через `UserFactoryService.generateHash()`      |
+| `CreateUserUseCase`       | создание пользователя (SA) через `UserFactoryService.generateHash()` |
+| `ChangePasswordUseCase`   | смена пароля через `BcryptService.generateHash()`                    |
+| `CheckCredentialsUseCase` | проверка пароля при логине через `BcryptService.compare()`           |
+
+**Отдельная колонка `salt` не нужна:** bcrypt сохраняет соль внутри строки `passwordHash` (формат `$2b$10$...`). При `compare()` соль извлекается из хеша автоматически — достаточно одного поля в таблице `users`.
 
 Общие утилиты: `normalizePaginationQuery` (`shared/utils/pagination`).
 

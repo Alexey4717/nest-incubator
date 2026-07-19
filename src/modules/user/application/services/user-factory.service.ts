@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
 
+import { BcryptService } from '@/shared/core/application/bcrypt.service';
+
 import { UserModel } from '../../models/user.model';
-import { PasswordHasherService } from './password-hasher.service';
 
 type CreateUserInput = {
   login: string;
@@ -14,7 +15,7 @@ type CreateUserInput = {
 
 @Injectable()
 export class UserFactoryService {
-  constructor(private readonly passwordHasher: PasswordHasherService) {}
+  constructor(private readonly bcryptService: BcryptService) {}
 
   async createNewUser({
     login,
@@ -22,7 +23,7 @@ export class UserFactoryService {
     password,
     isConfirmed,
   }: CreateUserInput): Promise<UserModel> {
-    const passwordHash = await this.passwordHasher.hash(password);
+    const passwordHash = await this.bcryptService.generateHash(password);
     return {
       id: randomUUID(),
       login,

@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
+import { BcryptService } from '@/shared/core/application/bcrypt.service';
 import { IUseCase } from '@/shared/types/use-case';
 import { createBadRequestErrors } from '@/shared/utils/bad-request-errors';
 
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
 import { UserRepository } from '../../infrastructure/user.repository';
-import { PasswordHasherService } from '../services/password-hasher.service';
 
 type ChangePasswordInput = {
   recoveryCode: string;
@@ -17,7 +17,7 @@ export class ChangePasswordUseCase implements IUseCase<ChangePasswordInput, bool
   constructor(
     private readonly userQueryRepository: UserQueryRepository,
     private readonly userRepository: UserRepository,
-    private readonly passwordHasher: PasswordHasherService,
+    private readonly bcryptService: BcryptService,
   ) {}
 
   async execute({ recoveryCode, newPassword }: ChangePasswordInput): Promise<boolean> {
@@ -33,7 +33,7 @@ export class ChangePasswordUseCase implements IUseCase<ChangePasswordInput, bool
         createBadRequestErrors({ message: 'Invalid recovery code', field: 'recoveryCode' }),
       );
     }
-    const passwordHash = await this.passwordHasher.hash(newPassword);
+    const passwordHash = await this.bcryptService.generateHash(newPassword);
     return this.userRepository.changeUserPasswordAndNullifyRecoveryData({
       userId: user.id,
       passwordHash,
