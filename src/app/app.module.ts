@@ -29,6 +29,7 @@ import { UserModule } from '@/modules/user/user.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SWAGGER_PATH } from './setup/swagger.setup';
 
 @Module({
   imports: [
@@ -42,7 +43,7 @@ import { AppService } from './app.service';
       useFactory: (coreConfig: CoreConfig) => [
         {
           rootPath: join(__dirname, '..', '..', 'swagger-static'),
-          serveRoot: coreConfig.isDevelopment ? '/' : '/swagger',
+          serveRoot: coreConfig.isDevelopment ? '/' : `/${SWAGGER_PATH}`,
         },
       ],
       inject: [CoreConfig],

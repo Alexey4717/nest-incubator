@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
@@ -32,8 +33,19 @@ import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';
 import { GetBlogsQueryParamsDto } from '../dto/get-blogs-query-params.dto';
 import { UpdateBlogDto } from '../dto/update-blog.dto';
+import {
+  ApiSaCreateBlog,
+  ApiSaCreatePostInBlog,
+  ApiSaDeleteBlog,
+  ApiSaDeletePostInBlog,
+  ApiSaGetBlogs,
+  ApiSaUpdateBlog,
+  ApiSaUpdatePostInBlog,
+} from './sa-blog.swagger.decorators';
 
 @SkipThrottle()
+@ApiTags('Blogs (Admin)')
+@ApiBasicAuth()
 @UseGuards(BasicAuthGuard)
 @Controller('sa/blogs')
 export class SaBlogController {
@@ -46,18 +58,21 @@ export class SaBlogController {
 
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiSaGetBlogs()
   async getBlogs(@Query() query: GetBlogsQueryParamsDto) {
     return this.queryBus.execute(new GetBlogsQuery(query));
   }
 
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
+  @ApiSaCreateBlog()
   async createBlog(@Body() body: CreateBlogDTO) {
     return this.commandBus.execute(new CreateBlogCommand(body));
   }
 
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiSaUpdateBlog()
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
     const isBlogUpdated = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
 
@@ -66,6 +81,7 @@ export class SaBlogController {
 
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiSaDeleteBlog()
   async deleteBlog(@Param() params: { id: string }) {
     const isBlogDeleted = await this.commandBus.execute(new DeleteBlogCommand(params.id));
     if (!isBlogDeleted) throw new NotFoundException();
@@ -73,6 +89,7 @@ export class SaBlogController {
 
   @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
+  @ApiSaCreatePostInBlog()
   async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
     const createdPostInBlog = await this.commandBus.execute(
       new CreatePostInBlogCommand(params.blogId, body),
@@ -85,6 +102,7 @@ export class SaBlogController {
 
   @Put(':blogId/posts/:postId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiSaUpdatePostInBlog()
   async updatePost(
     @Param() params: { blogId: string; postId: string },
     @Body() body: CreatePostInBlogDTO,
@@ -101,6 +119,7 @@ export class SaBlogController {
 
   @Delete(':blogId/posts/:postId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiSaDeletePostInBlog()
   async deletePost(@Param() params: { blogId: string; postId: string }) {
     await this.ensurePostInBlog(params.blogId, params.postId);
 

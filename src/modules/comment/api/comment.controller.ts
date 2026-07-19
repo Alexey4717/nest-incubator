@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
@@ -27,8 +28,15 @@ import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.qu
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
 import { CommentManageStatuses } from '../types/types';
+import {
+  ApiDeleteComment,
+  ApiGetComment,
+  ApiUpdateComment,
+  ApiUpdateCommentLikeStatus,
+} from './comment.swagger.decorators';
 
 @SkipThrottle()
+@ApiTags('Comments')
 @Controller('comments')
 export class CommentController {
   constructor(
@@ -39,6 +47,7 @@ export class CommentController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiGetComment()
   async getComment(@Param() params: { id: string }, @CurrentUserId() currentUserId: string | null) {
     const foundComment = await this.queryBus.execute(
       new GetCommentByIdQuery(params.id, currentUserId),
@@ -51,6 +60,7 @@ export class CommentController {
   @UseGuards(AccessJwtAuthGuard)
   @Put(':commentId/like-status')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiUpdateCommentLikeStatus()
   async changeLikeStatus(
     @Param() params: GetCommentInputModel,
     @Body() body: LikeInputDto,
@@ -66,6 +76,7 @@ export class CommentController {
   @UseGuards(AccessJwtAuthGuard)
   @Put(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiUpdateComment()
   async updateComment(
     @Param() params: GetCommentInputModel,
     @Body() body: UpdateCommentDTO,
@@ -82,6 +93,7 @@ export class CommentController {
   @UseGuards(AccessJwtAuthGuard)
   @Delete(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiDeleteComment()
   async deleteComment(@Param() params: GetCommentInputModel, @CurrentUserId() userId: string) {
     const result = await this.commandBus.execute(
       new DeleteCommentCommand(params.commentId, userId),

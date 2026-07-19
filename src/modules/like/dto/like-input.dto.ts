@@ -10,5 +10,5 @@ export class LikeInputDto {
     example: LikeStatus.Like,
   })
   @IsEnum(LikeStatus)
-  likeStatus: LikeStatus;
+  likeStatus: LikeStatus = LikeStatus.None;
 }

@@ -14,19 +14,19 @@ async function downloadSwaggerStaticIfDev(coreConfig: CoreConfig, port: number) 
 
   const serverUrl = `http://127.0.0.1:${port}`;
 
-  get(`${serverUrl}/swagger/swagger-ui-bundle.js`, function (response) {
+  get(`${serverUrl}/api/swagger-ui-bundle.js`, function (response) {
     response.pipe(createWriteStream('swagger-static/swagger-ui-bundle.js'));
   });
 
-  get(`${serverUrl}/swagger/swagger-ui-init.js`, function (response) {
+  get(`${serverUrl}/api/swagger-ui-init.js`, function (response) {
     response.pipe(createWriteStream('swagger-static/swagger-ui-init.js'));
   });
 
-  get(`${serverUrl}/swagger/swagger-ui-standalone-preset.js`, function (response) {
+  get(`${serverUrl}/api/swagger-ui-standalone-preset.js`, function (response) {
     response.pipe(createWriteStream('swagger-static/swagger-ui-standalone-preset.js'));
   });
 
-  get(`${serverUrl}/swagger/swagger-ui.css`, function (response) {
+  get(`${serverUrl}/api/swagger-ui.css`, function (response) {
     response.pipe(createWriteStream('swagger-static/swagger-ui.css'));
   });
 }

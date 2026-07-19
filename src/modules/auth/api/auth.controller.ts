@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { CookieOptions, Response } from 'express';
 
@@ -39,8 +40,20 @@ import { AccessJwtAuthGuard } from '../guards/access-jwt-auth.guard';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { RefreshJwtAuthGuard } from '../guards/refresh-jwt-auth.guard';
 import { IRefreshTokenJwtPayload } from '../models/refresh-token-jwt-payload.model';
+import {
+  ApiGetMe,
+  ApiLogin,
+  ApiLogout,
+  ApiNewPassword,
+  ApiPasswordRecovery,
+  ApiRefreshToken,
+  ApiRegistration,
+  ApiRegistrationConfirmation,
+  ApiRegistrationEmailResending,
+} from './auth.swagger.decorators';
 
 @SkipThrottle()
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -63,6 +76,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(200)
+  @ApiLogin()
   async login(
     @Body() _loginDto: LoginDto,
     @CurrentUserId() userId: string,
@@ -84,6 +98,7 @@ export class AuthController {
   @SkipThrottle(false)
   @Post('password-recovery')
   @HttpCode(204)
+  @ApiPasswordRecovery()
   async passwordRecovery(@Body() recoveryPasswordDto: RecoveryPasswordDto) {
     return this.commandBus.execute(new PasswordRecoveryCommand(recoveryPasswordDto.email));
   }
@@ -91,12 +106,14 @@ export class AuthController {
   @SkipThrottle(false)
   @Post('new-password')
   @HttpCode(204)
+  @ApiNewPassword()
   async newPassword(@Body() newPasswordDto: NewPasswordDto) {
     return this.commandBus.execute(new NewPasswordCommand(newPasswordDto));
   }
 
   @Post('refresh-token')
   @HttpCode(200)
+  @ApiRefreshToken()
   async refreshToken(
     @RefreshToken() token: string,
     @Res({ passthrough: true })
@@ -117,6 +134,7 @@ export class AuthController {
   @SkipThrottle(false)
   @Post('registration')
   @HttpCode(204)
+  @ApiRegistration()
   async registration(@Body() registrationDto: RegistrationDto) {
     return this.commandBus.execute(new RegistrationCommand(registrationDto));
   }
@@ -124,6 +142,7 @@ export class AuthController {
   @SkipThrottle(false)
   @Post('registration-email-resending')
   @HttpCode(204)
+  @ApiRegistrationEmailResending()
   async registrationEmailResending(
     @Body() registrationEmailResendingDto: RegistrationEmailResendingDto,
   ) {
@@ -135,6 +154,7 @@ export class AuthController {
   @SkipThrottle(false)
   @Post('registration-confirmation')
   @HttpCode(204)
+  @ApiRegistrationConfirmation()
   async registrationConfirmation(@Body() registrationConfirmationDto: RegistrationConfirmationDto) {
     return this.commandBus.execute(
       new RegistrationConfirmationCommand(registrationConfirmationDto.code),
@@ -144,6 +164,7 @@ export class AuthController {
   @UseGuards(RefreshJwtAuthGuard)
   @Post('logout')
   @HttpCode(204)
+  @ApiLogout()
   async logout(
     @CurrentUserId() userId: string,
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
@@ -159,6 +180,7 @@ export class AuthController {
   @UseGuards(AccessJwtAuthGuard)
   @Get('me')
   @HttpCode(200)
+  @ApiGetMe()
   async aboutMe(@CurrentUserId() userId: string) {
     const me = await this.queryBus.execute(new GetMeQuery(userId));
     if (!me) throw new UnauthorizedException();

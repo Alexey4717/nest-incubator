@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
@@ -37,8 +38,19 @@ import { CreatePostDto } from '../dto/create-post.dto';
 import { GetPostsQueryParamsDto } from '../dto/get-posts-query-params.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 import { GetPostInputModel } from '../models/GetPostInputModel';
+import {
+  ApiCreateCommentInPost,
+  ApiCreatePost,
+  ApiDeletePost,
+  ApiGetPost,
+  ApiGetPostComments,
+  ApiGetPosts,
+  ApiUpdatePost,
+  ApiUpdatePostLikeStatus,
+} from './post.swagger.decorators';
 
 @SkipThrottle()
+@ApiTags('Posts')
 @Controller('posts')
 export class PostController {
   constructor(
@@ -50,6 +62,7 @@ export class PostController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get()
   @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiGetPosts()
   async getPosts(
     @Query() query: GetPostsQueryParamsDto,
     @CurrentUserId() currentUserId: string | null,
@@ -60,6 +73,7 @@ export class PostController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiGetPost()
   async getPost(@Param() params: GetPostInputModel, @CurrentUserId() currentUserId: string | null) {
     const resData = await this.queryBus.execute(new GetPostByIdQuery(params.id, currentUserId));
 
@@ -70,6 +84,7 @@ export class PostController {
   @UseGuards(GetUserIdFromBearerToken)
   @Get(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiGetPostComments()
   async getCommentsOfPost(
     @Param() params: { postId: string },
     @Query() query: GetPostCommentsQueryParamsDto,
@@ -86,6 +101,7 @@ export class PostController {
   @UseGuards(BasicAuthGuard)
   @Post()
   @HttpCode(constants.HTTP_STATUS_CREATED)
+  @ApiCreatePost()
   async createPost(@Body() body: CreatePostDto) {
     const createdPost = await this.commandBus.execute(new CreatePostCommand(body));
 
@@ -96,6 +112,7 @@ export class PostController {
   @UseGuards(AccessJwtAuthGuard)
   @Post(':postId/comments')
   @HttpCode(constants.HTTP_STATUS_CREATED)
+  @ApiCreateCommentInPost()
   async createCommentInPost(
     @Param() params: { postId: string },
     @Body() body: CreateCommentInPostDto,
@@ -115,6 +132,7 @@ export class PostController {
   @UseGuards(AccessJwtAuthGuard)
   @Put(':postId/like-status')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiUpdatePostLikeStatus()
   async updatePostLikeStatus(
     @Param('postId') postId: string,
     @Body() body: LikeInputDto,
@@ -130,6 +148,7 @@ export class PostController {
   @UseGuards(BasicAuthGuard)
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiUpdatePost()
   async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
     const isPostUpdated = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
     if (!isPostUpdated) throw new NotFoundException();
@@ -138,6 +157,7 @@ export class PostController {
   @UseGuards(BasicAuthGuard)
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
+  @ApiDeletePost()
   async deletePost(@Param() params: GetPostInputModel) {
     const resData = await this.commandBus.execute(new DeletePostCommand(params.id));
     if (!resData) throw new NotFoundException();

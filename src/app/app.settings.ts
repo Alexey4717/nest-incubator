@@ -1,10 +1,11 @@
 import { BadRequestException, INestApplication, ValidationPipe } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
 import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
+
+import { swaggerSetup } from './setup/swagger.setup';
 
 /** Подключает class-validator к Nest DI; вызывать после app.init(). */
 export function setupClassValidatorContainer(app: INestApplication): void {
@@ -62,12 +63,5 @@ export function appSettings(app: INestApplication): void {
 
   app.useGlobalFilters(app.get(ErrorExceptionFilter));
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('nestjs app example')
-    .setDescription('API description')
-    .setVersion('1.0')
-    .addTag('nestjs it-incubator app')
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('swagger', app, document);
+  swaggerSetup(app);
 }
