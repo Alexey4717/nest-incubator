@@ -14,10 +14,10 @@ import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { CookieOptions, Response } from 'express';
 
-import { CoreConfig } from '@/shared/core/core.config';
-import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
-import { RefreshToken } from '@/shared/decorators/param/refresh-token.decorator';
-import { UserAgent } from '@/shared/decorators/param/user-agent.decorator';
+import { CoreConfig } from '@/core/core.config';
+import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
+import { RefreshToken } from '@/core/decorators/param/refresh-token.decorator';
+import { UserAgent } from '@/core/decorators/param/user-agent.decorator';
 
 import { LoginCommand } from '../application/commands/login.command';
 import { LogoutCommand } from '../application/commands/logout.command';

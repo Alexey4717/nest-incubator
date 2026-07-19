@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { CommentViewModel } from '../../types/view-models';
 import { CreateCommentInPostUseCase } from '../use-cases/create-comment-in-post.use-case';

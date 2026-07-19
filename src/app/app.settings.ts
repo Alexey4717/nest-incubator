@@ -1,8 +1,9 @@
-import { setupValidationPipe } from '@/setup/pipes.setup';
 import { INestApplication } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
+
+import { setupValidationPipe } from '@/core/pipes/pipes.setup';
 
 import { swaggerSetup } from './setup/swagger.setup';
 

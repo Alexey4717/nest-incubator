@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectThrottlerStorage, ThrottlerStorage } from '@nestjs/throttler';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { TestingRepository } from '../../infrastructure/testing.repository';
 

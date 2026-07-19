@@ -2,9 +2,9 @@ import { ArgumentsHost, Catch, ExceptionFilter, Injectable } from '@nestjs/commo
 import { Request, Response } from 'express';
 import { constants } from 'http2';
 
-import { CoreConfig } from '@/shared/core/core.config';
-import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
+import { CoreConfig } from '@/core/core.config';
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
 
 function getHttpStatus(code: DomainExceptionCode): number {
   switch (code) {

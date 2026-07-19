@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
-import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
-import { IUseCase } from '@/shared/types/use-case';
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { IUseCase } from '@/core/types/use-case';
 
 import { UserEntity } from '../../domain/entities/user.entity';
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';

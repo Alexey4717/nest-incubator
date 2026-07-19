@@ -1,8 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
-import { CoreConfig } from '@/shared/core/core.config';
-import { CoreModule } from '@/shared/core/core.module';
+import { CoreConfig } from '@/core/core.config';
+import { CoreModule } from '@/core/core.module';
 
 import { configModule } from '../dynamic-config-module';
 import { AppModule } from './app.module';

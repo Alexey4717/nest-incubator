@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { Paginator } from '@/shared/types/common';
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { Paginator } from '@/core/types/common';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { GetUsersQueryParamsDto } from '../../dto/get-users-query-params.dto';
 import { UserViewModel } from '../../types/view-models';

@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
-import { IUseCase } from '@/shared/types/use-case';
-import { validateOrRejectModel } from '@/shared/utils/helpers';
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { IUseCase } from '@/core/types/use-case';
+import { validateOrRejectModel } from '@/core/utils/helpers';
 
 import { BlogEntity } from '../../domain/entities/blog.entity';
 import { UpdateBlogDto } from '../../dto/update-blog.dto';

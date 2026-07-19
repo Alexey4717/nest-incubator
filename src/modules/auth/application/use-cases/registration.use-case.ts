@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { EmailService } from '@/modules/email/email.service';
 import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';

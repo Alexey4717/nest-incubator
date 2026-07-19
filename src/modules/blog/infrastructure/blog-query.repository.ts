@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { PaginatedViewDto } from '@/shared/dto/paginated-view.dto';
-import { Paginator } from '@/shared/types/common';
-import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
+import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
+import { Paginator } from '@/core/types/common';
+import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
 
 import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';

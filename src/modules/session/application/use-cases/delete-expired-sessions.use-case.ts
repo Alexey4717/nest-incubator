@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { SessionRepository } from '../../infrastructure/session.repository';
 import { SessionConfig } from '../../session.config';

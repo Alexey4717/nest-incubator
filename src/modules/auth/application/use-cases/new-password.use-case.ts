@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { ChangePasswordUseCase } from '@/modules/user/application/use-cases/change-password.use-case';
 

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
-import { CoreModule } from '@/shared/core/core.module';
+import { CoreModule } from '@/core/core.module';
 
 import { TestingController } from './api/testing.controller';
 import { DeleteAllDataHandler } from './application/commands/delete-all-data.command';

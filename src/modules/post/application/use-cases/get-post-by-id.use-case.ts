@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { PostQueryRepository } from '../../infrastructure/post-query.repository';
 import { PostViewMapper } from '../../post.view-mapper';

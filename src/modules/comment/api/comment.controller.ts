@@ -4,9 +4,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { resultToDomainException } from '@/shared/core/result/result-to-domain';
-import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
-import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
+import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
+import { resultToDomainException } from '@/core/result/result-to-domain';
+import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';

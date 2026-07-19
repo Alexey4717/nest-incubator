@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn } from 'class-validator';
 
-import { BaseQueryParamsDto } from '@/shared/dto/base-query-params.dto';
+import { BaseQueryParamsDto } from '@/core/dto/base-query-params.dto';
 
 export type SortPostCommentsBy = 'content' | 'createdAt';
 

@@ -9,11 +9,11 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CommentViewDto } from '@/shared/swagger/comment-view.dto';
+import { CommentViewDto } from '@/core/swagger/comment-view.dto';
 import {
   ApiBearerProtected,
   ApiValidationError,
-} from '@/shared/swagger/decorators/common.swagger.decorators';
+} from '@/core/swagger/decorators/common.swagger.decorators';
 
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 

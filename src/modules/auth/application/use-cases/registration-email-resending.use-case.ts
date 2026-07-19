@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
-import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
-import { IUseCase } from '@/shared/types/use-case';
+import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/core/exceptions/domain.exception';
+import { IUseCase } from '@/core/types/use-case';
 
 import { EmailService } from '@/modules/email/email.service';
 import { UserEntity } from '@/modules/user/domain/entities/user.entity';

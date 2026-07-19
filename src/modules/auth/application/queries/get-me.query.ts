@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { MeViewModel } from '../../types/view-models';
 import { GetMeUseCase } from '../use-cases/get-me.use-case';

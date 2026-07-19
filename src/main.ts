@@ -4,7 +4,7 @@ import { get } from 'http';
 
 import './register-paths';
 
-import { CoreConfig } from '@/shared/core/core.config';
+import { CoreConfig } from '@/core/core.config';
 
 import { configApp } from '@/app/app.settings';
 import { initAppModule } from '@/app/init-app-module';

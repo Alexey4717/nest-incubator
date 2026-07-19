@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { CoreConfig } from '@/shared/core/core.config';
+import { CoreConfig } from '@/core/core.config';
 
 import { CreateBlogUseCase } from '@/modules/blog/application/use-cases/create-blog.use-case';
 import { CreateBlogDTO } from '@/modules/blog/dto/create-blog.dto';

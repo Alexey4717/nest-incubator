@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-import { Trim } from '@/shared/decorators/validation/trim.decorator';
+import { Trim } from '@/core/decorators/validation/trim.decorator';
 
 export class CreatePostDto {
   /** Post title (max 30 characters) */

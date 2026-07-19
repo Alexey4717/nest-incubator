@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { CreateUserDTO } from '../../dto/create-user.dto';
 import { UserModel } from '../../models/user.model';

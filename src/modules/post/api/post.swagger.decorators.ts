@@ -9,13 +9,13 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CommentViewDto, PaginatedCommentsViewDto } from '@/shared/swagger/comment-view.dto';
+import { CommentViewDto, PaginatedCommentsViewDto } from '@/core/swagger/comment-view.dto';
 import {
   ApiBasicAdmin,
   ApiBearerProtected,
   ApiValidationError,
-} from '@/shared/swagger/decorators/common.swagger.decorators';
-import { PaginatedPostsViewDto, PostViewDto } from '@/shared/swagger/post-view.dto';
+} from '@/core/swagger/decorators/common.swagger.decorators';
+import { PaginatedPostsViewDto, PostViewDto } from '@/core/swagger/post-view.dto';
 
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 

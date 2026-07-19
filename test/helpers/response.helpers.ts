@@ -1,4 +1,4 @@
-import { Paginator } from '../../src/shared/types/common';
+import { Paginator } from '../../src/core/types/common';
 
 export function expectPaginatorShape<T>(body: Paginator<T[]>): void {
   expect(body.items).toBeDefined();

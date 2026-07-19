@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { BlogModel } from '../../models/blog.model';
 import { GetBlogByIdUseCase } from '../use-cases/get-blog-by-id.use-case';

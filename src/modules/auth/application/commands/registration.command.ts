@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { RegistrationUseCase } from '../use-cases/registration.use-case';
 

@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { Paginator } from '@/shared/types/common';
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { Paginator } from '@/core/types/common';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { GetBlogsQueryParamsDto } from '../../dto/get-blogs-query-params.dto';
 import { BlogModel } from '../../models/blog.model';

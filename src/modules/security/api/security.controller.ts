@@ -3,8 +3,8 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 
-import { CurrentDeviceId } from '@/shared/decorators/param/currentDeviceId.decorator';
-import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+import { CurrentDeviceId } from '@/core/decorators/param/currentDeviceId.decorator';
+import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
 
 import { RefreshJwtAuthGuard } from '@/modules/auth/guards/refresh-jwt-auth.guard';
 

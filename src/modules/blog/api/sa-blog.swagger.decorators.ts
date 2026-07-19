@@ -10,9 +10,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { BlogViewDto, PaginatedBlogsViewDto } from '@/shared/swagger/blog-view.dto';
-import { ApiValidationError } from '@/shared/swagger/decorators/common.swagger.decorators';
-import { PostViewDto } from '@/shared/swagger/post-view.dto';
+import { BlogViewDto, PaginatedBlogsViewDto } from '@/core/swagger/blog-view.dto';
+import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
+import { PostViewDto } from '@/core/swagger/post-view.dto';
 
 import { CreateBlogDTO } from '../dto/create-blog.dto';
 import { CreatePostInBlogDTO } from '../dto/create-post-in-blog.dto';

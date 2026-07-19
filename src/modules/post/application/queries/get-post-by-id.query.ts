@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { PostViewModel } from '../../types/view-models';
 import { GetPostByIdUseCase } from '../use-cases/get-post-by-id.use-case';

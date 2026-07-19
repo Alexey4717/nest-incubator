@@ -1,8 +1,8 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam } from '@nestjs/swagger';
 
-import { BlogViewDto, PaginatedBlogsViewDto } from '@/shared/swagger/blog-view.dto';
-import { PaginatedPostsViewDto } from '@/shared/swagger/post-view.dto';
+import { BlogViewDto, PaginatedBlogsViewDto } from '@/core/swagger/blog-view.dto';
+import { PaginatedPostsViewDto } from '@/core/swagger/post-view.dto';
 
 export function ApiGetBlogs() {
   return applyDecorators(

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IsNumber } from 'class-validator';
 
-import { applyValidatedConfig } from '@/shared/core/config-validation.utility';
+import { applyValidatedConfig } from '@/core/config-validation.utility';
 
 class SessionEnvironmentVariables {
   @IsNumber({}, { message: 'Set REFRESH_TOKEN_LIFE_TIME env variable as number' })

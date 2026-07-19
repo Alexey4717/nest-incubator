@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { SessionViewModel } from '@/modules/session/models/session-view.model';
 

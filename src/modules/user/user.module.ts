@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 
-import { CoreModule } from '@/shared/core/core.module';
+import { CoreModule } from '@/core/core.module';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UserEmailExistsValidator } from '@/modules/user/validators/user-email-exists.validator';

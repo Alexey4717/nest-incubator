@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { CreateSessionUseCase } from '@/modules/session/application/use-cases/create-session.use-case';
 import { SessionModel } from '@/modules/session/models/session.model';

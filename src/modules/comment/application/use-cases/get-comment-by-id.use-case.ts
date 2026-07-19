@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { CommentViewMapper } from '../../comment.view-mapper';
 import { CommentQueryRepository } from '../../infrastructure/comment-query.repository';

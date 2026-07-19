@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { DeleteOtherSessionsUseCase } from '@/modules/session/application/use-cases/delete-other-sessions.use-case';
 

@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { CoreModule } from '@/shared/core/core.module';
+import { CoreModule } from '@/core/core.module';
 
 import { BlogModule } from '@/modules/blog/blog.module';
 import { CommentModule } from '@/modules/comment/comment.module';

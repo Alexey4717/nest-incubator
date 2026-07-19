@@ -7,7 +7,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { SecurityDeviceViewDto } from '@/shared/swagger/security-device-view.dto';
+import { SecurityDeviceViewDto } from '@/core/swagger/security-device-view.dto';
 
 const UNAUTHORIZED_DESCRIPTION = 'Invalid refresh token';
 

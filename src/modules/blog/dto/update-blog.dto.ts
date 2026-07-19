@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsUrl, MaxLength } from 'class-validator';
 
-import { Trim } from '@/shared/decorators/validation/trim.decorator';
+import { Trim } from '@/core/decorators/validation/trim.decorator';
 
 export class UpdateBlogDto {
   /** Blog name (max 15 characters) */

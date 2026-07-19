@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-import { applyValidatedConfig, convertToBoolean } from '@/shared/core/config-validation.utility';
+import { applyValidatedConfig, convertToBoolean } from '@/core/config-validation.utility';
 
 class DatabaseEnvironmentVariables {
   @IsString()

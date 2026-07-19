@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/shared/core/result/result.types';
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { Result as ResultType } from '@/core/result/result.types';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { UpdateCommentDTO } from '../../dto/update-comment.dto';
 import { UpdateCommentUseCase } from '../use-cases/update-comment.use-case';

@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { UserModel } from '../../models/user.model';
 import { CheckCredentialsUseCase } from '../use-cases/check-credentials.use-case';

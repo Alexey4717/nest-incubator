@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
-import { Paginator } from '@/shared/types/common';
-import { IUseCase } from '@/shared/types/use-case';
+import { Paginator } from '@/core/types/common';
+import { IUseCase } from '@/core/types/use-case';
 
 import { CommentViewMapper } from '@/modules/comment/comment.view-mapper';
 import { GetPostCommentsQueryParamsDto } from '@/modules/comment/dto/get-post-comments-query-params.dto';

@@ -7,13 +7,13 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { AccessTokenViewDto, MeViewDto } from '@/shared/swagger/auth-view.dto';
+import { AccessTokenViewDto, MeViewDto } from '@/core/swagger/auth-view.dto';
 import {
   ApiBearerProtected,
   ApiCookieProtected,
   ApiCookieProtectedLogout,
   ApiValidationError,
-} from '@/shared/swagger/decorators/common.swagger.decorators';
+} from '@/core/swagger/decorators/common.swagger.decorators';
 
 import { LoginDto } from '../dto/login.dto';
 import { NewPasswordDto } from '../dto/new-password.dto';

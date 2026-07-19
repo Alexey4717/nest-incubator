@@ -4,8 +4,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
-import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
+import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
+import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';

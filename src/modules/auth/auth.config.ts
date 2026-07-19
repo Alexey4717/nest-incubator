@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 
-import { applyValidatedConfig } from '@/shared/core/config-validation.utility';
+import { applyValidatedConfig } from '@/core/config-validation.utility';
 
 class AuthEnvironmentVariables {
   @IsString()

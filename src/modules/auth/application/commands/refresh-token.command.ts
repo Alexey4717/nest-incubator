@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { AuthTokensViewModel } from '../../types/view-models';
 import { RefreshTokenUseCase } from '../use-cases/refresh-token.use-case';

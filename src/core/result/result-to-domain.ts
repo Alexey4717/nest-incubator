@@ -1,4 +1,4 @@
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
+import { DomainException } from '@/core/exceptions/domain.exception';
 
 import { Result, ResultStatus } from './result.types';
 

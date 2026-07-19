@@ -10,8 +10,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { ApiValidationError } from '@/shared/swagger/decorators/common.swagger.decorators';
-import { PaginatedUsersViewDto, UserViewDto } from '@/shared/swagger/user-view.dto';
+import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
+import { PaginatedUsersViewDto, UserViewDto } from '@/core/swagger/user-view.dto';
 
 import { CreateUserDTO } from '../dto/create-user.dto';
 

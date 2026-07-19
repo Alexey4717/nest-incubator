@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 
-import { TypedQuery } from '@/shared/types/cqrs-augmentation';
+import { TypedQuery } from '@/core/types/cqrs-augmentation';
 
 import { CommentViewModel } from '../../types/view-models';
 import { GetCommentByIdUseCase } from '../use-cases/get-comment-by-id.use-case';

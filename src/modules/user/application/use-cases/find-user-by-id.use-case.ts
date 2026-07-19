@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
+import { IUseCase } from '@/core/types/use-case';
 
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
 import { UserModel } from '../../models/user.model';

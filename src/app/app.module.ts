@@ -1,7 +1,7 @@
 import { configModule } from '@/dynamic-config-module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { DynamicModule, Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -9,10 +9,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
-import { CoreConfig } from '@/shared/core/core.config';
-import { CoreModule } from '@/shared/core/core.module';
-import { AllHttpExceptionsFilter } from '@/shared/core/filters/all-http-exceptions.filter';
-import { DomainHttpExceptionsFilter } from '@/shared/core/filters/domain-http-exceptions.filter';
+import { CoreConfig } from '@/core/core.config';
+import { CoreModule } from '@/core/core.module';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
@@ -66,15 +64,7 @@ import { SWAGGER_PATH } from './setup/swagger.setup';
     SecurityModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    // нужны только если где-то явно инжектят AllHttpExceptionsFilter или DomainHttpExceptionsFilter
-    AllHttpExceptionsFilter,
-    DomainHttpExceptionsFilter,
-    // Регистрация глобальных exception filters
-    { provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
-    { provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },
-  ],
+  providers: [AppService],
 })
 export class AppModule {
   static forRoot(coreConfig: CoreConfig): DynamicModule {

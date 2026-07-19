@@ -2,7 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Injectable } from
 import { Request, Response } from 'express';
 import { constants } from 'http2';
 
-import { CoreConfig } from '@/shared/core/core.config';
+import { CoreConfig } from '@/core/core.config';
 
 function normalizeBadRequestMessages(exception: HttpException): {
   message: string;

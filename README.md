@@ -6,13 +6,13 @@ REST API на [NestJS](https://nestjs.com/) для учебного проект
 
 ## Архитектура
 
-Проект организован как **modular monolith**: в корне `src/` три слоя — `app`, `shared`, `modules`. Точка входа `main.ts` остаётся в корне `src/`.
+Проект организован как **modular monolith**: в корне `src/` три слоя — `app`, `core`, `modules`. Точка входа `main.ts` остаётся в корне `src/`.
 
 ```
 src/
 ├── main.ts                 # bootstrap NestJS-приложения
 ├── app/                    # composition root: сборка модулей, глобальные настройки HTTP
-├── shared/                 # переиспользуемый код без доменной логики
+├── core/                   # переиспользуемый код без доменной логики
 └── modules/                # feature-модули (домены)
 ```
 
@@ -20,11 +20,11 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл                                   | Назначение                                                                                                        |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                     |
-| `app.settings.ts`                      | `configApp` — глобальные pipes (через `setup/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                    |
+| Файл                                   | Назначение                                                                                                             |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                          |
+| `app.settings.ts`                      | `configApp` — глобальные pipes (через `core/pipes/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                         |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
 
@@ -35,29 +35,30 @@ src/
 | `{ provide: APP_GUARD, useClass: ThrottlerGuard }`      | Глобальный throttling для всех маршрутов       |
 | `CqrsModule.forRoot()`, `TypeOrmModule`, `MailerModule` | CQRS, PostgreSQL, SMTP                         |
 
-`app/` импортирует `modules/*` и `shared/*`, но **не содержит бизнес-логики** доменов.
+`app/` импортирует `modules/*` и `core/*`, но **не содержит бизнес-логики** доменов.
 
-### `shared/` — общий код
+### `core/` — общий код
 
 Инфраструктурные и cross-cutting вещи, которые используются в нескольких модулях и **не зависят от конкретного домена**:
 
 ```
-shared/
-├── core/
-│   ├── exceptions/         # DomainException, коды ошибок, Extension
-│   ├── filters/            # DomainHttpExceptionsFilter, AllHttpExceptionsFilter
-│   ├── result/             # Result Object (ok/fail, resultToDomainException)
-│   ├── application/        # BcryptService
-│   └── core.config.ts      # CoreConfig, CoreModule
+core/
+├── application/            # BcryptService
+├── exceptions/             # DomainException, коды ошибок, Extension
+├── filters/                # DomainHttpExceptionsFilter, AllHttpExceptionsFilter
+├── result/                 # Result Object (ok/fail, resultToDomainException)
+├── pipes/                  # setupValidationPipe (глобальный ValidationPipe)
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
 ├── dto/                    # BaseQueryParamsDto, PaginatedViewDto
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
 ├── validators/             # class-validator constraints + Injectable-валидаторы
-└── utils/                  # утилиты (helpers, error-formatter, throw-if-not-found, typeorm-pagination)
+├── utils/                  # утилиты (helpers, error-formatter, throw-if-not-found, typeorm-pagination)
+├── core.config.ts          # CoreConfig
+└── core.module.ts          # CoreModule (@Global)
 ```
 
-**Правило:** код в `shared/` не импортирует из `modules/*`. Если декоратор или валидатор нужен только одному модулю — он живёт внутри этого модуля (например, `modules/auth/decorators/`).
+**Правило:** код в `core/` не импортирует из `modules/*`. Если декоратор или валидатор нужен только одному модулю — он живёт внутри этого модуля (например, `modules/auth/decorators/`).
 
 ### `modules/` — feature-модули
 
@@ -99,13 +100,13 @@ modules/<feature>/
 ### Направление зависимостей
 
 ```
-main.ts → app/ → modules/ → shared/
+main.ts → app/ → modules/ → core/
                   ↓
             (не наоборот)
 ```
 
-- `modules/*` может импортировать `shared/*` и другие `modules/*` (через `@Module({ imports })` и прямые импорты типов)
-- `shared/*` **не импортирует** `modules/*`
+- `modules/*` может импортировать `core/*` и другие `modules/*` (через `@Module({ imports })` и прямые импорты типов)
+- `core/*` **не импортирует** `modules/*`
 - `app/*` собирает всё вместе, но не содержит доменной логики
 
 Публичный контракт Nest-модуля определяется **`exports` в `@Module`**, а не barrel-файлами (`index.ts`).
@@ -230,9 +231,9 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 | `500` (dev)           | `{ error, stack }`                         |
 | `500` (prod)          | `'Internal Error'`                         |
 
-**ValidationPipe** (`src/setup/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
+**ValidationPipe** (`src/core/pipes/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
 
-Фильтры регистрируются в `AppModule` через `APP_FILTER` (порядок важен — Nest выполняет в обратном порядке регистрации):
+Фильтры регистрируются в `CoreModule` через `APP_FILTER` (порядок важен — Nest выполняет в обратном порядке регистрации):
 
 ```typescript
 { provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
@@ -241,7 +242,7 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 ### Хранение паролей
 
-Хеширование и сравнение инкапсулированы в `BcryptService` (`shared/core/application/bcrypt.service.ts`), зарегистрированном в `CoreModule`.
+Хеширование и сравнение инкапсулированы в `BcryptService` (`core/application/bcrypt.service.ts`), зарегистрированном в `CoreModule`.
 
 **Точки входа:**
 
@@ -254,7 +255,7 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 **Отдельная колонка `salt` не нужна:** bcrypt сохраняет соль внутри строки `passwordHash` (формат `$2b$10$...`). При `compare()` соль извлекается из хеша автоматически — достаточно одного поля в таблице `users`.
 
-Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`shared/utils/typeorm-pagination.ts`).
+Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`core/utils/typeorm-pagination.ts`).
 
 ### Subdomain-модули
 
@@ -296,7 +297,7 @@ Path alias `@/*` → `src/*` настроен в `tsconfig.json` (`strictNullChe
 1. `nest`
 2. сторонние пакеты (`@nestjs/*`, `express`, …)
 3. `@/modules/*`
-4. `@/shared/*`
+4. `@/core/*`
 5. `@/app/*`
 6. относительные `./` / `../`
 
@@ -454,15 +455,15 @@ yarn build && yarn start:prod
 
 В прикладном коде **не используйте `process.env` и `ConfigService.get()`** — только типизированные `*Config`-классы с валидацией через `class-validator`:
 
-| Config-класс     | Модуль        | Переменные                                                                                        |
-| ---------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| `CoreConfig`     | `shared/core` | `PORT`, `NODE_ENV`                                                                                |
-| `DatabaseConfig` | `database`    | `DB_NAME`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSL` |
-| `AuthConfig`     | `auth`        | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD`                                    |
-| `EmailConfig`    | `email`       | `NODEMAILER_*`, `MAIN_URL`                                                                        |
-| `SessionConfig`  | `session`     | `REFRESH_TOKEN_LIFE_TIME`                                                                         |
+| Config-класс     | Модуль     | Переменные                                                                                        |
+| ---------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| `CoreConfig`     | `core`     | `PORT`, `NODE_ENV`                                                                                |
+| `DatabaseConfig` | `database` | `DB_NAME`, `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_SSL` |
+| `AuthConfig`     | `auth`     | `ACCESS_TOKEN_*`, `REFRESH_TOKEN_*`, `SA_LOGIN`, `SA_PASSWORD`                                    |
+| `EmailConfig`    | `email`    | `NODEMAILER_*`, `MAIN_URL`                                                                        |
+| `SessionConfig`  | `session`  | `REFRESH_TOKEN_LIFE_TIME`                                                                         |
 
-`CoreModule` **не глобальный** — модуль, которому нужен `CoreConfig` или другой config, явно импортирует `CoreModule` / модуль-владелец config. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
+`CoreModule` помечен `@Global()` — `CoreConfig`, `BcryptService`, `TrimValidator` и глобальные exception filters доступны после одного импорта `CoreModule` в `AppModule`. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
 
 ### Использование *Config (инъекция и чтение)
 
@@ -482,7 +483,7 @@ this.authConfig.ACCESS_TOKEN_SECRET
 | Использовать `DatabaseConfig` | Импортировать `DatabaseModule`                      |
 | Использовать `CoreConfig`     | Импортировать `CoreModule`                          |
 
-`CoreModule` **не** помечен `@Global()` — явный импорт модуля-владельца config обязателен.
+`CoreModule` помечен `@Global()` — `CoreConfig` и `BcryptService` доступны во всём приложении после импорта `CoreModule` в `AppModule`.
 
 **Factory-классы:** некоторые config-классы не читают env напрямую, а потребляют другой `*Config`:
 
@@ -502,7 +503,7 @@ this.authConfig.ACCESS_TOKEN_SECRET
    - `@Injectable()` класс `XxxConfig` с полями конфигурации;
    - в конструкторе: `applyValidatedConfig(this, process.env, XxxEnvironmentVariables)`.
 
-   Образцы: [`src/shared/core/config-validation.utility.ts`](src/shared/core/config-validation.utility.ts), [`src/modules/auth/auth.config.ts`](src/modules/auth/auth.config.ts).
+   Образцы: [`src/core/config-validation.utility.ts`](src/core/config-validation.utility.ts), [`src/modules/auth/auth.config.ts`](src/modules/auth/auth.config.ts).
 
 4. **Зарегистрируйте в Nest-модуле:** `providers: [XxxConfig]`, `exports: [XxxConfig]`. Если config нужен в `registerAsync` другого модуля (например, `JwtModule`), вынесите отдельный `XxxConfigModule` — см. [`src/modules/auth/auth-config.module.ts`](src/modules/auth/auth-config.module.ts).
 5. **Инжектируйте** `XxxConfig` в сервисы, стратегии, контроллеры.

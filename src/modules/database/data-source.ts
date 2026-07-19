@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { DataSource } from 'typeorm';
 
-import { loadEnvFiles } from '@/shared/core/env-files.utility';
+import { loadEnvFiles } from '@/core/env-files.utility';
 
 import { BlogOrmEntity } from '@/modules/blog/infrastructure/blog.orm-entity';
 import { CommentReactionEntity } from '@/modules/comment/infrastructure/comment-reaction.entity';

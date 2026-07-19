@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
-import { IUseCase } from '@/shared/types/use-case';
-import { validateOrRejectModel } from '@/shared/utils/helpers';
+import { IUseCase } from '@/core/types/use-case';
+import { validateOrRejectModel } from '@/core/utils/helpers';
 
 import { BlogQueryRepository } from '@/modules/blog/infrastructure/blog-query.repository';
 

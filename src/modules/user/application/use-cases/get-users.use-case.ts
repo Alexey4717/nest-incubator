@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Paginator } from '@/shared/types/common';
-import { IUseCase } from '@/shared/types/use-case';
+import { Paginator } from '@/core/types/common';
+import { IUseCase } from '@/core/types/use-case';
 
 import { GetUsersQueryParamsDto } from '../../dto/get-users-query-params.dto';
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { TypedCommand } from '@/shared/types/cqrs-augmentation';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { UpdateBlogDto } from '../../dto/update-blog.dto';
 import { UpdateBlogUseCase } from '../use-cases/update-blog.use-case';

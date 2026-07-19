@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { BcryptService } from '@/shared/core/application/bcrypt.service';
-import { IUseCase } from '@/shared/types/use-case';
+import { BcryptService } from '@/core/application/bcrypt.service';
+import { IUseCase } from '@/core/types/use-case';
 
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
 import { UserModel } from '../../models/user.model';
