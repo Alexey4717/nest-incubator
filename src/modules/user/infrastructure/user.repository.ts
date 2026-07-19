@@ -5,38 +5,22 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/shared/core/exceptions/domain.exception';
 
-import { UserModel } from '../models/user.model';
-import { UserEntity } from './user.entity';
-import { toDomain, toOrm } from './user.mapper';
-
-type UpdateUserConfirmationCodeInputType = {
-  userId: string;
-  newCode: string;
-};
-
-type ChangeUserPasswordArgs = {
-  userId: string;
-  passwordHash: string;
-};
-
-type SetUserRecoveryDataInputType = {
-  userId: string;
-  recoveryCode: string;
-  recoveryExpiration: Date;
-};
+import { UserEntity } from '../domain/entities/user.entity';
+import { UserPersistenceMapper } from '../domain/mappers/user.persistence-mapper';
+import { UserOrmEntity } from './user.orm-entity';
 
 @Injectable()
 export class UserRepository {
   constructor(
-    @InjectRepository(UserEntity)
-    private readonly usersRepository: Repository<UserEntity>,
+    @InjectRepository(UserOrmEntity)
+    private readonly usersRepository: Repository<UserOrmEntity>,
   ) {}
 
-  async createUser(newUser: UserModel): Promise<UserModel> {
+  async createUser(newUser: UserEntity): Promise<UserEntity> {
     try {
-      const entity = toOrm(newUser);
+      const entity = UserPersistenceMapper.toPersistence(newUser);
       const saved = await this.usersRepository.save(entity);
-      return toDomain(saved);
+      return UserPersistenceMapper.toDomain(saved);
     } catch (error: unknown) {
       if (error instanceof QueryFailedError) {
         const pgError = error.driverError as {
@@ -55,6 +39,29 @@ export class UserRepository {
       console.log(`usersRepository.createUser error is occurred: ${error}`);
       throw error;
     }
+  }
+
+  async save(user: UserEntity): Promise<boolean> {
+    const data = user.toDb();
+    const result = await this.usersRepository.update(
+      { id: data.id },
+      {
+        login: data.login,
+        email: data.email,
+        passwordHash: data.passwordHash,
+        confirmationCode: data.confirmationCode,
+        confirmationExpiration: data.confirmationExpiration,
+        isConfirmed: data.isConfirmed,
+        recoveryCode: data.recoveryCode,
+        recoveryExpiration: data.recoveryExpiration,
+      },
+    );
+    return (result.affected ?? 0) === 1;
+  }
+
+  async findById(id: string): Promise<UserEntity | null> {
+    const entity = await this.usersRepository.findOne({ where: { id } });
+    return entity ? UserPersistenceMapper.toDomain(entity) : null;
   }
 
   private uniqueViolationToErrorsMessages(
@@ -96,48 +103,5 @@ export class UserRepository {
       console.log(`usersRepository.deleteUserById error is occurred: ${error}`);
       return false;
     }
-  }
-
-  async updateConfirmation(userId: string): Promise<boolean> {
-    const result = await this.usersRepository.update({ id: userId }, { isConfirmed: true });
-    return (result.affected ?? 0) === 1;
-  }
-
-  async changeUserPasswordAndNullifyRecoveryData({
-    userId,
-    passwordHash,
-  }: ChangeUserPasswordArgs): Promise<boolean> {
-    const result = await this.usersRepository.update(
-      { id: userId },
-      {
-        passwordHash,
-        recoveryCode: null,
-        recoveryExpiration: null,
-      },
-    );
-    return (result.affected ?? 0) === 1;
-  }
-
-  async setUserRecoveryData({
-    userId,
-    recoveryCode,
-    recoveryExpiration,
-  }: SetUserRecoveryDataInputType): Promise<boolean> {
-    const result = await this.usersRepository.update(
-      { id: userId },
-      {
-        recoveryCode,
-        recoveryExpiration,
-      },
-    );
-    return (result.affected ?? 0) === 1;
-  }
-
-  async updateUserConfirmationCode({
-    userId,
-    newCode,
-  }: UpdateUserConfirmationCodeInputType): Promise<boolean> {
-    const result = await this.usersRepository.update({ id: userId }, { confirmationCode: newCode });
-    return (result.affected ?? 0) === 1;
   }
 }

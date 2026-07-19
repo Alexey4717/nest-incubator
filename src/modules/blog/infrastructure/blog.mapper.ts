@@ -1,7 +1,8 @@
+import { BlogDb, BlogEntity } from '../domain/entities/blog.entity';
 import { BlogModel } from '../models/blog.model';
-import { BlogEntity } from './blog.entity';
+import { BlogOrmEntity } from './blog.orm-entity';
 
-export function toDomain(entity: BlogEntity): BlogModel {
+export function toDomain(entity: BlogOrmEntity): BlogModel {
   return {
     id: entity.id,
     name: entity.name,
@@ -12,8 +13,8 @@ export function toDomain(entity: BlogEntity): BlogModel {
   };
 }
 
-export function toOrm(model: BlogModel): BlogEntity {
-  const entity = new BlogEntity();
+export function toOrm(model: BlogModel): BlogOrmEntity {
+  const entity = new BlogOrmEntity();
   entity.id = model.id;
   entity.name = model.name;
   entity.websiteUrl = model.websiteUrl;
@@ -21,4 +22,27 @@ export function toOrm(model: BlogModel): BlogEntity {
   entity.isMembership = model.isMembership ?? false;
   entity.createdAt = new Date(model.createdAt);
   return entity;
+}
+
+export function modelToDb(model: BlogModel): BlogDb {
+  return {
+    id: model.id,
+    name: model.name,
+    websiteUrl: model.websiteUrl,
+    description: model.description,
+    isMembership: model.isMembership,
+    createdAt: new Date(model.createdAt),
+  };
+}
+
+export function fromEntity(entity: BlogEntity): BlogModel {
+  const data = entity.toDb();
+  return {
+    id: data.id,
+    name: data.name,
+    websiteUrl: data.websiteUrl,
+    description: data.description,
+    isMembership: data.isMembership,
+    createdAt: data.createdAt.toISOString(),
+  };
 }

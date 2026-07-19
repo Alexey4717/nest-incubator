@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('sessions')
-export class SessionEntity {
+export class SessionOrmEntity {
   @PrimaryColumn({ name: 'device_id', type: 'varchar' })
   deviceId: string;
 

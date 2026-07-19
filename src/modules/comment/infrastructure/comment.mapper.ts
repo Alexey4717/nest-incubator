@@ -1,6 +1,7 @@
+import { CommentEntity } from '../domain/entities/comment.entity';
 import { CommentModel, CommentReactionModel } from '../models/comment.model';
 import { CommentReactionEntity } from './comment-reaction.entity';
-import { CommentEntity } from './comment.entity';
+import { CommentOrmEntity } from './comment.orm-entity';
 
 export function reactionToDomain(reaction: CommentReactionEntity): CommentReactionModel {
   return {
@@ -23,7 +24,7 @@ export function reactionToOrm(
 }
 
 export function toDomain(
-  entity: CommentEntity,
+  entity: CommentOrmEntity,
   reactions: CommentReactionEntity[] = [],
 ): CommentModel {
   return {
@@ -36,8 +37,8 @@ export function toDomain(
   };
 }
 
-export function toOrm(model: CommentModel): CommentEntity {
-  const entity = new CommentEntity();
+export function toOrm(model: CommentModel): CommentOrmEntity {
+  const entity = new CommentOrmEntity();
   entity.id = model.id;
   entity.postId = model.postId;
   entity.content = model.content;
@@ -45,4 +46,19 @@ export function toOrm(model: CommentModel): CommentEntity {
   entity.userLogin = model.commentatorInfo.userLogin;
   entity.createdAt = new Date(model.createdAt);
   return entity;
+}
+
+export function fromEntity(
+  entity: CommentEntity,
+  reactions: CommentReactionModel[] = [],
+): CommentModel {
+  const data = entity.toDb();
+  return {
+    id: data.id,
+    postId: data.postId,
+    content: data.content,
+    commentatorInfo: { userId: data.userId, userLogin: data.userLogin },
+    createdAt: data.createdAt.toISOString(),
+    reactions,
+  };
 }

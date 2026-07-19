@@ -1,6 +1,7 @@
+import { PostEntity } from '../domain/entities/post.entity';
 import { PostModel, PostReactionModel } from '../models/post.model';
 import { PostReactionEntity } from './post-reaction.entity';
-import { PostEntity } from './post.entity';
+import { PostOrmEntity } from './post.orm-entity';
 
 export function reactionToDomain(reaction: PostReactionEntity): PostReactionModel {
   return {
@@ -11,7 +12,7 @@ export function reactionToDomain(reaction: PostReactionEntity): PostReactionMode
   };
 }
 
-export function toDomain(entity: PostEntity, reactions: PostReactionEntity[] = []): PostModel {
+export function toDomain(entity: PostOrmEntity, reactions: PostReactionEntity[] = []): PostModel {
   return {
     id: entity.id,
     title: entity.title,
@@ -24,8 +25,8 @@ export function toDomain(entity: PostEntity, reactions: PostReactionEntity[] = [
   };
 }
 
-export function toOrm(model: PostModel): PostEntity {
-  const entity = new PostEntity();
+export function toOrm(model: PostModel): PostOrmEntity {
+  const entity = new PostOrmEntity();
   entity.id = model.id;
   entity.title = model.title;
   entity.shortDescription = model.shortDescription;
@@ -34,4 +35,18 @@ export function toOrm(model: PostModel): PostEntity {
   entity.blogName = model.blogName;
   entity.createdAt = new Date(model.createdAt);
   return entity;
+}
+
+export function fromEntity(entity: PostEntity, reactions: PostReactionModel[] = []): PostModel {
+  const data = entity.toDb();
+  return {
+    id: data.id,
+    title: data.title,
+    shortDescription: data.shortDescription,
+    content: data.content,
+    blogId: data.blogId,
+    blogName: data.blogName,
+    createdAt: data.createdAt.toISOString(),
+    reactions,
+  };
 }

@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
+import { BcryptService } from '@/shared/core/application/bcrypt.service';
 import { IUseCase } from '@/shared/types/use-case';
 
+import { UserEntity } from '../../domain/entities/user.entity';
+import { fromEntity } from '../../infrastructure/user.mapper';
 import { UserRepository } from '../../infrastructure/user.repository';
 import { UserModel } from '../../models/user.model';
-import { UserFactoryService } from '../services/user-factory.service';
 
 type RegisterUserInput = {
   login: string;
@@ -16,18 +18,20 @@ type RegisterUserInput = {
 export class RegisterUserUseCase implements IUseCase<RegisterUserInput, UserModel> {
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly userFactory: UserFactoryService,
+    private readonly bcryptService: BcryptService,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<UserModel> {
     const { login, email, password } = input;
-    const newUser = await this.userFactory.createNewUser({
+    const passwordHash = await this.bcryptService.generateHash(password);
+    const newUser = UserEntity.create({
       login,
       email,
-      password,
+      passwordHash,
       isConfirmed: false,
     });
 
-    return this.userRepository.createUser(newUser);
+    const saved = await this.userRepository.createUser(newUser);
+    return fromEntity(saved);
   }
 }

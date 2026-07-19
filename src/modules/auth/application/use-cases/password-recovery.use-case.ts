@@ -5,7 +5,9 @@ import { add } from 'date-fns';
 import { IUseCase } from '@/shared/types/use-case';
 
 import { EmailService } from '@/modules/email/email.service';
+import { UserEntity } from '@/modules/user/domain/entities/user.entity';
 import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
+import { modelToDb } from '@/modules/user/infrastructure/user.mapper';
 import { UserRepository } from '@/modules/user/infrastructure/user.repository';
 
 @Injectable()
@@ -17,14 +19,17 @@ export class PasswordRecoveryUseCase implements IUseCase<string, void | null> {
   ) {}
 
   async execute(email: string): Promise<void | null> {
-    const user = await this.userQueryRepository.findUserByEmail(email);
-    if (!user) return null;
+    const found = await this.userQueryRepository.findUserByEmail(email);
+    if (!found) return null;
+
+    const user = UserEntity.reconstitute(modelToDb(found));
     const recoveryCode = randomUUID();
-    await this.userRepository.setUserRecoveryData({
-      userId: user.id,
+    user.setRecoveryData({
       recoveryCode,
       recoveryExpiration: add(new Date(), { hours: 1 }),
     });
-    return this.emailService.sendPasswordRecoveryCode(user.email, user.login, recoveryCode);
+    await this.userRepository.save(user);
+    const data = user.toDb();
+    return this.emailService.sendPasswordRecoveryCode(data.email, data.login, recoveryCode);
   }
 }

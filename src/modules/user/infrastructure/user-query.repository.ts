@@ -8,10 +8,10 @@ import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 
 import { GetUsersQueryParamsDto, SortUsersBy } from '../dto/get-users-query-params.dto';
 import { UserModel } from '../models/user.model';
-import { UserEntity } from './user.entity';
 import { toDomain } from './user.mapper';
+import { UserOrmEntity } from './user.orm-entity';
 
-const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserEntity> = {
+const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserOrmEntity> = {
   createdAt: 'createdAt',
   login: 'login',
   email: 'email',
@@ -20,8 +20,8 @@ const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserEntity> = {
 @Injectable()
 export class UserQueryRepository {
   constructor(
-    @InjectRepository(UserEntity)
-    private readonly usersRepository: Repository<UserEntity>,
+    @InjectRepository(UserOrmEntity)
+    private readonly usersRepository: Repository<UserOrmEntity>,
   ) {}
 
   async getUsers(query: GetUsersQueryParamsDto): Promise<Paginator<UserModel[]>> {

@@ -2,72 +2,54 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/shared/core/exceptions/domain.exception';
-
+import { PostEntity } from '@/modules/post/domain/entities/post.entity';
 import { PostRepository } from '@/modules/post/infrastructure/post.repository';
-import { PostModel } from '@/modules/post/models/post.model';
 
-import { BlogModel } from '../models/blog.model';
-import { UpdateBlogInputModel } from '../models/UpdateBlogInputModel';
-import { BlogEntity } from './blog.entity';
-import { toDomain, toOrm } from './blog.mapper';
-
-interface UpdateBlogArgs {
-  id: string;
-  input: UpdateBlogInputModel;
-}
+import { BlogEntity } from '../domain/entities/blog.entity';
+import { BlogPersistenceMapper } from '../domain/mappers/blog.persistence-mapper';
+import { BlogOrmEntity } from './blog.orm-entity';
 
 @Injectable()
 export class BlogRepository {
   constructor(
-    @InjectRepository(BlogEntity)
-    private readonly blogsRepository: Repository<BlogEntity>,
+    @InjectRepository(BlogOrmEntity)
+    private readonly blogsRepository: Repository<BlogOrmEntity>,
     private readonly postRepository: PostRepository,
   ) {}
 
-  async createBlog(newBlog: BlogModel): Promise<BlogModel | null> {
+  async createBlog(newBlog: BlogEntity): Promise<BlogEntity | null> {
     try {
-      const entity = toOrm(newBlog);
+      const entity = BlogPersistenceMapper.toPersistence(newBlog);
       const saved = await this.blogsRepository.save(entity);
-      return toDomain(saved);
+      return BlogPersistenceMapper.toDomain(saved);
     } catch (error: unknown) {
       console.log(`blogsRepository.createBlog error is occurred: ${error}`);
       return null;
     }
   }
 
-  async createPostInBlog(newPost: PostModel): Promise<boolean> {
-    const result = await this.postRepository.createPost(newPost);
-    return result !== null;
+  async findById(id: string): Promise<BlogEntity | null> {
+    const entity = await this.blogsRepository.findOne({ where: { id } });
+    return entity ? BlogPersistenceMapper.toDomain(entity) : null;
   }
 
-  async updateBlog({ id, input }: UpdateBlogArgs): Promise<boolean> {
-    try {
-      const existingBlog = await this.blogsRepository.findOne({ where: { id } });
-      if (!existingBlog) return false;
+  async save(blog: BlogEntity): Promise<boolean> {
+    const data = blog.toDb();
+    const result = await this.blogsRepository.update(
+      { id: data.id },
+      {
+        name: data.name,
+        websiteUrl: data.websiteUrl,
+        description: data.description,
+        isMembership: data.isMembership,
+      },
+    );
+    return (result.affected ?? 0) === 1;
+  }
 
-      const blogWithSameName = await this.blogsRepository
-        .createQueryBuilder('blog')
-        .where('blog.name = :name', { name: input.name })
-        .andWhere('blog.id != :id', { id })
-        .getOne();
-
-      if (blogWithSameName) {
-        throw new DomainException(DomainExceptionCode.BadRequest, [
-          { message: 'This name already exists', field: 'name' },
-        ]);
-      }
-
-      const result = await this.blogsRepository.update({ id }, input);
-      return (result.affected ?? 0) === 1;
-    } catch (error) {
-      if (error instanceof DomainException) {
-        throw error;
-      }
-      console.log(`blogsRepository.updateBlog error is occurred: ${error}`);
-      return false;
-    }
+  async createPostInBlog(newPost: PostEntity): Promise<boolean> {
+    const result = await this.postRepository.createPost(newPost);
+    return result !== null;
   }
 
   async deleteBlogById(id: string): Promise<boolean> {

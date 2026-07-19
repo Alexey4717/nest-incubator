@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
-import { CommentEntity } from './comment.entity';
+import { CommentOrmEntity } from './comment.orm-entity';
 
 @Entity('comment_reactions')
 export class CommentReactionEntity {
@@ -18,7 +18,7 @@ export class CommentReactionEntity {
   @Column({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => CommentEntity, (comment) => comment.reactions, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CommentOrmEntity, (comment) => comment.reactions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'comment_id' })
-  comment: CommentEntity;
+  comment: CommentOrmEntity;
 }

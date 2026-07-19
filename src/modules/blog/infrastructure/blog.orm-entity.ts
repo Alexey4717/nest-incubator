@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('blogs')
-export class BlogEntity {
+export class BlogOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 

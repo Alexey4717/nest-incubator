@@ -1,12 +1,13 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
 
 import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { BlogQueryRepository } from '@/modules/blog/infrastructure/blog-query.repository';
 
+import { PostEntity } from '../../domain/entities/post.entity';
 import { CreatePostDto } from '../../dto/create-post.dto';
+import { fromEntity } from '../../infrastructure/post.mapper';
 import { PostRepository } from '../../infrastructure/post.repository';
 import { PostModel } from '../../models/post.model';
 import { PostViewMapper } from '../../post.view-mapper';
@@ -34,18 +35,10 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, PostModel | 
     const foundBlog = await this.blogQueryRepository.findBlogById(blogId);
     if (!foundBlog) return null;
 
-    const newPost: PostModel = {
-      id: randomUUID(),
-      title,
-      shortDescription,
-      blogId,
-      blogName: foundBlog.name,
-      content,
-      createdAt: new Date().toISOString(),
-      reactions: [],
-    };
+    const newPost = PostEntity.create({ title, shortDescription, content, blogId }, foundBlog.name);
 
-    return this.postRepository.createPost(newPost);
+    const saved = await this.postRepository.createPost(newPost);
+    return saved ? fromEntity(saved) : null;
   }
 
   async executeFromDto(input: CreatePostDto): Promise<PostViewModel | null> {

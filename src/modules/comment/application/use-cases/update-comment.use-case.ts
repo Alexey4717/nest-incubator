@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/shared/core/exceptions/domain.exception';
 import { Result } from '@/shared/core/result/result.factory';
-import { ResultStatus, Result as ResultType } from '@/shared/core/result/result.types';
+import { Result as ResultType } from '@/shared/core/result/result.types';
 import { IUseCase } from '@/shared/types/use-case';
 import { validateOrRejectModel } from '@/shared/utils/helpers';
 
 import { UpdateCommentDTO } from '../../dto/update-comment.dto';
 import { CommentRepository } from '../../infrastructure/comment.repository';
-import { CommentOwnerCheckerService } from '../services/comment-owner-checker.service';
 
 type UpdateCommentInput = {
   id: string;
@@ -18,23 +18,27 @@ type UpdateCommentInput = {
 
 @Injectable()
 export class UpdateCommentUseCase implements IUseCase<UpdateCommentInput, ResultType<null>> {
-  constructor(
-    private readonly commentRepository: CommentRepository,
-    private readonly commentOwnerCheckerService: CommentOwnerCheckerService,
-  ) {}
+  constructor(private readonly commentRepository: CommentRepository) {}
 
   async execute({ id, userId, input }: UpdateCommentInput): Promise<ResultType<null>> {
     await validateOrRejectModel(input, UpdateCommentDTO, 'UpdateCommentUseCase.execute');
 
-    const checkingResult = await this.commentOwnerCheckerService.check({ commentId: id, userId });
-    if (checkingResult.status === ResultStatus.Failure) {
-      return checkingResult;
+    const comment = await this.commentRepository.findById(id);
+    if (!comment) {
+      return Result.fail(DomainExceptionCode.NotFound);
     }
 
-    const updateResult = await this.commentRepository.updateCommentById({
-      id,
-      content: input.content,
-    });
+    try {
+      comment.canBeModifiedBy(userId);
+    } catch (error) {
+      if (error instanceof DomainException) {
+        return Result.fail(error.code, error.extensions);
+      }
+      throw error;
+    }
+
+    comment.update(input.content);
+    const updateResult = await this.commentRepository.save(comment);
     if (!updateResult) {
       return Result.fail(DomainExceptionCode.NotFound);
     }

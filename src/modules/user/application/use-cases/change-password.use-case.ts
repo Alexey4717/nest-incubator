@@ -5,7 +5,9 @@ import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-c
 import { DomainException } from '@/shared/core/exceptions/domain.exception';
 import { IUseCase } from '@/shared/types/use-case';
 
+import { UserEntity } from '../../domain/entities/user.entity';
 import { UserQueryRepository } from '../../infrastructure/user-query.repository';
+import { modelToDb } from '../../infrastructure/user.mapper';
 import { UserRepository } from '../../infrastructure/user.repository';
 
 type ChangePasswordInput = {
@@ -22,22 +24,17 @@ export class ChangePasswordUseCase implements IUseCase<ChangePasswordInput, bool
   ) {}
 
   async execute({ recoveryCode, newPassword }: ChangePasswordInput): Promise<boolean> {
-    const user = await this.userQueryRepository.findUserByRecoveryCode(recoveryCode);
-    if (
-      !user ||
-      !user.recoveryCode ||
-      user.recoveryCode !== recoveryCode ||
-      !user.recoveryExpiration ||
-      user.recoveryExpiration <= new Date()
-    ) {
+    const found = await this.userQueryRepository.findUserByRecoveryCode(recoveryCode);
+    if (!found) {
       throw new DomainException(DomainExceptionCode.BadRequest, [
         { message: 'Invalid recovery code', field: 'recoveryCode' },
       ]);
     }
+
+    const user = UserEntity.reconstitute(modelToDb(found));
+    user.validateRecoveryCode(recoveryCode);
     const passwordHash = await this.bcryptService.generateHash(newPassword);
-    return this.userRepository.changeUserPasswordAndNullifyRecoveryData({
-      userId: user.id,
-      passwordHash,
-    });
+    user.changePassword(passwordHash);
+    return this.userRepository.save(user);
   }
 }

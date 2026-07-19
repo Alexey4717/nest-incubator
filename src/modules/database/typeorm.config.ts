@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { join } from 'path';
 
-import { BlogEntity } from '@/modules/blog/infrastructure/blog.entity';
+import { BlogOrmEntity } from '@/modules/blog/infrastructure/blog.orm-entity';
 import { CommentReactionEntity } from '@/modules/comment/infrastructure/comment-reaction.entity';
-import { CommentEntity } from '@/modules/comment/infrastructure/comment.entity';
+import { CommentOrmEntity } from '@/modules/comment/infrastructure/comment.orm-entity';
 import { PostReactionEntity } from '@/modules/post/infrastructure/post-reaction.entity';
-import { PostEntity } from '@/modules/post/infrastructure/post.entity';
-import { SessionEntity } from '@/modules/session/infrastructure/session.entity';
-import { UserEntity } from '@/modules/user/infrastructure/user.entity';
+import { PostOrmEntity } from '@/modules/post/infrastructure/post.orm-entity';
+import { SessionOrmEntity } from '@/modules/session/infrastructure/session.orm-entity';
+import { UserOrmEntity } from '@/modules/user/infrastructure/user.orm-entity';
 
 import { DatabaseConfig } from './database.config';
 import { buildPostgresConnectionOptions } from './postgres-options.utility';
@@ -31,12 +31,12 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
         poolMax,
       }),
       entities: [
-        UserEntity,
-        SessionEntity,
-        BlogEntity,
-        PostEntity,
+        UserOrmEntity,
+        SessionOrmEntity,
+        BlogOrmEntity,
+        PostOrmEntity,
         PostReactionEntity,
-        CommentEntity,
+        CommentOrmEntity,
         CommentReactionEntity,
       ],
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],

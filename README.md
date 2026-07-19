@@ -70,10 +70,13 @@ modules/<feature>/
 │   ├── commands/           # CQRS command + thin @CommandHandler
 │   ├── queries/            # CQRS query + thin @QueryHandler
 │   ├── use-cases/          # *UseCase с методом execute()
-│   └── services/           # domain services (JWT, hashing, owner-check и т.п.)
-├── infrastructure/         # TypeORM entities, repositories, mappers
+│   └── services/           # application services (JWT, hashing и т.п.)
+├── domain/
+│   ├── entities/           # rich domain entities (create, reconstitute, toDb, business methods)
+│   └── mappers/            # *PersistenceMapper — OrmEntity ↔ Entity
+├── infrastructure/         # TypeORM OrmEntity, repositories, read mappers
 ├── dto/                    # class-validator DTO для HTTP (body и query params list-эндпоинтов)
-├── models/                 # domain-модели, input/output для слоя данных
+├── models/                 # read-модели (Model) для query-репозиториев и view mappers
 ├── guards/ / strategies/   # при необходимости (auth)
 ├── decorators/             # декораторы, специфичные для модуля
 └── <feature>.module.ts
@@ -111,13 +114,14 @@ main.ts → app/ → modules/ → shared/
 
 Бизнес-логика доменов построена на **@nestjs/cqrs** и паттерне **Use Case**:
 
-| Слой                | Роль                                                                                                                                         |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                                             |
-| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                                       |
-| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                                                    |
-| **Domain service**  | Переиспользуемая доменная/техническая логика без привязки к HTTP (например `JwtTokenService`, `BcryptService`, `CommentOwnerCheckerService`) |
-| **Repository**      | Доступ к данным (PostgreSQL через TypeORM)                                                                                                   |
+| Слой                | Роль                                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                       |
+| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                 |
+| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                              |
+| **Domain service**  | Переиспользуемая application/инфраструктурная логика без привязки к HTTP (например `JwtTokenService`, `BcryptService`) |
+| **Domain Entity**   | Rich-модель в `domain/entities/` — инварианты и бизнес-методы (`confirmEmail`, `canBeModifiedBy`, …)                   |
+| **Repository**      | CUD-доступ через domain entities; query-репозитории возвращают `*Model` для read side                                  |
 
 **Поток запроса:**
 
@@ -142,7 +146,68 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 })
 ```
 
-**Use case vs domain service:** use case оркестрирует сценарий (проверки, вызов репозиториев и сервисов, маппинг результата). Domain service инкапсулирует узкую переиспользуемую логику, которую вызывают несколько use cases.
+**Use case vs domain entity:** use case — тонкий оркестратор (загрузка entity из repository, вызов метода entity, `save`). Бизнес-правила и инварианты живут в `domain/entities/*`.
+
+### Domain layer (DDD)
+
+Модули `user`, `blog`, `post`, `comment`, `session` используют **rich domain layer** по образцу [express-incubator](https://github.com/Alexey4717/express-incubator):
+
+| Артефакт              | Расположение                               | Назначение                                                                                                                                      |
+| --------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Entity**            | `domain/entities/*.entity.ts`              | Aggregate root: `private constructor`, `static create()`, `static reconstitute()`, `toDb()`, getters, бизнес-методы. Бросает `DomainException`. |
+| **PersistenceMapper** | `domain/mappers/*.persistence-mapper.ts`   | `toDomain(OrmEntity)` / `toPersistence(Entity)` — тонкая обёртка над entity                                                                     |
+| **OrmEntity**         | `infrastructure/*.orm-entity.ts`           | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                |
+| **Model**             | `models/*.model.ts`                        | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                         |
+| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts` | Контракт HTTP-ответа (Swagger), маппинг из Model                                                                                                |
+
+**Поток command (write):**
+
+```
+UseCase → Repository.find*() → Entity.method() → Repository.save(entity)
+                ↓
+         PersistenceMapper.toDomain(OrmEntity)
+                ↓
+         PersistenceMapper.toPersistence(entity) → TypeORM save/update
+```
+
+**Поток query (read):**
+
+```
+QueryHandler → QueryRepository → OrmEntity → infrastructure mapper → Model → ViewMapper → HTTP
+```
+
+CUD-репозитории работают с **domain Entity**; query-репозитории — с **Model** (CQRS-lite внутри модуля). Хелпер `fromEntity()` в infrastructure mappers конвертирует Entity → Model, когда use case должен вернуть прежний контракт.
+
+#### Command repository vs Query repository
+
+В модулях `user`, `blog`, `post`, `comment`, `session` write- и read-доступ разделены на два репозитория:
+
+| Репозиторий                    | Ответственность                                                    |
+| ------------------------------ | ------------------------------------------------------------------ |
+| **Command** (`*Repository`)    | CUD + `findById` / `getById` для загрузки aggregate перед мутацией |
+| **Query** (`*QueryRepository`) | Все остальные чтения (списки, фильтры, lookup для use case)        |
+
+**Поток мутации с предварительным lookup:**
+
+```
+QueryRepository → Model → Entity.reconstitute() → entity.method() → Repository.save(entity)
+```
+
+**Категории пересечения методов (один SQL — разные контракты):**
+
+| Категория           | Статус     | Суть                                                                      |
+| ------------------- | ---------- | ------------------------------------------------------------------------- |
+| **A — intentional** | Оставляем  | Пара методов с одинаковым SQL, но разными типами возврата — CQS by design |
+| **B — accidental**  | Исправлено | Дубли lookup только в query-репозитории                                   |
+| **C — side-effect** | Допустимо  | Command repo может вызывать query repo для side-effects (например, likes) |
+
+**Категория A** — намеренные пары «command load vs read API»:
+
+| Command repo              | Query repo                   | Назначение          |
+| ------------------------- | ---------------------------- | ------------------- |
+| `findById` → `PostEntity` | `findPostById` → `PostModel` | мутация vs read API |
+
+Аналогичные пары есть в `user`, `blog`, `post`, `comment`, `session`. Command repo возвращает **Entity** для aggregate mutations; query repo — **Model** для read API и view mappers. Это не баг дублирования, а разделение ответственности по CQS.
 
 ### Обработка ошибок
 
@@ -180,12 +245,12 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 
 **Точки входа:**
 
-| Use case                  | Операция                                                             |
-| ------------------------- | -------------------------------------------------------------------- |
-| `RegisterUserUseCase`     | создание пользователя через `UserFactoryService.generateHash()`      |
-| `CreateUserUseCase`       | создание пользователя (SA) через `UserFactoryService.generateHash()` |
-| `ChangePasswordUseCase`   | смена пароля через `BcryptService.generateHash()`                    |
-| `CheckCredentialsUseCase` | проверка пароля при логине через `BcryptService.compare()`           |
+| Use case                  | Операция                                                       |
+| ------------------------- | -------------------------------------------------------------- |
+| `RegisterUserUseCase`     | `UserEntity.create()` + `BcryptService.generateHash()`         |
+| `CreateUserUseCase`       | `UserEntity.create()` (SA) + `BcryptService.generateHash()`    |
+| `ChangePasswordUseCase`   | `UserEntity.changePassword()` + `BcryptService.generateHash()` |
+| `CheckCredentialsUseCase` | проверка пароля при логине через `BcryptService.compare()`     |
 
 **Отдельная колонка `salt` не нужна:** bcrypt сохраняет соль внутри строки `passwordHash` (формат `$2b$10$...`). При `compare()` соль извлекается из хеша автоматически — достаточно одного поля в таблице `users`.
 

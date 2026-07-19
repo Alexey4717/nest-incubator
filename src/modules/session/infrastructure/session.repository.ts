@@ -2,38 +2,39 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan, Not, Repository } from 'typeorm';
 
-import { SessionModel } from '../models/session.model';
-import { SessionEntity } from './session.entity';
-import { toDomain, toOrm } from './session.mapper';
+import { SessionEntity } from '../domain/entities/session.entity';
+import { SessionPersistenceMapper } from '../domain/mappers/session.persistence-mapper';
+import { SessionOrmEntity } from './session.orm-entity';
 
 @Injectable()
 export class SessionRepository {
   constructor(
-    @InjectRepository(SessionEntity)
-    private readonly sessionsRepository: Repository<SessionEntity>,
+    @InjectRepository(SessionOrmEntity)
+    private readonly sessionsRepository: Repository<SessionOrmEntity>,
   ) {}
 
-  async createNewSession(newSessionInfo: SessionModel): Promise<SessionModel> {
-    const entity = toOrm(newSessionInfo);
+  async createNewSession(newSession: SessionEntity): Promise<SessionEntity> {
+    const entity = SessionPersistenceMapper.toPersistence(newSession);
     const saved = await this.sessionsRepository.save(entity);
-    return toDomain(saved);
+    return SessionPersistenceMapper.toDomain(saved);
   }
 
-  async updateSessionAfterRefreshToken(
-    userId: string,
-    deviceId: string,
-    lastActiveDate: string,
-    newLastActiveDate: string,
-  ): Promise<boolean> {
-    const result = await this.sessionsRepository.update(
-      {
-        userId,
-        deviceId,
-        lastActiveDate: new Date(lastActiveDate),
-      },
-      { lastActiveDate: new Date(newLastActiveDate) },
-    );
+  async findByDeviceId(deviceId: string): Promise<SessionEntity | null> {
+    const entity = await this.sessionsRepository.findOne({ where: { deviceId } });
+    return entity ? SessionPersistenceMapper.toDomain(entity) : null;
+  }
 
+  async findByUserAndDevice(userId: string, deviceId: string): Promise<SessionEntity | null> {
+    const entity = await this.sessionsRepository.findOne({ where: { userId, deviceId } });
+    return entity ? SessionPersistenceMapper.toDomain(entity) : null;
+  }
+
+  async save(session: SessionEntity): Promise<boolean> {
+    const data = session.toDb();
+    const result = await this.sessionsRepository.update(
+      { deviceId: data.deviceId },
+      { lastActiveDate: data.lastActiveDate },
+    );
     return (result.affected ?? 0) === 1;
   }
 
@@ -41,35 +42,32 @@ export class SessionRepository {
     userId: string,
     deviceId: string,
     lastActiveDate: string,
-  ): Promise<SessionModel | null> {
-    const entity = await this.sessionsRepository.findOne({
-      where: {
+  ): Promise<boolean> {
+    try {
+      const result = await this.sessionsRepository.delete({
         userId,
         deviceId,
         lastActiveDate: new Date(lastActiveDate),
-      },
-    });
-    if (!entity) return null;
-
-    await this.sessionsRepository.delete({
-      userId,
-      deviceId,
-      lastActiveDate: entity.lastActiveDate,
-    });
-    return toDomain(entity);
+      });
+      return (result.affected ?? 0) === 1;
+    } catch (error) {
+      console.log(
+        `sessionsRepository.deleteOneSessionByUserAndDeviceIdAndDate error is occurred: ${error}`,
+      );
+      return false;
+    }
   }
 
-  async deleteOneSessionByUserAndDeviceId(
-    userId: string,
-    deviceId: string,
-  ): Promise<SessionModel | null> {
-    const entity = await this.sessionsRepository.findOne({
-      where: { userId, deviceId },
-    });
-    if (!entity) return null;
-
-    await this.sessionsRepository.delete({ deviceId });
-    return toDomain(entity);
+  async deleteOneSessionByUserAndDeviceId(userId: string, deviceId: string): Promise<boolean> {
+    try {
+      const result = await this.sessionsRepository.delete({ deviceId });
+      return (result.affected ?? 0) === 1;
+    } catch (error) {
+      console.log(
+        `sessionsRepository.deleteOneSessionByUserAndDeviceId error is occurred: ${error}`,
+      );
+      return false;
+    }
   }
 
   async deleteAllSessionExceptCurrent(userId: string, deviceId: string) {

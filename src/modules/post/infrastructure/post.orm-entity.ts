@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { PostReactionEntity } from './post-reaction.entity';
 
 @Entity('posts')
-export class PostEntity {
+export class PostOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 

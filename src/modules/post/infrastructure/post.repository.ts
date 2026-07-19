@@ -6,12 +6,12 @@ import { ReactionUpdateService } from '@/modules/like/application/services/react
 import { LikeStatus } from '@/modules/like/types/like-status';
 import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
 
-import { PostModel } from '../models/post.model';
+import { PostEntity } from '../domain/entities/post.entity';
+import { PostPersistenceMapper } from '../domain/mappers/post.persistence-mapper';
 import { UpdatePostInputModel } from '../models/UpdatePostInputModel';
-import { PostQueryRepository } from './post-query.repository';
 import { PostReactionEntity } from './post-reaction.entity';
-import { PostEntity } from './post.entity';
-import { reactionToDomain, toDomain, toOrm } from './post.mapper';
+import { reactionToDomain } from './post.mapper';
+import { PostOrmEntity } from './post.orm-entity';
 
 export interface UpdatePostArgs {
   id: string;
@@ -27,24 +27,43 @@ export interface UpdateLikeStatusPostArgs {
 @Injectable()
 export class PostRepository {
   constructor(
-    @InjectRepository(PostEntity)
-    private readonly postsRepository: Repository<PostEntity>,
+    @InjectRepository(PostOrmEntity)
+    private readonly postsRepository: Repository<PostOrmEntity>,
     @InjectRepository(PostReactionEntity)
     private readonly postReactionsRepository: Repository<PostReactionEntity>,
-    private readonly postQueryRepository: PostQueryRepository,
     private readonly reactionUpdateService: ReactionUpdateService,
     private readonly userQueryRepository: UserQueryRepository,
   ) {}
 
-  async createPost(newPost: PostModel): Promise<PostModel | null> {
+  async createPost(newPost: PostEntity): Promise<PostEntity | null> {
     try {
-      const entity = toOrm(newPost);
+      const entity = PostPersistenceMapper.toPersistence(newPost);
       const saved = await this.postsRepository.save(entity);
-      return toDomain(saved, []);
+      return PostPersistenceMapper.toDomain(saved);
     } catch (error) {
       console.log(`postsRepository.createPost error is occurred: ${error}`);
       return null;
     }
+  }
+
+  async findById(id: string): Promise<PostEntity | null> {
+    const entity = await this.postsRepository.findOne({ where: { id } });
+    return entity ? PostPersistenceMapper.toDomain(entity) : null;
+  }
+
+  async save(post: PostEntity): Promise<boolean> {
+    const data = post.toDb();
+    const result = await this.postsRepository.update(
+      { id: data.id },
+      {
+        title: data.title,
+        shortDescription: data.shortDescription,
+        content: data.content,
+        blogId: data.blogId,
+        blogName: data.blogName,
+      },
+    );
+    return (result.affected ?? 0) === 1;
   }
 
   async updatePost({ id, input }: UpdatePostArgs): Promise<boolean> {

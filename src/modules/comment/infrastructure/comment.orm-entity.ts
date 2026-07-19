@@ -3,7 +3,7 @@ import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { CommentReactionEntity } from './comment-reaction.entity';
 
 @Entity('comments')
-export class CommentEntity {
+export class CommentOrmEntity {
   @PrimaryColumn('uuid')
   id: string;
 

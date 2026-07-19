@@ -9,10 +9,10 @@ import { applyPagination, applySort } from '@/shared/utils/typeorm-pagination';
 import { GetPostsQueryParamsDto, SortPostsBy } from '../dto/get-posts-query-params.dto';
 import { PostModel } from '../models/post.model';
 import { PostReactionEntity } from './post-reaction.entity';
-import { PostEntity } from './post.entity';
 import { toDomain } from './post.mapper';
+import { PostOrmEntity } from './post.orm-entity';
 
-const SORT_COLUMN_MAP: Record<SortPostsBy, keyof PostEntity> = {
+const SORT_COLUMN_MAP: Record<SortPostsBy, keyof PostOrmEntity> = {
   title: 'title',
   blogName: 'blogName',
   createdAt: 'createdAt',
@@ -21,8 +21,8 @@ const SORT_COLUMN_MAP: Record<SortPostsBy, keyof PostEntity> = {
 @Injectable()
 export class PostQueryRepository {
   constructor(
-    @InjectRepository(PostEntity)
-    private readonly postsRepository: Repository<PostEntity>,
+    @InjectRepository(PostOrmEntity)
+    private readonly postsRepository: Repository<PostOrmEntity>,
     @InjectRepository(PostReactionEntity)
     private readonly postReactionsRepository: Repository<PostReactionEntity>,
   ) {}

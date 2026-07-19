@@ -12,10 +12,10 @@ import { PostModel } from '@/modules/post/models/post.model';
 
 import { GetBlogsQueryParamsDto, SortBlogsBy } from '../dto/get-blogs-query-params.dto';
 import { BlogModel } from '../models/blog.model';
-import { BlogEntity } from './blog.entity';
 import { toDomain } from './blog.mapper';
+import { BlogOrmEntity } from './blog.orm-entity';
 
-const SORT_COLUMN_MAP: Record<SortBlogsBy, keyof BlogEntity> = {
+const SORT_COLUMN_MAP: Record<SortBlogsBy, keyof BlogOrmEntity> = {
   name: 'name',
   websiteUrl: 'websiteUrl',
   description: 'description',
@@ -26,8 +26,8 @@ const SORT_COLUMN_MAP: Record<SortBlogsBy, keyof BlogEntity> = {
 @Injectable()
 export class BlogQueryRepository {
   constructor(
-    @InjectRepository(BlogEntity)
-    private readonly blogsRepository: Repository<BlogEntity>,
+    @InjectRepository(BlogOrmEntity)
+    private readonly blogsRepository: Repository<BlogOrmEntity>,
     private readonly postQueryRepository: PostQueryRepository,
   ) {}
 
@@ -70,6 +70,11 @@ export class BlogQueryRepository {
 
   async findBlogById(id: string): Promise<BlogModel | null> {
     const entity = await this.blogsRepository.findOne({ where: { id } });
+    return entity ? toDomain(entity) : null;
+  }
+
+  async findBlogByName(name: string): Promise<BlogModel | null> {
+    const entity = await this.blogsRepository.findOne({ where: { name } });
     return entity ? toDomain(entity) : null;
   }
 }

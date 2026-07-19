@@ -19,6 +19,7 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
+    "strictPropertyInitialization": false, // Без этого нужно явно в классах определять поля
     "noFallthroughCasesInSwitch": false,
     "types": ["jest", "node"]
   },

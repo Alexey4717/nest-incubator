@@ -16,7 +16,6 @@ import { RegisterUserHandler } from './application/commands/register-user.comman
 import { CheckCredentialsHandler } from './application/queries/check-credentials.query';
 import { FindUserByIdHandler } from './application/queries/find-user-by-id.query';
 import { GetUsersHandler } from './application/queries/get-users.query';
-import { UserFactoryService } from './application/services/user-factory.service';
 import { ChangePasswordUseCase } from './application/use-cases/change-password.use-case';
 import { CheckCredentialsUseCase } from './application/use-cases/check-credentials.use-case';
 import { ConfirmEmailUseCase } from './application/use-cases/confirm-email.use-case';
@@ -49,15 +48,12 @@ const userCommandHandlers = [
 
 const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredentialsHandler];
 
-const userDomainServices = [UserFactoryService];
-
 @Module({
   imports: [CqrsModule, CoreModule, forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [
     UserRepository,
     UserQueryRepository,
-    ...userDomainServices,
     ...userUseCases,
     ...userCommandHandlers,
     ...userQueryHandlers,

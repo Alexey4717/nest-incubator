@@ -14,10 +14,10 @@ import {
 } from '../dto/get-post-comments-query-params.dto';
 import { CommentModel } from '../models/comment.model';
 import { CommentReactionEntity } from './comment-reaction.entity';
-import { CommentEntity } from './comment.entity';
 import { toDomain } from './comment.mapper';
+import { CommentOrmEntity } from './comment.orm-entity';
 
-const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentEntity> = {
+const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentOrmEntity> = {
   content: 'content',
   createdAt: 'createdAt',
 };
@@ -25,8 +25,8 @@ const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentEntity> = {
 @Injectable()
 export class CommentQueryRepository {
   constructor(
-    @InjectRepository(CommentEntity)
-    private readonly commentsRepository: Repository<CommentEntity>,
+    @InjectRepository(CommentOrmEntity)
+    private readonly commentsRepository: Repository<CommentOrmEntity>,
     @InjectRepository(CommentReactionEntity)
     private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
     private readonly postQueryRepository: PostQueryRepository,

@@ -4,14 +4,14 @@ import { Repository } from 'typeorm';
 
 import { SessionViewModel } from '../models/session-view.model';
 import { SessionModel } from '../models/session.model';
-import { SessionEntity } from './session.entity';
 import { toDomain, toSessionViewModel } from './session.mapper';
+import { SessionOrmEntity } from './session.orm-entity';
 
 @Injectable()
 export class SessionQueryRepository {
   constructor(
-    @InjectRepository(SessionEntity)
-    private readonly sessionsRepository: Repository<SessionEntity>,
+    @InjectRepository(SessionOrmEntity)
+    private readonly sessionsRepository: Repository<SessionOrmEntity>,
   ) {}
 
   async findOneByDeviceAndUserIdAndDate(

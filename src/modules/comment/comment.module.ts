@@ -10,7 +10,6 @@ import { DeleteCommentHandler } from './application/commands/delete-comment.comm
 import { UpdateCommentLikeStatusHandler } from './application/commands/update-comment-like-status.command';
 import { UpdateCommentHandler } from './application/commands/update-comment.command';
 import { GetCommentByIdHandler } from './application/queries/get-comment-by-id.query';
-import { CommentOwnerCheckerService } from './application/services/comment-owner-checker.service';
 import { CreateCommentInPostUseCase } from './application/use-cases/create-comment-in-post.use-case';
 import { DeleteCommentUseCase } from './application/use-cases/delete-comment.use-case';
 import { GetCommentByIdUseCase } from './application/use-cases/get-comment-by-id.use-case';
@@ -45,7 +44,6 @@ const commentQueryHandlers = [GetCommentByIdHandler];
     CommentRepository,
     CommentQueryRepository,
     CommentViewMapper,
-    CommentOwnerCheckerService,
     ...commentUseCases,
     ...commentCommandHandlers,
     ...commentQueryHandlers,
