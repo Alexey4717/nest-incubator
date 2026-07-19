@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { QueryFailedError, Repository, UpdateResult } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 
 import { UserModel } from '../models/user.model';
 import { UserEntity } from './user.entity';
@@ -139,15 +139,5 @@ export class UserRepository {
   }: UpdateUserConfirmationCodeInputType): Promise<boolean> {
     const result = await this.usersRepository.update({ id: userId }, { confirmationCode: newCode });
     return (result.affected ?? 0) === 1;
-  }
-
-  async updateRecoveryPasswordInfo(userId: string, recoveryCode: string): Promise<UpdateResult> {
-    return this.usersRepository.update(
-      { id: userId },
-      {
-        recoveryExpiration: new Date(),
-        recoveryCode,
-      },
-    );
   }
 }

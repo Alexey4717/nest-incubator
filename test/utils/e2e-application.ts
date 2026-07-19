@@ -5,10 +5,7 @@ import { appSettings, setupClassValidatorContainer } from '../../src/app/app.set
 import { initAppModule } from '../../src/app/init-app-module';
 import { EmailService } from '../../src/modules/email/email.service';
 
-export function createEmailServiceMock(): Pick<
-  EmailService,
-  'sendRegistrationEmail' | 'sendEmailWithNewConfirmationCode' | 'sendPasswordRecoveryCode'
-> {
+export function createEmailServiceMock(): EmailServiceMock {
   return {
     sendRegistrationEmail: jest.fn().mockResolvedValue(undefined),
     sendEmailWithNewConfirmationCode: jest.fn().mockResolvedValue(undefined),
@@ -16,8 +13,28 @@ export function createEmailServiceMock(): Pick<
   };
 }
 
+export type EmailServiceMock = {
+  sendRegistrationEmail: jest.Mock<
+    Promise<void>,
+    [email: string, login: string, confirmationCode: string]
+  >;
+  sendEmailWithNewConfirmationCode: jest.Mock<
+    Promise<void>,
+    [email: string, login: string, confirmationCode: string]
+  >;
+  sendPasswordRecoveryCode: jest.Mock<
+    Promise<void>,
+    [email: string, login: string, recoveryCode: string]
+  >;
+};
+
+export type E2eContext = {
+  app: INestApplication;
+  emailMock: EmailServiceMock;
+};
+
 /** E2e-приложение с теми же middleware/pipes/swagger, что и в main; почта заглушена. */
-export async function createE2eApplication(): Promise<INestApplication> {
+export async function createE2eApplication(): Promise<E2eContext> {
   const emailMock = createEmailServiceMock();
 
   const dynamicAppModule = await initAppModule();
@@ -33,5 +50,5 @@ export async function createE2eApplication(): Promise<INestApplication> {
   appSettings(app);
   await app.init();
   setupClassValidatorContainer(app);
-  return app;
+  return { app, emailMock };
 }

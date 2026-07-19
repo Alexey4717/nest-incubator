@@ -3,7 +3,7 @@ import { IRefreshTokenJwtPayload } from '@/modules/auth/models/refresh-token-jwt
 
 declare global {
   namespace Express {
-    interface User extends IAuthenticatedUser {}
+    type User = IAuthenticatedUser;
     interface Request {
       refreshTokenJWTPayload?: IRefreshTokenJwtPayload;
     }

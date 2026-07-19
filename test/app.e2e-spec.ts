@@ -1,20 +1,23 @@
-import { INestApplication } from '@nestjs/common';
+import { constants } from 'http2';
 import request from 'supertest';
 
-import { createE2eApplication } from './utils/e2e-application';
+import { createE2eApplication, E2eContext } from './utils/e2e-application';
 
 describe('App (e2e)', () => {
-  let app: INestApplication;
+  let ctx: E2eContext;
 
   beforeAll(async () => {
-    app = await createE2eApplication();
+    ctx = await createE2eApplication();
   }, 60000);
 
   afterAll(async () => {
-    await app?.close?.();
+    await ctx.app?.close?.();
   });
 
   it('/ (GET)', async () => {
-    await request(app.getHttpServer()).get('/').expect(200).expect('Hello Nest22!');
+    await request(ctx.app.getHttpServer())
+      .get('/')
+      .expect(constants.HTTP_STATUS_OK)
+      .expect('Hello Nest22!');
   });
 });

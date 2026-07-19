@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { add } from 'date-fns';
 
 import { IUseCase } from '@/shared/types/use-case';
 
@@ -19,7 +20,11 @@ export class PasswordRecoveryUseCase implements IUseCase<string, void | null> {
     const user = await this.userQueryRepository.findUserByEmail(email);
     if (!user) return null;
     const recoveryCode = randomUUID();
-    await this.userRepository.updateRecoveryPasswordInfo(user.id, recoveryCode);
+    await this.userRepository.setUserRecoveryData({
+      userId: user.id,
+      recoveryCode,
+      recoveryExpiration: add(new Date(), { hours: 1 }),
+    });
     return this.emailService.sendPasswordRecoveryCode(user.email, user.login, recoveryCode);
   }
 }
