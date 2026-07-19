@@ -1,11 +1,9 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createSaUser, loginAndGetToken } from './utils/auth.helper';
-import { ADMIN_BASIC_AUTH_HEADER } from './utils/basic-auth.helper';
-import { clearAllData } from './utils/db.helper';
+import { setupCommentE2eContext } from './utils/comment-setup.helper';
 import { createE2eApplication, E2eContext } from './utils/e2e-application';
-import { invalidInputData, validInputData } from './utils/invalid-input-data';
+import { invalidInputData } from './utils/invalid-input-data';
 
 describe('Comment API (e2e)', () => {
   let ctx: E2eContext;
@@ -15,58 +13,18 @@ describe('Comment API (e2e)', () => {
   let postId: string;
   let ownerCommentId: string;
   let otherCommentId: string;
-
-  const ownerLogin = 'cmntowner';
-  const otherLogin = 'cmntother';
-  const password = 'qwerty12';
+  let ownerLogin: string;
 
   beforeAll(async () => {
     ctx = await createE2eApplication();
-    await clearAllData(ctx.app);
 
-    const blogRes = await request(ctx.app.getHttpServer())
-      .post('/sa/blogs')
-      .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-      .send(validInputData.blog)
-      .expect(constants.HTTP_STATUS_CREATED);
-
-    const postRes = await request(ctx.app.getHttpServer())
-      .post('/posts')
-      .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-      .send({ ...validInputData.post, blogId: blogRes.body.id })
-      .expect(constants.HTTP_STATUS_CREATED);
-
-    postId = postRes.body.id;
-
-    await createSaUser(ctx.app, {
-      login: ownerLogin,
-      email: 'cmntowner@test.dev',
-      password,
-    });
-    await createSaUser(ctx.app, {
-      login: otherLogin,
-      email: 'cmntother@test.dev',
-      password,
-    });
-
-    ownerToken = await loginAndGetToken(ctx.app, ownerLogin, password);
-    otherToken = await loginAndGetToken(ctx.app, otherLogin, password);
-
-    const ownerCommentRes = await request(ctx.app.getHttpServer())
-      .post(`/posts/${postId}/comments`)
-      .set('Authorization', `Bearer ${ownerToken}`)
-      .send({ content: 'Owner comment content here' })
-      .expect(constants.HTTP_STATUS_CREATED);
-
-    ownerCommentId = ownerCommentRes.body.id;
-
-    const otherCommentRes = await request(ctx.app.getHttpServer())
-      .post(`/posts/${postId}/comments`)
-      .set('Authorization', `Bearer ${otherToken}`)
-      .send({ content: 'Other user comment content' })
-      .expect(constants.HTTP_STATUS_CREATED);
-
-    otherCommentId = otherCommentRes.body.id;
+    const setup = await setupCommentE2eContext(ctx.app);
+    ownerToken = setup.ownerToken;
+    otherToken = setup.otherToken;
+    postId = setup.postId;
+    ownerCommentId = setup.ownerCommentId;
+    otherCommentId = setup.otherCommentId;
+    ownerLogin = setup.ownerLogin;
   }, 120000);
 
   afterAll(async () => {

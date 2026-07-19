@@ -472,7 +472,11 @@ yarn test:e2e
 | Файл                           | Покрытие                        |
 | ------------------------------ | ------------------------------- |
 | `app.e2e-spec.ts`              | Корневой health-check           |
-| `auth-users.e2e-spec.ts`       | Регистрация, login, users       |
+| `auth.api.e2e-spec.ts`         | Регистрация, login, password    |
+| `user.api.e2e-spec.ts`         | Эндпoинты `/users`              |
+| `post.api.e2e-spec.ts`         | Эндпoинты `/posts`              |
+| `blog.api.e2e-spec.ts`         | Эндпoинты `/blogs`              |
+| `comment.api.e2e-spec.ts`      | Эндпoинты `/comments`           |
 | `auth-refresh.e2e-spec.ts`     | Refresh-токены и ротация сессий |
 | `auth-throttle.e2e-spec.ts`    | Rate limiting на auth POST      |
 | `security-devices.e2e-spec.ts` | Эндпoинты `/security/devices`   |
