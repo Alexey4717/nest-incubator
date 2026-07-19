@@ -1,18 +1,11 @@
-import {
-  Controller,
-  Get,
-  HttpCode,
-  NotFoundException,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Query, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
 
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
 import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
@@ -49,9 +42,7 @@ export class BlogController {
       new GetBlogPostsQuery(params.blogId, query, currentUserId),
     );
 
-    if (!resData) throw new NotFoundException();
-
-    return resData;
+    return throwIfNotFound(resData);
   }
 
   @Get(':id')
@@ -59,7 +50,6 @@ export class BlogController {
   @ApiGetBlog()
   async getBlog(@Param() params: { id: string }) {
     const resData = await this.queryBus.execute(new GetBlogByIdQuery(params.id));
-    if (!resData) throw new NotFoundException();
-    return resData;
+    return throwIfNotFound(resData);
   }
 }

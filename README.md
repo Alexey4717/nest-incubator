@@ -20,11 +20,11 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл                                   | Назначение                                                                    |
-| -------------------------------------- | ----------------------------------------------------------------------------- |
-| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer) |
-| `app.settings.ts`                      | Глобальные pipes, filters, CORS, Swagger — вызывается из `main.ts` и e2e      |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                |
+| Файл                                   | Назначение                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                  |
+| `app.settings.ts`                      | Глобальные pipes (через `setup/pipes.setup.ts`), CORS, Swagger — вызывается из `main.ts` и e2e |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                 |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
 
@@ -43,14 +43,18 @@ src/
 
 ```
 shared/
-├── core/                   # CoreConfig, CoreModule, validateConfig utility
+├── core/
+│   ├── exceptions/         # DomainException, коды ошибок, Extension
+│   ├── filters/            # DomainHttpExceptionsFilter, AllHttpExceptionsFilter
+│   ├── result/             # Result Object (ok/fail, resultToDomainException)
+│   ├── application/        # BcryptService
+│   └── core.config.ts      # CoreConfig, CoreModule
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
 ├── dto/                    # BaseQueryParamsDto, PaginatedViewDto
-├── exception-filters/      # глобальные HTTP-фильтры ошибок
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
 ├── validators/             # class-validator constraints + Injectable-валидаторы
-└── utils/                  # утилиты (helpers, typeorm-pagination)
+└── utils/                  # утилиты (helpers, error-formatter, throw-if-not-found, typeorm-pagination)
 ```
 
 **Правило:** код в `shared/` не импортирует из `modules/*`. Если декоратор или валидатор нужен только одному модулю — он живёт внутри этого модуля (например, `modules/auth/decorators/`).
@@ -139,6 +143,36 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 ```
 
 **Use case vs domain service:** use case оркестрирует сценарий (проверки, вызов репозиториев и сервисов, маппинг результата). Domain service инкапсулирует узкую переиспользуемую логику, которую вызывают несколько use cases.
+
+### Обработка ошибок
+
+Доменный слой и application-слой **не используют** `HttpException`. Вместо этого:
+
+| Компонент                    | Назначение                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------- |
+| `DomainException`            | Базовый класс с `code: DomainExceptionCode` и `extensions: Extension[]`                  |
+| `DomainHttpExceptionsFilter` | `@Catch(DomainException)` — маппинг кода в HTTP-ответ                                    |
+| `AllHttpExceptionsFilter`    | `@Catch()` — fallback для оставшихся `HttpException` (guards) и неизвестных ошибок (500) |
+| `Result` Object              | `Result.ok()` / `Result.fail()` + `resultToDomainException()` в контроллерах             |
+| `throwIfNotFound()`          | Хелпер для контроллеров при `null`/`undefined`                                           |
+
+**Формат HTTP-ответов (контракт API):**
+
+| Статус                | Тело ответа                                |
+| --------------------- | ------------------------------------------ |
+| `400`                 | `{ errorsMessages: [{ message, field }] }` |
+| `401` / `403` / `404` | `{ statusCode, timestamp, path }`          |
+| `500` (dev)           | `{ error, stack }`                         |
+| `500` (prod)          | `'Internal Error'`                         |
+
+**ValidationPipe** (`src/setup/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
+
+Фильтры регистрируются в `AppModule` через `APP_FILTER` (порядок важен — Nest выполняет в обратном порядке регистрации):
+
+```typescript
+{ provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
+{ provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },
+```
 
 ### Хранение паролей
 

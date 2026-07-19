@@ -1,7 +1,7 @@
 import { configModule } from '@/dynamic-config-module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { DynamicModule, Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -9,9 +9,14 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'path';
 
+
+
 import { CoreConfig } from '@/shared/core/core.config';
 import { CoreModule } from '@/shared/core/core.module';
-import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
+import { AllHttpExceptionsFilter } from '@/shared/core/filters/all-http-exceptions.filter';
+import { DomainHttpExceptionsFilter } from '@/shared/core/filters/domain-http-exceptions.filter';
+
+
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
@@ -27,9 +32,93 @@ import { SessionModule } from '@/modules/session/session.module';
 import { TestingModule } from '@/modules/testing/testing.module';
 import { UserModule } from '@/modules/user/user.module';
 
+
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SWAGGER_PATH } from './setup/swagger.setup';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @Module({
   imports: [
@@ -65,7 +154,15 @@ import { SWAGGER_PATH } from './setup/swagger.setup';
     SecurityModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ErrorExceptionFilter],
+  providers: [
+    AppService,
+    // нужны только если где-то явно инжектят AllHttpExceptionsFilter или DomainHttpExceptionsFilter
+    AllHttpExceptionsFilter,
+    DomainHttpExceptionsFilter,
+    // Регистрация глобальных exception filters
+    { provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
+    { provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },
+  ],
 })
 export class AppModule {
   static forRoot(coreConfig: CoreConfig): DynamicModule {

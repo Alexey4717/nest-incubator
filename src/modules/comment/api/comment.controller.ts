@@ -1,21 +1,12 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  ForbiddenException,
-  Get,
-  HttpCode,
-  NotFoundException,
-  Param,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Put, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
+import { resultToDomainException } from '@/shared/core/result/result-to-domain';
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
@@ -27,7 +18,6 @@ import { UpdateCommentCommand } from '../application/commands/update-comment.com
 import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.query';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
 import { GetCommentInputModel } from '../models/GetCommentInputModel';
-import { CommentManageStatuses } from '../types/types';
 import {
   ApiDeleteComment,
   ApiGetComment,
@@ -53,8 +43,7 @@ export class CommentController {
       new GetCommentByIdQuery(params.id, currentUserId),
     );
 
-    if (!foundComment) throw new NotFoundException();
-    return foundComment;
+    return throwIfNotFound(foundComment);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -70,7 +59,7 @@ export class CommentController {
       new UpdateCommentLikeStatusCommand(params.commentId, userId, body.likeStatus),
     );
 
-    if (!likeStatusIsUpdated) throw new NotFoundException();
+    throwIfNotFound(likeStatusIsUpdated || null);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -86,8 +75,7 @@ export class CommentController {
       new UpdateCommentCommand(params.commentId, userId, body),
     );
 
-    if (result === CommentManageStatuses.NOT_OWNER) throw new ForbiddenException();
-    if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
+    resultToDomainException(result);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -99,7 +87,6 @@ export class CommentController {
       new DeleteCommentCommand(params.commentId, userId),
     );
 
-    if (result === CommentManageStatuses.NOT_OWNER) throw new ForbiddenException();
-    if (result === CommentManageStatuses.NOT_FOUND) throw new NotFoundException();
+    resultToDomainException(result);
   }
 }

@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -17,6 +16,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/shared/decorators/param/currentUserId.decorator';
+import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -77,8 +77,7 @@ export class PostController {
   async getPost(@Param() params: GetPostInputModel, @CurrentUserId() currentUserId: string | null) {
     const resData = await this.queryBus.execute(new GetPostByIdQuery(params.id, currentUserId));
 
-    if (!resData) throw new NotFoundException();
-    return resData;
+    return throwIfNotFound(resData);
   }
 
   @UseGuards(GetUserIdFromBearerToken)
@@ -94,8 +93,7 @@ export class PostController {
       new GetPostCommentsQuery(params.postId, query, currentUserId),
     );
 
-    if (!resData) throw new NotFoundException();
-    return resData;
+    return throwIfNotFound(resData);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -105,8 +103,7 @@ export class PostController {
   async createPost(@Body() body: CreatePostDto) {
     const createdPost = await this.commandBus.execute(new CreatePostCommand(body));
 
-    if (!createdPost) throw new NotFoundException();
-    return createdPost;
+    return throwIfNotFound(createdPost);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -118,14 +115,13 @@ export class PostController {
     @Body() body: CreateCommentInPostDto,
     @CurrentUserId() userId: string,
   ) {
-    const user = await this.findUserByIdUseCase.execute(userId);
-    if (!user) throw new NotFoundException();
+    const user = throwIfNotFound(await this.findUserByIdUseCase.execute(userId));
 
-    const createdCommentInPost = await this.commandBus.execute(
-      new CreateCommentInPostCommand(params.postId, body.content, userId, user.login),
+    const createdCommentInPost = throwIfNotFound(
+      await this.commandBus.execute(
+        new CreateCommentInPostCommand(params.postId, body.content, userId, user.login),
+      ),
     );
-
-    if (!createdCommentInPost) throw new NotFoundException();
     return createdCommentInPost;
   }
 
@@ -142,7 +138,7 @@ export class PostController {
       new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus),
     );
 
-    if (!isPostUpdated) throw new NotFoundException();
+    throwIfNotFound(isPostUpdated || null);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -151,7 +147,7 @@ export class PostController {
   @ApiUpdatePost()
   async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
     const isPostUpdated = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
-    if (!isPostUpdated) throw new NotFoundException();
+    throwIfNotFound(isPostUpdated || null);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -160,6 +156,6 @@ export class PostController {
   @ApiDeletePost()
   async deletePost(@Param() params: GetPostInputModel) {
     const resData = await this.commandBus.execute(new DeletePostCommand(params.id));
-    if (!resData) throw new NotFoundException();
+    throwIfNotFound(resData || null);
   }
 }

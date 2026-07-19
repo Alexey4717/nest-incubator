@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 import { Trim } from '@/shared/decorators/validation/trim.decorator';
 
@@ -27,6 +27,7 @@ export class CreatePostDto {
 
   /** ID of the blog the post belongs to */
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440000' })
+  @IsNotEmpty()
   @IsString()
   blogId = '';
 }

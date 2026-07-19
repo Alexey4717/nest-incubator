@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
   Query,
@@ -14,6 +13,8 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
+
+import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 
@@ -57,7 +58,6 @@ export class UserController {
   @ApiDeleteUser()
   async deleteUser(@Param() params: DeleteUserInputModel) {
     const resData = await this.commandBus.execute(new DeleteUserCommand(params.id));
-    if (!resData) throw new NotFoundException();
-    return resData;
+    throwIfNotFound(resData || null);
   }
 }

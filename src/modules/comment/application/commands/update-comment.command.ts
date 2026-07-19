@@ -1,12 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
+import { Result as ResultType } from '@/shared/core/result/result.types';
 import { TypedCommand } from '@/shared/types/cqrs-augmentation';
 
 import { UpdateCommentDTO } from '../../dto/update-comment.dto';
-import { CommentManageStatuses } from '../../types/types';
 import { UpdateCommentUseCase } from '../use-cases/update-comment.use-case';
 
-export class UpdateCommentCommand extends TypedCommand<CommentManageStatuses> {
+export class UpdateCommentCommand extends TypedCommand<ResultType<null>> {
   constructor(
     public readonly id: string,
     public readonly userId: string,
@@ -19,11 +19,11 @@ export class UpdateCommentCommand extends TypedCommand<CommentManageStatuses> {
 @CommandHandler(UpdateCommentCommand)
 export class UpdateCommentHandler implements ICommandHandler<
   UpdateCommentCommand,
-  CommentManageStatuses
+  ResultType<null>
 > {
   constructor(private readonly updateCommentUseCase: UpdateCommentUseCase) {}
 
-  execute(command: UpdateCommentCommand): Promise<CommentManageStatuses> {
+  execute(command: UpdateCommentCommand): Promise<ResultType<null>> {
     return this.updateCommentUseCase.execute({
       id: command.id,
       userId: command.userId,

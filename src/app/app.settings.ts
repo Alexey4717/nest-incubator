@@ -1,9 +1,8 @@
-import { BadRequestException, INestApplication, ValidationPipe } from '@nestjs/common';
+import { setupValidationPipe } from '@/setup/pipes.setup';
+import { INestApplication } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
-
-import { ErrorExceptionFilter } from '@/shared/exception-filters/http.exception-filter';
 
 import { swaggerSetup } from './setup/swagger.setup';
 
@@ -32,36 +31,7 @@ export function appSettings(app: INestApplication): void {
 
   app.enableCors();
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      stopAtFirstError: false,
-      exceptionFactory: (errors) => {
-        const formatErrors = (
-          validationErrors: typeof errors,
-        ): { message: string; field: string }[] =>
-          validationErrors.flatMap((error) => {
-            const constraintsKeys = Object.keys(error.constraints ?? {});
-            const current =
-              constraintsKeys.length > 0
-                ? [
-                    {
-                      message: String(error.constraints?.[constraintsKeys[0]]),
-                      field: error.property,
-                    },
-                  ]
-                : [];
-
-            return [...current, ...formatErrors(error.children ?? [])];
-          });
-
-        throw new BadRequestException(formatErrors(errors));
-      },
-    }),
-  );
-
-  app.useGlobalFilters(app.get(ErrorExceptionFilter));
+  setupValidationPipe(app);
 
   swaggerSetup(app);
 }

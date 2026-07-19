@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/shared/core/exceptions/domain.exception';
 
 import { PostRepository } from '@/modules/post/infrastructure/post.repository';
 import { PostModel } from '@/modules/post/models/post.model';
@@ -51,16 +54,15 @@ export class BlogRepository {
         .getOne();
 
       if (blogWithSameName) {
-        throw new BadRequestException({
-          message: [{ message: 'This name already exists', field: 'name' }],
-          error: 'Bad Request',
-        });
+        throw new DomainException(DomainExceptionCode.BadRequest, [
+          { message: 'This name already exists', field: 'name' },
+        ]);
       }
 
       const result = await this.blogsRepository.update({ id }, input);
       return (result.affected ?? 0) === 1;
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      if (error instanceof DomainException) {
         throw error;
       }
       console.log(`blogsRepository.updateBlog error is occurred: ${error}`);

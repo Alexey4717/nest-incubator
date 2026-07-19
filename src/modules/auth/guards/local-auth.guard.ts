@@ -1,7 +1,11 @@
-import { BadRequestException, ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+
+import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/shared/core/exceptions/domain.exception';
+import { errorFormatter } from '@/shared/utils/error-formatter';
 
 import { LoginDto } from '../dto/login.dto';
 
@@ -16,14 +20,7 @@ export class LocalAuthGuard extends AuthGuard('local') {
     });
 
     if (errors.length > 0) {
-      const message = errors.map((error) => {
-        const constraintsKeys = Object.keys(error.constraints ?? {});
-        return {
-          message: error.constraints?.[constraintsKeys[0]],
-          field: error.property,
-        };
-      });
-      throw new BadRequestException({ message, error: 'Bad Request' });
+      throw new DomainException(DomainExceptionCode.ValidationError, errorFormatter(errors));
     }
 
     return (await super.canActivate(context)) as boolean;

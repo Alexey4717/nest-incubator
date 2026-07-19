@@ -4,7 +4,6 @@ import { constants } from 'http2';
 
 import { CoreConfig } from '@/shared/core/core.config';
 
-/** Разбираем тело BadRequestException / Validation Pipe в массив { message, field } для errorsMessages */
 function normalizeBadRequestMessages(exception: HttpException): {
   message: string;
   field: string;
@@ -66,13 +65,12 @@ function sendHttpExceptionResponse(exception: HttpException, host: ArgumentsHost
   });
 }
 
-// для подсказок в режиме разработки где упала ошибка
 @Injectable()
 @Catch()
-export class ErrorExceptionFilter implements ExceptionFilter {
+export class AllHttpExceptionsFilter implements ExceptionFilter {
   constructor(private readonly coreConfig: CoreConfig) {}
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     if (exception instanceof HttpException) {
       sendHttpExceptionResponse(exception, host);
       return;
@@ -80,25 +78,17 @@ export class ErrorExceptionFilter implements ExceptionFilter {
 
     const context = host.switchToHttp();
     const response = context.getResponse<Response>();
-    void context.getRequest<Request>();
 
     const error = exception instanceof Error ? exception : new Error(String(exception));
 
-    // catching all internal server errors (500)
     if (!this.coreConfig.isProduction) {
       response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({
         error: error.toString(),
         stack: error.stack,
       });
-    } else {
-      response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send('Internal Error');
+      return;
     }
-  }
-}
 
-@Catch(HttpException)
-export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
-    sendHttpExceptionResponse(exception, host);
+    response.status(constants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send('Internal Error');
   }
 }

@@ -1,19 +1,30 @@
-import { validateOrReject } from 'class-validator';
+import { validateOrReject, ValidationError } from 'class-validator';
+
+import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/shared/core/exceptions/domain.exception';
+import { errorFormatter } from '@/shared/utils/error-formatter';
 
 export const validateOrRejectModel = async (
-  model: any,
-  classConstructor: { new (): any },
+  model: object,
+  classConstructor: { new (): object },
   errorPlace: string,
-) => {
-  // так можно сделать дополнительную проверку, если тип не дто (созданный с помощью класса),
-  // то валидация не пройдет classValidator`ом
+): Promise<void> => {
   if (model instanceof classConstructor === false) {
-    throw new Error(`${errorPlace}: inputModel not instanceof ${classConstructor.name}`);
+    throw new DomainException(DomainExceptionCode.InternalServerError, [
+      {
+        field: null,
+        message: `${errorPlace}: inputModel not instanceof ${classConstructor.name}`,
+      },
+    ]);
   }
+
   try {
     await validateOrReject(model);
   } catch (error: unknown) {
-    // регенерация ошибки, чтобы она попала в exception filter внутренних ошибок сервера
+    if (Array.isArray(error) && error.every((item) => item instanceof ValidationError)) {
+      throw new DomainException(DomainExceptionCode.ValidationError, errorFormatter(error));
+    }
+
     throw error instanceof Error ? error : new Error(String(error));
   }
 };

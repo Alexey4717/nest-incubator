@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  NotFoundException,
   Param,
   Post,
   Put,
@@ -15,6 +14,8 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
+
+import { throwIfNotFound } from '@/shared/utils/throw-if-not-found';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { DeletePostCommand } from '@/modules/post/application/commands/delete-post.command';
@@ -76,7 +77,7 @@ export class SaBlogController {
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
     const isBlogUpdated = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
 
-    if (!isBlogUpdated) throw new NotFoundException();
+    throwIfNotFound(isBlogUpdated || null);
   }
 
   @Delete(':id')
@@ -84,7 +85,7 @@ export class SaBlogController {
   @ApiSaDeleteBlog()
   async deleteBlog(@Param() params: { id: string }) {
     const isBlogDeleted = await this.commandBus.execute(new DeleteBlogCommand(params.id));
-    if (!isBlogDeleted) throw new NotFoundException();
+    throwIfNotFound(isBlogDeleted || null);
   }
 
   @Post(':blogId/posts')
@@ -95,9 +96,7 @@ export class SaBlogController {
       new CreatePostInBlogCommand(params.blogId, body),
     );
 
-    if (!createdPostInBlog) throw new NotFoundException();
-
-    return this.postViewMapper.toPostViewModel(createdPostInBlog);
+    return this.postViewMapper.toPostViewModel(throwIfNotFound(createdPostInBlog));
   }
 
   @Put(':blogId/posts/:postId')
@@ -114,7 +113,7 @@ export class SaBlogController {
       new UpdatePostCommand(params.postId, input),
     );
 
-    if (!isPostUpdated) throw new NotFoundException();
+    throwIfNotFound(isPostUpdated || null);
   }
 
   @Delete(':blogId/posts/:postId')
@@ -124,14 +123,16 @@ export class SaBlogController {
     await this.ensurePostInBlog(params.blogId, params.postId);
 
     const isPostDeleted = await this.commandBus.execute(new DeletePostCommand(params.postId));
-    if (!isPostDeleted) throw new NotFoundException();
+    throwIfNotFound(isPostDeleted || null);
   }
 
   private async ensurePostInBlog(blogId: string, postId: string): Promise<void> {
     const blog = await this.queryBus.execute(new GetBlogByIdQuery(blogId));
-    if (!blog) throw new NotFoundException();
+    throwIfNotFound(blog);
 
     const post = await this.postQueryRepository.findPostById(postId);
-    if (!post || post.blogId !== blogId) throw new NotFoundException();
+    if (!post || post.blogId !== blogId) {
+      throwIfNotFound(null);
+    }
   }
 }

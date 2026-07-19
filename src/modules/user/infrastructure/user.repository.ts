@@ -1,6 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
+
+import { DomainExceptionCode } from '@/shared/core/exceptions/domain-exception-code.enum';
+import { DomainException } from '@/shared/core/exceptions/domain.exception';
 
 import { UserModel } from '../models/user.model';
 import { UserEntity } from './user.entity';
@@ -46,10 +49,7 @@ export class UserRepository {
             pgError.detail ?? '',
             pgError.constraint ?? '',
           );
-          throw new BadRequestException({
-            message: errs,
-            error: 'Bad Request',
-          });
+          throw new DomainException(DomainExceptionCode.BadRequest, errs);
         }
       }
       console.log(`usersRepository.createUser error is occurred: ${error}`);
