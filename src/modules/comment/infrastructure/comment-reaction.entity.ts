@@ -18,7 +18,10 @@ export class CommentReactionEntity {
   @Column({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => CommentOrmEntity, (comment) => comment.reactions, { onDelete: 'CASCADE' })
+  @ManyToOne(() => CommentOrmEntity, (comment) => comment.reactions, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'comment_id' })
   comment: CommentOrmEntity;
 }

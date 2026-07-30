@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
 import { LikeStatus } from '@/modules/like/types/like-status';
@@ -24,6 +24,8 @@ export class CommentRepository {
     private readonly commentsRepository: Repository<CommentOrmEntity>,
     @InjectRepository(CommentReactionEntity)
     private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
     private readonly commentQueryRepository: CommentQueryRepository,
     private readonly reactionUpdateService: ReactionUpdateService,
   ) {}
@@ -56,43 +58,47 @@ export class CommentRepository {
     likeStatus,
   }: UpdateCommentLikeStatusArgs): Promise<boolean> {
     try {
-      const foundComment = await this.commentQueryRepository.getCommentById(commentId);
-      if (!foundComment) return false;
+      return await this.dataSource.transaction(async (manager) => {
+        const commentReactionsRepository = manager.getRepository(CommentReactionEntity);
 
-      const plan = this.reactionUpdateService.planReactionUpdate({
-        reactions: foundComment.reactions ?? [],
-        userId,
-        likeStatus,
-      });
+        const foundComment = await this.commentQueryRepository.getCommentById(commentId);
+        if (!foundComment) return false;
 
-      if (plan.action === 'noop') return true;
-
-      if (plan.action === 'push') {
-        const reaction = new CommentReactionEntity();
-        reaction.commentId = commentId;
-        reaction.userId = plan.reaction.userId;
-        reaction.likeStatus = plan.reaction.likeStatus;
-        reaction.createdAt = new Date(plan.reaction.createdAt);
-        await this.commentReactionsRepository.save(reaction);
-        return true;
-      }
-
-      if (plan.action === 'pull') {
-        const result = await this.commentReactionsRepository.delete({
-          commentId,
-          userId: plan.userId,
+        const plan = this.reactionUpdateService.planReactionUpdate({
+          reactions: foundComment.reactions ?? [],
+          userId,
+          likeStatus,
         });
-        return (result.affected ?? 0) === 1;
-      }
 
-      const result = await this.commentReactionsRepository.update(
-        { commentId, userId: plan.userId },
-        {
-          likeStatus: plan.likeStatus,
-          createdAt: new Date(plan.createdAt),
-        },
-      );
-      return (result.affected ?? 0) === 1;
+        if (plan.action === 'noop') return true;
+
+        if (plan.action === 'push') {
+          const reaction = new CommentReactionEntity();
+          reaction.commentId = commentId;
+          reaction.userId = plan.reaction.userId;
+          reaction.likeStatus = plan.reaction.likeStatus;
+          reaction.createdAt = new Date(plan.reaction.createdAt);
+          await commentReactionsRepository.save(reaction);
+          return true;
+        }
+
+        if (plan.action === 'pull') {
+          const result = await commentReactionsRepository.delete({
+            commentId,
+            userId: plan.userId,
+          });
+          return (result.affected ?? 0) === 1;
+        }
+
+        const result = await commentReactionsRepository.update(
+          { commentId, userId: plan.userId },
+          {
+            likeStatus: plan.likeStatus,
+            createdAt: new Date(plan.createdAt),
+          },
+        );
+        return (result.affected ?? 0) === 1;
+      });
     } catch (error) {
       console.log(
         'commentsRepository.updateCommentLikeStatusByCommentId error is occurred: ',

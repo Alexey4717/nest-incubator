@@ -1,10 +1,9 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+
+import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 @Entity('blogs')
-export class BlogOrmEntity {
-  @PrimaryColumn('uuid')
-  id: string;
-
+export class BlogOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar' })
   name: string;
 
@@ -16,7 +15,4 @@ export class BlogOrmEntity {
 
   @Column({ name: 'is_membership', type: 'boolean', default: false })
   isMembership: boolean;
-
-  @Column({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
 }

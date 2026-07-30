@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, Not, Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, LessThan, Not, Repository } from 'typeorm';
 
 import { SessionEntity } from '../domain/entities/session.entity';
 import { SessionPersistenceMapper } from '../domain/mappers/session.persistence-mapper';
@@ -11,6 +11,8 @@ export class SessionRepository {
   constructor(
     @InjectRepository(SessionOrmEntity)
     private readonly sessionsRepository: Repository<SessionOrmEntity>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async createNewSession(newSession: SessionEntity): Promise<SessionEntity> {
@@ -36,14 +38,18 @@ export class SessionRepository {
     session: SessionEntity,
   ): Promise<boolean> {
     const data = session.toDb();
-    const result = await this.sessionsRepository.update(
-      { deviceId, userId, currentRefreshTokenJti: expectedJti },
-      {
-        currentRefreshTokenJti: data.currentRefreshTokenJti,
-        lastActiveDate: data.lastActiveDate,
-      },
-    );
-    return (result.affected ?? 0) === 1;
+
+    return this.dataSource.transaction(async (manager) => {
+      const sessionsRepository = manager.getRepository(SessionOrmEntity);
+      const result = await sessionsRepository.update(
+        { deviceId, userId, currentRefreshTokenJti: expectedJti },
+        {
+          currentRefreshTokenJti: data.currentRefreshTokenJti,
+          lastActiveDate: data.lastActiveDate,
+        },
+      );
+      return (result.affected ?? 0) === 1;
+    });
   }
 
   async deleteOneSessionByUserAndDeviceId(userId: string, deviceId: string): Promise<boolean> {

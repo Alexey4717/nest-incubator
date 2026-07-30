@@ -1,12 +1,11 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
+
+import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 import { PostReactionEntity } from './post-reaction.entity';
 
 @Entity('posts')
-export class PostOrmEntity {
-  @PrimaryColumn('uuid')
-  id: string;
-
+export class PostOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar' })
   title: string;
 
@@ -21,9 +20,6 @@ export class PostOrmEntity {
 
   @Column({ name: 'blog_name', type: 'varchar' })
   blogName: string;
-
-  @Column({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
 
   @OneToMany(() => PostReactionEntity, (reaction) => reaction.post)
   reactions?: PostReactionEntity[];

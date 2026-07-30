@@ -1,10 +1,9 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity } from 'typeorm';
+
+import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 @Entity('users')
-export class UserOrmEntity {
-  @PrimaryColumn('uuid')
-  id: string;
-
+export class UserOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar', unique: true })
   login: string;
 
@@ -13,9 +12,6 @@ export class UserOrmEntity {
 
   @Column({ name: 'password_hash', type: 'varchar' })
   passwordHash: string;
-
-  @Column({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
 
   @Column({ name: 'confirmation_code', type: 'varchar', unique: true, nullable: true })
   confirmationCode: string | null;

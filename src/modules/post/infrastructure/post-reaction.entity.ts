@@ -21,7 +21,10 @@ export class PostReactionEntity {
   @Column({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => PostOrmEntity, (post) => post.reactions, { onDelete: 'CASCADE' })
+  @ManyToOne(() => PostOrmEntity, (post) => post.reactions, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'post_id' })
   post: PostOrmEntity;
 }

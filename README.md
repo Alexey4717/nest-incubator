@@ -487,7 +487,7 @@ modules/database/
 └── seeds/                   # seed для локальной разработки
 ```
 
-Слой данных в feature-модулях: **entity** (TypeORM) → **mapper** → **domain model** → **repository**.
+Слой данных в feature-модулях: **OrmEntity** (TypeORM) ↔ **Domain Entity** через **PersistenceMapper**; **Model** — для read side (QueryRepository).
 
 ### Регистрация entities через `TypeOrmModule.forFeature`
 
@@ -500,6 +500,21 @@ modules/database/
 | `BlogOrmEntity`                             | `BlogModule`    |
 | `PostOrmEntity`, `PostReactionEntity`       | `PostModule`    |
 | `CommentOrmEntity`, `CommentReactionEntity` | `CommentModule` |
+
+### TypeORM: соответствие лекциям 04–07
+
+| Тема лекции                          | Решение в проекте                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------- |
+| Разделение OrmEntity и Domain Entity | `*.orm-entity.ts` + `PersistenceMapper`; domain без TypeORM-декораторов           |
+| Base entity (`id`, `createdAt`)      | `BaseOrmEntity` в `database/`; наследуют user/blog/post/comment                   |
+| Явные типы колонок                   | `type: 'varchar'`, `'uuid'`, `'timestamptz'`, `'boolean'` в `@Column`             |
+| Обязательный `@ManyToOne`            | `nullable: false` на reaction → post/comment (внутри модуля)                      |
+| FK между модулями                    | Скаляр `blog_id` / `post_id` / `user_id` + миграция; без `@ManyToOne` на родителе |
+| ON DELETE                            | `posts.blog_id` → RESTRICT; `comments.post_id`, `sessions.user_id` → CASCADE      |
+| Repository: create / update          | `.save()` для INSERT; `.update()` для command UPDATE (не change detection)        |
+| Транзакции                           | `dataSource.transaction()` для multi-step (reactions, rotate refresh token)       |
+| Reactions                            | Junction entity + `ReactionUpdateService`; без cascade collections                |
+| Регистрация entities                 | `TypeOrmModule.forFeature` в feature-модулях; `BaseOrmEntity` без `@Entity`       |
 
 В режиме разработки (`NODE_ENV=development`, например `yarn start:dev`) TypeORM логирует SQL-запросы (`logging: CoreConfig.isDevelopment`).
 
