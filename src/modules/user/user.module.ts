@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CoreModule } from '@/core/core.module';
 
@@ -23,6 +24,7 @@ import { FindUserByIdUseCase } from './application/use-cases/find-user-by-id.use
 import { GetUsersUseCase } from './application/use-cases/get-users.use-case';
 import { RegisterUserUseCase } from './application/use-cases/register-user.use-case';
 import { UserQueryRepository } from './infrastructure/user-query.repository';
+import { UserOrmEntity } from './infrastructure/user.orm-entity';
 import { UserRepository } from './infrastructure/user.repository';
 import { UserEmailExistsValidator } from './validators/user-email-exists.validator';
 import { UserLoginExistsValidator } from './validators/user-login-exists.validator';
@@ -49,7 +51,12 @@ const userCommandHandlers = [
 const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredentialsHandler];
 
 @Module({
-  imports: [CqrsModule, CoreModule, forwardRef(() => AuthModule)],
+  imports: [
+    CqrsModule,
+    CoreModule,
+    TypeOrmModule.forFeature([UserOrmEntity]),
+    forwardRef(() => AuthModule),
+  ],
   controllers: [UserController],
   providers: [
     UserRepository,

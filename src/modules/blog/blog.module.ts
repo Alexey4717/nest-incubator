@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 
@@ -20,6 +21,7 @@ import { GetBlogPostsUseCase } from './application/use-cases/get-blog-posts.use-
 import { GetBlogsUseCase } from './application/use-cases/get-blogs.use-case';
 import { UpdateBlogUseCase } from './application/use-cases/update-blog.use-case';
 import { BlogQueryRepository } from './infrastructure/blog-query.repository';
+import { BlogOrmEntity } from './infrastructure/blog.orm-entity';
 import { BlogRepository } from './infrastructure/blog.repository';
 
 const blogUseCases = [
@@ -43,7 +45,7 @@ const blogQueryHandlers = [GetBlogsHandler, GetBlogByIdHandler, GetBlogPostsHand
 
 @Global()
 @Module({
-  imports: [CqrsModule, AuthModule],
+  imports: [CqrsModule, AuthModule, TypeOrmModule.forFeature([BlogOrmEntity])],
   controllers: [BlogController, SaBlogController],
   providers: [
     BlogRepository,

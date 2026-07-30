@@ -481,13 +481,27 @@ Credentials для prod храните в `src/env/.env.production.local` (ло�
 modules/database/
 ├── database.config.ts       # DatabaseConfig (POSTGRES_* из env)
 ├── typeorm.config.ts        # TypeOrmModule.forRootAsync
+├── typeorm-entities.ts      # Список entities только для CLI (data-source.ts, migration:generate)
 ├── data-source.ts           # DataSource для CLI TypeORM
 ├── migrations/              # SQL-миграции
-├── seeds/                   # seed для локальной разработки
-└── typeorm-entities.module.ts
+└── seeds/                   # seed для локальной разработки
 ```
 
 Слой данных в feature-модулях: **entity** (TypeORM) → **mapper** → **domain model** → **repository**.
+
+### Регистрация entities через `TypeOrmModule.forFeature`
+
+Каждый feature-модуль регистрирует свои TypeORM-сущности локально. Глобальный `TypeOrmModule.forRootAsync` использует `autoLoadEntities: true` и подхватывает все entities из `forFeature`.
+
+| Entity                                      | Module          |
+| ------------------------------------------- | --------------- |
+| `UserOrmEntity`                             | `UserModule`    |
+| `SessionOrmEntity`                          | `SessionModule` |
+| `BlogOrmEntity`                             | `BlogModule`    |
+| `PostOrmEntity`, `PostReactionEntity`       | `PostModule`    |
+| `CommentOrmEntity`, `CommentReactionEntity` | `CommentModule` |
+
+В режиме разработки (`NODE_ENV=development`, например `yarn start:dev`) TypeORM логирует SQL-запросы (`logging: CoreConfig.isDevelopment`).
 
 ## Запуск
 
@@ -584,10 +598,10 @@ this.authConfig.ACCESS_TOKEN_SECRET
 
 **Factory-классы:** некоторые config-классы не читают env напрямую, а потребляют другой `*Config`:
 
-| Factory-класс   | Использует       | Назначение                   |
-| --------------- | ---------------- | ---------------------------- |
-| `TypeOrmConfig` | `DatabaseConfig` | `TypeOrmModule.forRootAsync` |
-| `MailerConfig`  | `EmailConfig`    | `MailerModule.forRootAsync`  |
+| Factory-класс   | Использует                     | Назначение                                                         |
+| --------------- | ------------------------------ | ------------------------------------------------------------------ |
+| `TypeOrmConfig` | `DatabaseConfig`, `CoreConfig` | `TypeOrmModule.forRootAsync` (`autoLoadEntities`, `logging` в dev) |
+| `MailerConfig`  | `EmailConfig`                  | `MailerModule.forRootAsync`                                        |
 
 ### Создание нового *Config
 

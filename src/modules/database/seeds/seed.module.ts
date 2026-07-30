@@ -17,7 +17,6 @@ import { TestingModule } from '@/modules/testing/testing.module';
 import { UserModule } from '@/modules/user/user.module';
 
 import { DatabaseModule } from '../database.module';
-import { TypeOrmEntitiesModule } from '../typeorm-entities.module';
 import { TypeOrmConfig } from '../typeorm.config';
 import { SeedService } from './seed.service';
 
@@ -27,7 +26,6 @@ import { SeedService } from './seed.service';
     CoreModule,
     DatabaseModule,
     TypeOrmModule.forRootAsync({ imports: [DatabaseModule], useClass: TypeOrmConfig }),
-    TypeOrmEntitiesModule,
     ThrottlerModule.forRoot({ ttl: 10, limit: 5 }),
     CqrsModule,
     SessionModule,

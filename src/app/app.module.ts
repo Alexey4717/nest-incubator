@@ -16,7 +16,6 @@ import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
 import { CommentModule } from '@/modules/comment/comment.module';
 import { DatabaseModule } from '@/modules/database/database.module';
-import { TypeOrmEntitiesModule } from '@/modules/database/typeorm-entities.module';
 import { TypeOrmConfig } from '@/modules/database/typeorm.config';
 import { EmailModule } from '@/modules/email/email.module';
 import { MailerConfig } from '@/modules/email/mailer.config';
@@ -49,7 +48,6 @@ import { SWAGGER_PATH } from './setup/swagger.setup';
     }),
     DatabaseModule,
     TypeOrmModule.forRootAsync({ imports: [DatabaseModule], useClass: TypeOrmConfig }),
-    TypeOrmEntitiesModule,
     UserModule,
     SessionModule,
     CommentModule,

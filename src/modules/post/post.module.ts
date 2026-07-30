@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 import { LikeModule } from '@/modules/like/like.module';
@@ -21,6 +22,8 @@ import { GetPostsUseCase } from './application/use-cases/get-posts.use-case';
 import { UpdatePostLikeStatusUseCase } from './application/use-cases/update-post-like-status.use-case';
 import { UpdatePostUseCase } from './application/use-cases/update-post.use-case';
 import { PostQueryRepository } from './infrastructure/post-query.repository';
+import { PostReactionEntity } from './infrastructure/post-reaction.entity';
+import { PostOrmEntity } from './infrastructure/post.orm-entity';
 import { PostRepository } from './infrastructure/post.repository';
 import { PostViewMapper } from './post.view-mapper';
 
@@ -45,7 +48,13 @@ const postQueryHandlers = [GetPostsHandler, GetPostByIdHandler, GetPostCommentsH
 
 @Global()
 @Module({
-  imports: [CqrsModule, AuthModule, LikeModule, UserModule],
+  imports: [
+    CqrsModule,
+    AuthModule,
+    LikeModule,
+    UserModule,
+    TypeOrmModule.forFeature([PostOrmEntity, PostReactionEntity]),
+  ],
   controllers: [PostController],
   providers: [
     PostRepository,

@@ -1,12 +1,10 @@
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { Extension } from '@/core/exceptions/extension.type';
+import { DomainExceptionCode } from '../exceptions/domain-exception-code.enum';
+import { Extension } from '../exceptions/extension.type';
 
 export enum ResultStatus {
   Success = 'Success',
   Failure = 'Failure',
 }
-
-export type ExtensionType = Extension;
 
 export type Result<T> =
   | {
@@ -16,5 +14,5 @@ export type Result<T> =
   | {
       status: ResultStatus.Failure;
       code: DomainExceptionCode;
-      extensions: ExtensionType[];
+      extensions: Extension[];
     };

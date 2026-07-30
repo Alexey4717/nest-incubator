@@ -2,13 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { join } from 'path';
 
+import { CoreConfig } from '@/core/core.config';
+
 import { DatabaseConfig } from './database.config';
 import { buildPostgresConnectionOptions } from './postgres-options.utility';
-import { TYPEORM_ENTITIES } from './typeorm-entities';
 
 @Injectable()
 export class TypeOrmConfig implements TypeOrmOptionsFactory {
-  constructor(private readonly databaseConfig: DatabaseConfig) {}
+  constructor(
+    private readonly databaseConfig: DatabaseConfig,
+    private readonly coreConfig: CoreConfig,
+  ) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
     const poolMax = process.env.NODE_ENV === 'production' ? 1 : 10;
@@ -23,7 +27,8 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
         ssl: this.databaseConfig.POSTGRES_SSL,
         poolMax,
       }),
-      entities: TYPEORM_ENTITIES,
+      autoLoadEntities: true,
+      logging: this.coreConfig.isDevelopment,
       migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
       synchronize: false,
       migrationsRun: false,

@@ -5,6 +5,7 @@ import { constants } from 'http2';
 import { CoreConfig } from '@/core/core.config';
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
+import { normalizeDomainFieldError } from '@/core/utils/normalize-http-exception-errors';
 
 function getHttpStatus(code: DomainExceptionCode): number {
   switch (code) {
@@ -44,10 +45,9 @@ export class DomainHttpExceptionsFilter implements ExceptionFilter {
 
     if (isBadRequestCode(exception.code)) {
       response.status(status).json({
-        errorsMessages: exception.extensions.map(({ message, field }) => ({
-          message,
-          field: field ?? 'email',
-        })),
+        errorsMessages: exception.extensions.map(({ message, field }) =>
+          normalizeDomainFieldError(message, field),
+        ),
       });
       return;
     }

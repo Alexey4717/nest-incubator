@@ -6,6 +6,7 @@ import { PostOrmEntity } from '@/modules/post/infrastructure/post.orm-entity';
 import { SessionOrmEntity } from '@/modules/session/infrastructure/session.orm-entity';
 import { UserOrmEntity } from '@/modules/user/infrastructure/user.orm-entity';
 
+/** Список сущностей только для TypeORM CLI (data-source.ts, migration:generate). В runtime используйте TypeOrmModule.forFeature в feature-модулях + autoLoadEntities. */
 export const TYPEORM_ENTITIES = [
   UserOrmEntity,
   SessionOrmEntity,
