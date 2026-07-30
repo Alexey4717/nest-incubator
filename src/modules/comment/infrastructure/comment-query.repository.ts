@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 
 import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
-import { Paginator } from '@/core/types/common';
-import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
+import { Paginator, SortDirections } from '@/core/types/common';
 
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';
 
@@ -13,8 +12,7 @@ import {
   SortPostCommentsBy,
 } from '../dto/get-post-comments-query-params.dto';
 import { CommentModel } from '../models/comment.model';
-import { CommentReactionEntity } from './comment-reaction.entity';
-import { toDomain } from './comment.mapper';
+import { CommentRawRow, fromRaw } from './comment.mapper';
 import { CommentOrmEntity } from './comment.orm-entity';
 
 const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentOrmEntity> = {
@@ -22,13 +20,31 @@ const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentOrmEntity> = {
   createdAt: 'createdAt',
 };
 
+const COMMENT_RAW_SELECT = [
+  'comment.id as "id"',
+  'comment.postId as "postId"',
+  'comment.content as "content"',
+  'comment.userId as "userId"',
+  'comment.userLogin as "userLogin"',
+  'comment.createdAt as "createdAt"',
+];
+
+const COMMENT_REACTIONS_AGG = `COALESCE(
+  jsonb_agg(
+    json_build_object(
+      'userId', r.user_id,
+      'likeStatus', r.like_status,
+      'createdAt', r.created_at
+    )
+  ) FILTER (WHERE r.comment_id IS NOT NULL),
+  '[]'
+)`;
+
 @Injectable()
 export class CommentQueryRepository {
   constructor(
     @InjectRepository(CommentOrmEntity)
     private readonly commentsRepository: Repository<CommentOrmEntity>,
-    @InjectRepository(CommentReactionEntity)
-    private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
     private readonly postQueryRepository: PostQueryRepository,
   ) {}
 
@@ -41,22 +57,23 @@ export class CommentQueryRepository {
       const foundPost = await this.postQueryRepository.findPostById(postId);
       if (!foundPost) return null;
 
-      const qb = this.commentsRepository.createQueryBuilder('comment');
-      qb.andWhere('comment.postId = :postId', { postId });
-
+      const skip = query.calculateSkip();
       const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-      applySort(qb, 'comment', sortColumn, sortDirection);
-      applyPagination(qb, query.calculateSkip(), pageSize);
 
-      const [entities, totalCount] = await qb.getManyAndCount();
+      const totalCount = await this.createCommentsQueryBuilder(postId).getCount();
 
-      const commentIds = entities.map((entity) => entity.id);
-      const reactionsByCommentId = await this.loadReactionsByCommentIds(commentIds);
+      const rawRows = await this.createCommentsQueryBuilder(postId)
+        .leftJoin('comment.reactions', 'r')
+        .select(COMMENT_RAW_SELECT)
+        .addSelect(COMMENT_REACTIONS_AGG, 'reactions')
+        .groupBy('comment.id')
+        .orderBy(`comment.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC')
+        .offset(skip)
+        .limit(pageSize)
+        .getRawMany<CommentRawRow>();
 
       return PaginatedViewDto.mapToView({
-        items: entities.map((entity) =>
-          toDomain(entity, reactionsByCommentId.get(entity.id) ?? []),
-        ),
+        items: rawRows.map(fromRaw),
         page: pageNumber,
         size: pageSize,
         totalCount,
@@ -69,36 +86,25 @@ export class CommentQueryRepository {
 
   async getCommentById(id: string): Promise<CommentModel | null> {
     try {
-      const entity = await this.commentsRepository.findOne({ where: { id } });
-      if (!entity) return null;
+      const raw = await this.commentsRepository
+        .createQueryBuilder('comment')
+        .leftJoin('comment.reactions', 'r')
+        .select(COMMENT_RAW_SELECT)
+        .addSelect(COMMENT_REACTIONS_AGG, 'reactions')
+        .where('comment.id = :id', { id })
+        .groupBy('comment.id')
+        .getRawOne<CommentRawRow>();
 
-      const reactions = await this.commentReactionsRepository.find({ where: { commentId: id } });
-      return toDomain(entity, reactions);
+      return raw ? fromRaw(raw) : null;
     } catch (error) {
       console.log(`commentsQueryRepository.getCommentById error is occurred: ${error}`);
       return null;
     }
   }
 
-  private async loadReactionsByCommentIds(
-    commentIds: string[],
-  ): Promise<Map<string, CommentReactionEntity[]>> {
-    const reactionsByCommentId = new Map<string, CommentReactionEntity[]>();
-
-    if (commentIds.length === 0) {
-      return reactionsByCommentId;
-    }
-
-    const reactions = await this.commentReactionsRepository.find({
-      where: { commentId: In(commentIds) },
-    });
-
-    for (const reaction of reactions) {
-      const existing = reactionsByCommentId.get(reaction.commentId) ?? [];
-      existing.push(reaction);
-      reactionsByCommentId.set(reaction.commentId, existing);
-    }
-
-    return reactionsByCommentId;
+  private createCommentsQueryBuilder(postId: string): SelectQueryBuilder<CommentOrmEntity> {
+    return this.commentsRepository
+      .createQueryBuilder('comment')
+      .andWhere('comment.postId = :postId', { postId });
   }
 }

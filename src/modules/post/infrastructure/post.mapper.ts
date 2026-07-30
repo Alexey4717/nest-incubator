@@ -37,6 +37,47 @@ export function toOrm(model: PostModel): PostOrmEntity {
   return entity;
 }
 
+type PostReactionRaw = {
+  userId: string;
+  userLogin: string;
+  likeStatus: PostReactionModel['likeStatus'];
+  createdAt: Date | string;
+};
+
+export type PostRawRow = {
+  id: string;
+  title: string;
+  shortDescription: string;
+  content: string;
+  blogId: string;
+  blogName: string;
+  createdAt: Date;
+  reactions: PostReactionRaw[];
+};
+
+const toIsoString = (value: Date | string): string =>
+  value instanceof Date ? value.toISOString() : String(value);
+
+export function fromRaw(row: PostRawRow): PostModel {
+  const reactions = Array.isArray(row.reactions) ? row.reactions : [];
+
+  return {
+    id: row.id,
+    title: row.title,
+    shortDescription: row.shortDescription,
+    content: row.content,
+    blogId: row.blogId,
+    blogName: row.blogName,
+    createdAt: toIsoString(row.createdAt),
+    reactions: reactions.map((reaction) => ({
+      userId: reaction.userId,
+      userLogin: reaction.userLogin,
+      likeStatus: reaction.likeStatus,
+      createdAt: toIsoString(reaction.createdAt),
+    })),
+  };
+}
+
 export function fromEntity(entity: PostEntity, reactions: PostReactionModel[] = []): PostModel {
   const data = entity.toDb();
   return {

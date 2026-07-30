@@ -3,12 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
 
 import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
-import { Paginator } from '@/core/types/common';
-import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
+import { Paginator, SortDirections } from '@/core/types/common';
 
 import { GetUsersQueryParamsDto, SortUsersBy } from '../dto/get-users-query-params.dto';
 import { UserModel } from '../models/user.model';
-import { toDomain } from './user.mapper';
+import { fromRaw, toDomain, UserRawRow } from './user.mapper';
 import { UserOrmEntity } from './user.orm-entity';
 
 const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserOrmEntity> = {
@@ -16,6 +15,19 @@ const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserOrmEntity> = {
   login: 'login',
   email: 'email',
 };
+
+const USER_RAW_SELECT = [
+  'user.id as "id"',
+  'user.login as "login"',
+  'user.email as "email"',
+  'user.passwordHash as "passwordHash"',
+  'user.createdAt as "createdAt"',
+  'user.confirmationCode as "confirmationCode"',
+  'user.confirmationExpiration as "confirmationExpiration"',
+  'user.isConfirmed as "isConfirmed"',
+  'user.recoveryCode as "recoveryCode"',
+  'user.recoveryExpiration as "recoveryExpiration"',
+];
 
 @Injectable()
 export class UserQueryRepository {
@@ -26,9 +38,34 @@ export class UserQueryRepository {
 
   async getUsers(query: GetUsersQueryParamsDto): Promise<Paginator<UserModel[]>> {
     const { searchLoginTerm, searchEmailTerm, sortBy, sortDirection, pageNumber, pageSize } = query;
+    const skip = query.calculateSkip();
+    const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
 
-    const qb = this.usersRepository.createQueryBuilder('user');
+    const filterQb = this.usersRepository.createQueryBuilder('user');
+    this.applyUserSearchFilters(filterQb, searchLoginTerm, searchEmailTerm);
 
+    const totalCount = await filterQb.clone().getCount();
+
+    const rawRows = await filterQb
+      .select(USER_RAW_SELECT)
+      .orderBy(`user.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC')
+      .offset(skip)
+      .limit(pageSize)
+      .getRawMany<UserRawRow>();
+
+    return PaginatedViewDto.mapToView({
+      items: rawRows.map(fromRaw),
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
+  }
+
+  private applyUserSearchFilters(
+    qb: ReturnType<Repository<UserOrmEntity>['createQueryBuilder']>,
+    searchLoginTerm?: string,
+    searchEmailTerm?: string,
+  ): void {
     if (searchLoginTerm && !searchEmailTerm) {
       qb.andWhere('user.login ILIKE :loginTerm', { loginTerm: `%${searchLoginTerm}%` });
     } else if (searchEmailTerm && !searchLoginTerm) {
@@ -42,19 +79,6 @@ export class UserQueryRepository {
         }),
       );
     }
-
-    const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
-    applySort(qb, 'user', sortColumn, sortDirection);
-    applyPagination(qb, query.calculateSkip(), pageSize);
-
-    const [entities, totalCount] = await qb.getManyAndCount();
-
-    return PaginatedViewDto.mapToView({
-      items: entities.map(toDomain),
-      page: pageNumber,
-      size: pageSize,
-      totalCount,
-    });
   }
 
   async findUserById(id: string): Promise<UserModel | null> {

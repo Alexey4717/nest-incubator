@@ -516,6 +516,21 @@ modules/database/
 | Reactions                            | Junction entity + `ReactionUpdateService`; без cascade collections                |
 | Регистрация entities                 | `TypeOrmModule.forFeature` в feature-модулях; `BaseOrmEntity` без `@Entity`       |
 
+### QueryBuilder
+
+В **command-side** репозиториях (`*Repository`) CUD-операции выполняются через **Repository API** (`.save()`, `.update()`, `.delete()`) и `PersistenceMapper` — см. правило `typeorm-persistence`. Это осознанное решение: command path не смешивается с QueryBuilder CUD.
+
+В **query-side** репозиториях (`*QueryRepository`) используются продвинутые паттерны QueryBuilder:
+
+| Паттерн                                    | Где в проекте                                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `jsonb_agg` + `getRawMany`                 | `PostQueryRepository`, `CommentQueryRepository` — reactions в одном SQL       |
+| `getRawMany` + явные alias (`"camelCase"`) | `UserQueryRepository.getUsers`                                                |
+| `offset` / `limit` (raw queries)           | query-репозитории post/comment/user                                           |
+| `getCount()` до `groupBy` / pagination     | списки post/comment/user                                                      |
+| `leftJoinAndSelect` + `getManyAndCount`    | `PostQueryRepository.getPaginatedPostsViaJoin` (образец §5.1, не prod path)   |
+| QB `insert` / `update` / `delete`          | `TestingRepository.demo*ViaQueryBuilder` — только для обучения, не production |
+
 В режиме разработки (`NODE_ENV=development`, например `yarn start:dev`) TypeORM логирует SQL-запросы (`logging: CoreConfig.isDevelopment`).
 
 ## Запуск
