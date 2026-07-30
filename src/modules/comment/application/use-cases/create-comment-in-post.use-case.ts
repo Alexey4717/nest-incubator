@@ -6,7 +6,7 @@ import { Result } from '@/core/result/result.factory';
 import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
-import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';
+import { PostRepository } from '@/modules/post/infrastructure/post.repository';
 
 import { CommentEntity } from '../../domain/entities/comment.entity';
 import { fromEntity } from '../../infrastructure/comment.mapper';
@@ -27,14 +27,14 @@ export class CreateCommentInPostUseCase implements IUseCase<
 > {
   constructor(
     private readonly commentRepository: CommentRepository,
-    @Inject(forwardRef(() => PostQueryRepository))
-    private readonly postQueryRepository: PostQueryRepository,
+    @Inject(forwardRef(() => PostRepository))
+    private readonly postRepository: PostRepository,
   ) {}
 
   async execute(input: CreateCommentInPostInput): Promise<ResultType<CommentModel>> {
     const { postId, content, userId, userLogin } = input;
 
-    const foundPost = await this.postQueryRepository.findPostById(postId);
+    const foundPost = await this.postRepository.findById(postId);
     if (!foundPost) {
       return Result.fail(DomainExceptionCode.NotFound);
     }

@@ -4,7 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 
 import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
 import { LikeStatus } from '@/modules/like/types/like-status';
-import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
+import { UserOrmEntity } from '@/modules/user/infrastructure/user.orm-entity';
 
 import { PostEntity } from '../domain/entities/post.entity';
 import { PostPersistenceMapper } from '../domain/mappers/post.persistence-mapper';
@@ -28,7 +28,6 @@ export class PostRepository {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly reactionUpdateService: ReactionUpdateService,
-    private readonly userQueryRepository: UserQueryRepository,
   ) {}
 
   async createPost(newPost: PostEntity): Promise<PostEntity | null> {
@@ -88,7 +87,12 @@ export class PostRepository {
 
         let userLogin: string | null = null;
         if (plan.action === 'push' || plan.action === 'update') {
-          userLogin = await this.userQueryRepository.findUserLoginById(userId);
+          const usersRepository = manager.getRepository(UserOrmEntity);
+          const userEntity = await usersRepository.findOne({
+            where: { id: userId },
+            select: { login: true },
+          });
+          userLogin = userEntity?.login ?? null;
           if (!userLogin) return false;
 
           plan = this.reactionUpdateService.planReactionUpdate({

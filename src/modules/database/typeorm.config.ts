@@ -15,7 +15,8 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
   ) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
-    const poolMax = process.env.NODE_ENV === 'production' ? 1 : 10;
+    const parsedPoolMax = Number(process.env.POSTGRES_POOL_MAX);
+    const poolMax = Number.isFinite(parsedPoolMax) && parsedPoolMax > 0 ? parsedPoolMax : 10;
 
     return {
       ...buildPostgresConnectionOptions({

@@ -54,8 +54,8 @@ export class CommentQueryRepository {
   ): Promise<Paginator<CommentModel[]> | null> {
     try {
       const { sortBy, sortDirection, pageNumber, pageSize } = query;
-      const foundPost = await this.postQueryRepository.findPostById(postId);
-      if (!foundPost) return null;
+      const postExists = await this.postQueryRepository.postExists(postId);
+      if (!postExists) return null;
 
       const skip = query.calculateSkip();
       const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';

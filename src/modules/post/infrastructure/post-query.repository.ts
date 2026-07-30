@@ -50,6 +50,10 @@ export class PostQueryRepository {
     return this.getPaginatedPosts(query);
   }
 
+  async postExists(id: string): Promise<boolean> {
+    return this.postsRepository.exists({ where: { id } });
+  }
+
   async findPostById(id: string): Promise<PostModel | null> {
     const raw = await this.createPostsQueryBuilder()
       .leftJoin('post.reactions', 'r')

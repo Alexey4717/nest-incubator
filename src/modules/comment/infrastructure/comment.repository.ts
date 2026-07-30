@@ -7,7 +7,7 @@ import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { CommentEntity } from '../domain/entities/comment.entity';
 import { CommentPersistenceMapper } from '../domain/mappers/comment.persistence-mapper';
-import { CommentQueryRepository } from './comment-query.repository';
+import { reactionToDomain } from './comment.mapper';
 import { CommentReactionEntity } from './comment-reaction.entity';
 import { CommentOrmEntity } from './comment.orm-entity';
 
@@ -26,7 +26,6 @@ export class CommentRepository {
     private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    private readonly commentQueryRepository: CommentQueryRepository,
     private readonly reactionUpdateService: ReactionUpdateService,
   ) {}
 
@@ -59,13 +58,19 @@ export class CommentRepository {
   }: UpdateCommentLikeStatusArgs): Promise<boolean> {
     try {
       return await this.dataSource.transaction(async (manager) => {
+        const commentsRepository = manager.getRepository(CommentOrmEntity);
         const commentReactionsRepository = manager.getRepository(CommentReactionEntity);
 
-        const foundComment = await this.commentQueryRepository.getCommentById(commentId);
-        if (!foundComment) return false;
+        const commentExists = await commentsRepository.exists({ where: { id: commentId } });
+        if (!commentExists) return false;
+
+        const existingReactionEntity = await commentReactionsRepository.findOne({
+          where: { commentId, userId },
+        });
+        const reactions = existingReactionEntity ? [reactionToDomain(existingReactionEntity)] : [];
 
         const plan = this.reactionUpdateService.planReactionUpdate({
-          reactions: foundComment.reactions ?? [],
+          reactions,
           userId,
           likeStatus,
         });
