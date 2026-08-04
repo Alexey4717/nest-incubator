@@ -1,8 +1,13 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 
 import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 @Entity('users')
+@Index('IDX_users_created_at', ['createdAt'])
+@Index('UQ_users_recovery_code_partial', ['recoveryCode'], {
+  unique: true,
+  where: '"recovery_code" IS NOT NULL',
+})
 export class UserOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar', unique: true })
   login: string;

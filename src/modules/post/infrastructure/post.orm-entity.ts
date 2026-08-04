@@ -1,10 +1,11 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 import { PostReactionEntity } from './post-reaction.entity';
 
 @Entity('posts')
+@Index('IDX_posts_blog_id_created_at', ['blogId', 'createdAt'])
 export class PostOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar' })
   title: string;

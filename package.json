@@ -35,7 +35,12 @@
     "db:migrate:test": "cross-env NODE_ENV=testing yarn migration:run",
     "db:migrate:prod": "cross-env NODE_ENV=production yarn migration:run",
     "db:setup": "yarn db:up && yarn db:migrate && yarn db:migrate:test",
-    "db:seed": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/seed.ts"
+    "db:seed": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/seed.ts",
+    "db:seed:bulk": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/seed-bulk.ts",
+    "db:seed:bulk:clean": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/seed-bulk.ts -- --clean",
+    "db:explain": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-explain.ts",
+    "db:benchmark": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-benchmark.ts",
+    "db:benchmark:quick": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-benchmark.ts -- --quick"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.8.1",

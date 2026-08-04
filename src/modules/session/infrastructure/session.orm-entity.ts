@@ -1,6 +1,8 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
 
 @Entity('sessions')
+@Index('IDX_sessions_user_id', ['userId'])
+@Index('IDX_sessions_last_active_date', ['lastActiveDate'])
 export class SessionOrmEntity {
   @PrimaryColumn({ name: 'device_id', type: 'varchar' })
   deviceId: string;

@@ -1,10 +1,11 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 import { CommentReactionEntity } from './comment-reaction.entity';
 
 @Entity('comments')
+@Index('IDX_comments_post_id_created_at', ['postId', 'createdAt'])
 export class CommentOrmEntity extends BaseOrmEntity {
   @Column({ name: 'post_id', type: 'uuid' })
   postId: string;

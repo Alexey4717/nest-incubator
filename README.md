@@ -579,6 +579,11 @@ yarn build && yarn start:prod
 | `db:migrate:test`           | Миграции для test-БД                                                                                 |
 | `db:setup`                  | `db:up` + `db:migrate` + `db:migrate:test`                                                           |
 | `db:seed`                   | Seed dev-БД дефолтными данными                                                                       |
+| `db:seed:bulk`              | Bulk-данные для бенчмарка индексов (`--scale=`, `--scenario=`)                                       |
+| `db:seed:bulk:clean`        | Удалить benchmark-данные (`bench_user_*`, `bench_device_*`)                                          |
+| `db:explain`                | EXPLAIN ANALYZE одного SQL из `scripts/sql/explain/` (флаг `--no-index`)                             |
+| `db:benchmark`              | Полный бенчмарк индексов (100k/200k/400k), exit 1 при провале assertions                             |
+| `db:benchmark:quick`        | Быстрый бенчмарк (2k/4k/8k) — проверка после добавления индекса                                      |
 
 ## Конфигурация и settings
 
@@ -887,6 +892,78 @@ Refresh token:
 Модуль `testing` подключается через **`INCLUDE_TESTING_MODULE=true`** (см. `CoreConfig.includeTestingModule` в [`app.module.ts`](src/app/app.module.ts)). На Vercel и в e2e переменная обычно включена; в production без checker — `false`.
 
 `DELETE /testing/all-data` доступен только когда модуль подключён. Эндпoинт очищает данные в PostgreSQL для e2e и **сбрасывает in-memory storage throttler**, чтобы лимиты не мешали последующим тестам. Для локального e2e также используйте `NODE_ENV=testing`.
+
+## Индексы и EXPLAIN ANALYZE
+
+Индексы ускоряют **точечный поиск** и **сортировку по отфильтрованному подмножеству**. Без индекса PostgreSQL делает **Seq Scan** — читает всю таблицу; время растёт **линейно** O(n). С B-tree индексом — **Index Scan**, время растёт **логарифмически** O(log n).
+
+**Селективность:** индекс оправдан, если условие WHERE отсеивает **>95%** строк. Для boolean/enum с низкой селективностью — **partial index** (`WHERE recovery_code IS NOT NULL`).
+
+### Шпаргалка по плану
+
+| Node Type             | Значение                                |
+| --------------------- | --------------------------------------- |
+| **Seq Scan**          | Полный перебор таблицы — нужен индекс   |
+| **Index Scan**        | Чтение через B-tree — ожидаемый план    |
+| **Bitmap Index Scan** | Несколько индексов (OR) → bitmap → heap |
+| **Index Only Scan**   | Данные только из индекса (covering)     |
+
+### Индексы проекта
+
+| Эндпоинт / запрос                  | Индекс                                         | Ожидаемый план |
+| ---------------------------------- | ---------------------------------------------- | -------------- |
+| `POST /auth/login`                 | `UQ_users_login`                               | Index Scan     |
+| `findByLoginOrEmail`               | `UQ_users_login` + `UQ_users_email`            | BitmapOr       |
+| `GET /blogs/:blogId/posts`         | `IDX_posts_blog_id_created_at`                 | Index Scan     |
+| `GET /posts/:postId/comments`      | `IDX_comments_post_id_created_at`              | Index Scan     |
+| `GET /security/devices`            | `IDX_sessions_user_id`                         | Index Scan     |
+| Cron: удаление просроченных сессий | `IDX_sessions_last_active_date`                | Index Scan     |
+| Поиск блога по имени               | `IDX_blogs_name`                               | Index Scan     |
+| Списки users/blogs по `createdAt`  | `IDX_users_created_at`, `IDX_blogs_created_at` | Index Scan     |
+
+### Команды
+
+```bash
+# Полный бенчмарк (100k → 200k → 400k), exit 1 при провале assertions
+yarn db:benchmark
+
+# Быстрая проверка (2k → 4k → 8k) — после добавления индекса
+yarn db:benchmark:quick
+
+# Один EXPLAIN вручную (добавьте --no-index для Seq Scan)
+yarn db:explain 03-posts-by-blog.sql
+
+# Bulk-данные для экспериментов
+yarn db:seed:bulk -- --scale=100000 --scenario=posts
+yarn db:seed:bulk:clean
+```
+
+### Как читать отчёт
+
+| Метрика            | Что смотреть                                                               |
+| ------------------ | -------------------------------------------------------------------------- |
+| **Execution Time** | Фактическое время запроса (ms) из `EXPLAIN ANALYZE`                        |
+| **Scan type**      | `Index Scan` ✓ vs `Seq Scan` ✗                                             |
+| **Speedup**        | T(без индекса) / T(с индексом) — ожидаем ≥10× на max scale                 |
+| **T(2N)/T(N)**     | Без индекса ≈ **2.0** (линейный рост); с индексом ≈ **1.0–1.3** (логарифм) |
+| **BUFFERS**        | `shared hit` — из cache; `shared read` — с диска                           |
+
+### Пример вывода
+
+```
+Scenario: Posts by blog (ORDER BY created_at)
+| Scale | With index (ms) | Scan       | Without index (ms) | Scan     | Speedup |
+| 8,000 | 0.42            | Index Scan | 12.35              | Seq Scan | 29.4x   |
+
+Scaling ratios T(2N)/T(N):
+  2000 → 4000: with index 1.08, without index 2.01
+```
+
+### Что НЕ индексировать
+
+- Колонки с низкой селективностью без partial WHERE (`is_confirmed`, `is_membership`).
+- Поля, по которым нет фильтрации в реальных запросах.
+- Дублирующие индексы (если `(a, b)` покрывает `(a)`).
 
 ## Лицензия
 

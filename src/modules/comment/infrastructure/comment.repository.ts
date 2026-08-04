@@ -7,8 +7,8 @@ import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { CommentEntity } from '../domain/entities/comment.entity';
 import { CommentPersistenceMapper } from '../domain/mappers/comment.persistence-mapper';
-import { reactionToDomain } from './comment.mapper';
 import { CommentReactionEntity } from './comment-reaction.entity';
+import { reactionToDomain } from './comment.mapper';
 import { CommentOrmEntity } from './comment.orm-entity';
 
 export interface UpdateCommentLikeStatusArgs {
