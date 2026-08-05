@@ -31,40 +31,26 @@ export class PairGameRepository {
     private readonly internalIdResolver: InternalIdResolver,
   ) {}
 
-  async findActivePairPublicIdForUser(userPublicId: string): Promise<string | null> {
+  async findCurrentPairPublicIdForUser(userPublicId: string): Promise<string | null> {
     const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
     const pair = await this.pairsRepository
       .createQueryBuilder('pair')
-      .where('pair.status = :status', { status: PairGameStatus.Active })
+      .where('pair.status IN (:...statuses)', {
+        statuses: [PairGameStatus.PendingSecondPlayer, PairGameStatus.Active],
+      })
       .andWhere('(pair.first_player_user_id = :userId OR pair.second_player_user_id = :userId)', {
         userId: userInternalId,
       })
+      .orderBy('pair.created_at', 'DESC')
       .getOne();
 
     return pair?.publicId ?? null;
   }
 
-  async findPendingPairAsFirstPlayerPublicId(userPublicId: string): Promise<string | null> {
-    const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
-    const pair = await this.pairsRepository.findOne({
-      where: {
-        status: PairGameStatus.PendingSecondPlayer,
-        firstPlayerUserId: userInternalId,
-      },
-    });
-
-    return pair?.publicId ?? null;
-  }
-
   async connect(userPublicId: string): Promise<string> {
-    const activePairId = await this.findActivePairPublicIdForUser(userPublicId);
-    if (activePairId) {
+    const currentPairId = await this.findCurrentPairPublicIdForUser(userPublicId);
+    if (currentPairId) {
       throw new DomainException(DomainExceptionCode.Forbidden);
-    }
-
-    const pendingAsFirst = await this.findPendingPairAsFirstPlayerPublicId(userPublicId);
-    if (pendingAsFirst) {
-      return pendingAsFirst;
     }
 
     return runWithTransactionRetry(() =>

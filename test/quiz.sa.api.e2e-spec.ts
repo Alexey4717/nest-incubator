@@ -51,6 +51,25 @@ describe('Quiz SA API (e2e)', () => {
       const searchRes = await quiz.getQuestions({ bodySearchTerm: 'France' });
       expectPaginatorItemsCount(searchRes.body, 1);
     });
+
+    it('should accept empty-string query params like homework checker — 200', async () => {
+      await quiz.createQuestion('question body01', ['correct1']);
+
+      const res = await request(ctx.httpServer)
+        .get('/sa/quiz/questions')
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .query({
+          pageNumber: '',
+          pageSize: '',
+          sortBy: '',
+          sortDirection: '',
+          publishedStatus: '',
+          bodySearchTerm: '',
+        })
+        .expect(constants.HTTP_STATUS_OK);
+
+      expect(res.body.items[0].updatedAt).toBeNull();
+    });
   });
 
   describe('POST /sa/quiz/questions', () => {

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -9,6 +10,10 @@ import {
   Length,
 } from 'class-validator';
 
+import {
+  emptyToUndefined,
+  queryParamToStringWithDefault,
+} from '@/core/decorators/validation/empty-to-undefined.transform';
 import { Trim } from '@/core/decorators/validation/trim.decorator';
 import { BaseQueryParamsDto } from '@/core/dto/base-query-params.dto';
 
@@ -22,15 +27,18 @@ export type SortQuizQuestionsBy = 'createdAt';
 
 export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
   @ApiPropertyOptional({ example: 'capital' })
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsString()
   bodySearchTerm?: string;
 
   @ApiProperty({ enum: PublishedStatusFilter, default: PublishedStatusFilter.all })
+  @Transform(queryParamToStringWithDefault(PublishedStatusFilter.all))
   @IsIn(Object.values(PublishedStatusFilter))
   publishedStatus: PublishedStatusFilter = PublishedStatusFilter.all;
 
   @ApiProperty({ enum: ['createdAt'], default: 'createdAt' })
+  @Transform(queryParamToStringWithDefault('createdAt'))
   @IsIn(['createdAt'])
   sortBy: SortQuizQuestionsBy = 'createdAt';
 }

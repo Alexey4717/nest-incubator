@@ -129,9 +129,7 @@ describe('Quiz Pair Game API (e2e)', () => {
   }
 
   it('User2 connects — Active with 5 questions', async () => {
-    const res1 = await connect(token1).expect(constants.HTTP_STATUS_OK);
-    const res1Again = await connect(token1).expect(constants.HTTP_STATUS_OK);
-    expect(res1Again.body.id).toBe(res1.body.id);
+    await connect(token1).expect(constants.HTTP_STATUS_OK);
 
     const res2 = await connect(token2).expect(constants.HTTP_STATUS_OK);
     const game = res2.body as PairGameView;
@@ -167,6 +165,11 @@ describe('Quiz Pair Game API (e2e)', () => {
 
   it('GET my-current without active pair — 404', async () => {
     await getMyCurrent(token1).expect(constants.HTTP_STATUS_NOT_FOUND);
+  });
+
+  it('POST connection when already PendingSecondPlayer — 403', async () => {
+    await connect(token1);
+    await connect(token1).expect(constants.HTTP_STATUS_FORBIDDEN);
   });
 
   it('POST connection when already Active — 403', async () => {
