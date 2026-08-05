@@ -34,11 +34,13 @@ export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
 
   @ApiProperty({ enum: PublishedStatusFilter, default: PublishedStatusFilter.all })
   @Transform(queryParamToStringWithDefault(PublishedStatusFilter.all))
-  @IsIn(Object.values(PublishedStatusFilter))
+  @IsOptional()
+  @IsIn(['all', 'published', 'notPublished'])
   publishedStatus: PublishedStatusFilter = PublishedStatusFilter.all;
 
   @ApiProperty({ enum: ['createdAt'], default: 'createdAt' })
   @Transform(queryParamToStringWithDefault('createdAt'))
+  @IsOptional()
   @IsIn(['createdAt'])
   sortBy: SortQuizQuestionsBy = 'createdAt';
 }
