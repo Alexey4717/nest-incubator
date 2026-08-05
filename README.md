@@ -582,6 +582,7 @@ yarn build && yarn start:prod
 | `db:seed:bulk`              | Bulk-данные для бенчмарка индексов (`--scale=`, `--scenario=`)                                       |
 | `db:seed:bulk:clean`        | Удалить benchmark-данные (`bench_user_*`, `bench_device_*`)                                          |
 | `db:explain`                | EXPLAIN ANALYZE одного SQL из `scripts/sql/explain/` (флаг `--no-index`)                             |
+| `db:index-audit`            | Каталоговый аудит индексов (неиспользуемые, дубликаты, FK без индекса; флаг `--json`)                |
 | `db:benchmark`              | Полный бенчмарк индексов (100k/200k/400k), exit 1 при провале assertions                             |
 | `db:benchmark:quick`        | Быстрый бенчмарк (2k/4k/8k) — проверка после добавления индекса                                      |
 
@@ -1011,6 +1012,9 @@ yarn db:explain 03-posts-by-blog.sql
 # Partial unique index на confirmation_code (лекция 08)
 yarn db:explain 09-users-by-confirmation-code.sql
 
+# Каталоговый аудит индексов
+yarn db:index-audit
+
 # Bulk-данные для экспериментов
 yarn db:seed:bulk -- --scale=100000 --scenario=posts
 yarn db:seed:bulk:clean
@@ -1042,6 +1046,26 @@ Scaling ratios T(2N)/T(N):
 - Колонки с низкой селективностью без partial WHERE (`is_confirmed`, `is_membership`).
 - Поля, по которым нет фильтрации в реальных запросах.
 - Дублирующие индексы (если `(a, b)` покрывает `(a)`).
+
+### Антипаттерны индексов (лекция 12)
+
+Каталоговый аудит — **без изменений схемы**. Скрипт только читает `pg_catalog` и `pg_stat_*`.
+
+| Тема лекции                  | Состояние проекта                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| §1 Малые таблицы с индексами | Информационно: `blogs`, `comments` — мало строк, индексы оправданы запросами                                                                |
+| §3 FK без индекса            | Учебные случаи: `comments.user_id` (нет FK и индекса), `post_reactions.user_id`, `comment_reactions.user_id` (FK есть, leading index — нет) |
+| §4 Дублирующие индексы       | Проверяется автоматически                                                                                                                   |
+| §5 Неиспользуемые индексы    | `idx_scan = 0` на маленькой dev-БД — нормально; не повод удалять индексы                                                                    |
+
+```bash
+yarn db:index-audit
+
+# machine-readable
+yarn db:index-audit -- --json
+```
+
+Скрипт предназначен для **обучения**, а не для prod-cleanup. На dev-БД без нагрузки все индексы могут показывать `idx_scan = 0` — это ожидаемо.
 
 ## Лицензия
 
