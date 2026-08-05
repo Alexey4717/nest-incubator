@@ -1,8 +1,8 @@
 # nest-incubator
 
-REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **PostgreSQL** ([TypeORM](https://typeorm.io/)), использует модульную архитектуру и покрывает домены: аутентификация, управление устройствами и сессиями, пользователи, блоги, посты, комментарии, email-уведомления.
+REST API на [NestJS](https://nestjs.com/) для учебного проекта **it-incubator**. Бэкенд работает с **PostgreSQL** ([TypeORM](https://typeorm.io/)), использует модульную архитектуру и покрывает домены: аутентификация, управление устройствами и сессиями, пользователи, блоги, посты, комментарии, quiz game, email-уведомления.
 
-Основные модули: `auth`, `security`, `user`, `post`, `blog`, `comment`, `like`, `session`, `email`, `testing`. Swagger доступен по пути `/api` (в development — также статика на `/`).
+Основные модули: `auth`, `security`, `user`, `post`, `blog`, `comment`, `like`, `session`, `quiz`, `email`, `testing`. Swagger доступен по пути `/api` (в development — также статика на `/`).
 
 ## Архитектура
 
@@ -709,6 +709,72 @@ yarn start:dev
 
 ### E2e-тесты
 
+## Quiz Game
+
+Модуль `quiz` реализует CRUD вопросов для Super Admin и парную игру на 5 опубликованных вопросов для авторизованных пользователей.
+
+### Super Admin API (`/sa/quiz/questions`, Basic Auth)
+
+| Метод    | Путь           | Код | Описание                            |
+| -------- | -------------- | --- | ----------------------------------- |
+| `GET`    | `/`            | 200 | Список с pagination и фильтрами     |
+| `POST`   | `/`            | 201 | Создание вопроса                    |
+| `PUT`    | `/:id`         | 204 | Обновление `body`, `correctAnswers` |
+| `PUT`    | `/:id/publish` | 204 | Публикация / снятие с публикации    |
+| `DELETE` | `/:id`         | 204 | Удаление вопроса                    |
+
+Query-параметры GET: `bodySearchTerm`, `publishedStatus` (`all` \| `published` \| `notPublished`), `sortBy` (`createdAt`), `sortDirection`, `pageNumber`, `pageSize`.
+
+Нельзя опубликовать вопрос без непустого массива `correctAnswers`. Обновление опубликованного вопроса без `correctAnswers` → 400.
+
+### Public API (`/pair-game-quiz/pairs`, Bearer JWT)
+
+| Метод  | Путь                  | Код | Описание                                        |
+| ------ | --------------------- | --- | ----------------------------------------------- |
+| `POST` | `/connection`         | 200 | Matchmaking (подключение к игре)                |
+| `GET`  | `/my-current`         | 200 | Текущая пара (`PendingSecondPlayer` / `Active`) |
+| `GET`  | `/:id`                | 200 | Пара по id (любой status)                       |
+| `POST` | `/my-current/answers` | 200 | Ответ на следующий вопрос                       |
+
+Коды ошибок: 401 (нет JWT), 403 (уже в Active-паре / не участник / все 5 ответов даны), 404 (нет активной пары / игра не найдена), 400 (невалидный UUID в `/:id`).
+
+**PairGameView:** `id`, `status`, `firstPlayerProgress`, `secondPlayerProgress`, `questions`, `startGameDate`, `finishGameDate`.
+
+| status                | secondPlayerProgress | questions | startGameDate | finishGameDate |
+| --------------------- | -------------------- | --------- | ------------- | -------------- |
+| `PendingSecondPlayer` | `null`               | `null`    | `null`        | `null`         |
+| `Active`              | заполнен             | 5 шт.     | ISO           | `null`         |
+| `Finished`            | заполнен             | 5 шт.     | ISO           | ISO            |
+
+`POST /my-current/answers` возвращает только `{ questionId, answerStatus, addedAt }`, не полную игру.
+
+### Scoring
+
+- +1 за каждый правильный ответ
+- +1 speed bonus первому finisher, если у него ≥ 1 правильный ответ
+- Bonus начисляется при завершении игры (оба ответили на 5 вопросов)
+
+Примеры: A — 2 correct + bonus = 3, B — 3 correct = 3 → **ничья** (3:3). A — 0 correct, finished first → 0 bonus; B — 1 correct → **B wins** (0:1).
+
+### Env для homework
+
+| Файл               | Переменная               | Значение                         |
+| ------------------ | ------------------------ | -------------------------------- |
+| `.env.development` | `ACCESS_TOKEN_LIFE_TIME` | `300`                            |
+| `.env.production`  | `ACCESS_TOKEN_LIFE_TIME` | `300`                            |
+| `.env.production`  | `IP_RESTRICTION_ENABLED` | `false`                          |
+| `.env.testing`     | `ACCESS_TOKEN_LIFE_TIME` | `10` (для быстрых auth e2e)      |
+| `.env.testing`     | `IP_RESTRICTION_ENABLED` | `false` (рекомендуется для quiz) |
+
+TTL задаётся только через env; `auth.config.ts` не менять.
+
+### E2e Quiz
+
+```bash
+yarn test:e2e quiz.sa.api.e2e-spec.ts
+yarn test:e2e quiz.pair-game.api.e2e-spec.ts
+```
+
 ```bash
 # PostgreSQL + миграции test-БД
 yarn db:setup
@@ -725,6 +791,7 @@ yarn test:e2e
 | `initSettings`             | `test/helpers/init-settings.ts`      | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком                                          |
 | `UsersTestManager`         | `test/helpers/users-test-manager.ts` | SA-создание пользователей, CRUD `/sa/users`                                                                             |
 | `AuthTestManager`          | `test/helpers/auth-test-manager.ts`  | Регистрация, login, confirm, password recovery                                                                          |
+| `QuizTestManager`          | `test/helpers/quiz-test-manager.ts`  | SA CRUD `/sa/quiz/questions`                                                                                            |
 | `configureModule` callback | аргумент `initSettings`              | Переопределение провайдеров на уровне describe (например, `JwtService`)                                                 |
 
 Пример инициализации с callback:
@@ -745,17 +812,19 @@ const ctx = await initSettings((builder) => {
 
 Файлы e2e в `test/`:
 
-| Файл                           | Покрытие                        |
-| ------------------------------ | ------------------------------- |
-| `app.e2e-spec.ts`              | Корневой health-check           |
-| `auth.api.e2e-spec.ts`         | Регистрация, login, password    |
-| `user.api.e2e-spec.ts`         | Эндпoинты `/users`              |
-| `post.api.e2e-spec.ts`         | Эндпoинты `/posts`              |
-| `blog.api.e2e-spec.ts`         | Эндпoинты `/blogs`              |
-| `comment.api.e2e-spec.ts`      | Эндпoинты `/comments`           |
-| `auth-refresh.e2e-spec.ts`     | Refresh-токены и ротация сессий |
-| `auth-throttle.e2e-spec.ts`    | Rate limiting на auth POST      |
-| `security-devices.e2e-spec.ts` | Эндпoинты `/security/devices`   |
+| Файл                             | Покрытие                        |
+| -------------------------------- | ------------------------------- |
+| `app.e2e-spec.ts`                | Корневой health-check           |
+| `auth.api.e2e-spec.ts`           | Регистрация, login, password    |
+| `user.api.e2e-spec.ts`           | Эндпoинты `/users`              |
+| `post.api.e2e-spec.ts`           | Эндпoинты `/posts`              |
+| `blog.api.e2e-spec.ts`           | Эндпoинты `/blogs`              |
+| `comment.api.e2e-spec.ts`        | Эндпoинты `/comments`           |
+| `auth-refresh.e2e-spec.ts`       | Refresh-токены и ротация сессий |
+| `auth-throttle.e2e-spec.ts`      | Rate limiting на auth POST      |
+| `security-devices.e2e-spec.ts`   | Эндпoинты `/security/devices`   |
+| `quiz.sa.api.e2e-spec.ts`        | SA CRUD `/sa/quiz/questions`    |
+| `quiz.pair-game.api.e2e-spec.ts` | Public API парной игры          |
 
 ## Authentication
 
@@ -821,10 +890,11 @@ Cookie `refreshToken`: `httpOnly`, `secure` только в production, `sameSit
 
 **TTL токенов** (`ACCESS_TOKEN_LIFE_TIME` / `REFRESH_TOKEN_LIFE_TIME`):
 
-| Окружение             | Access | Refresh |
-| --------------------- | ------ | ------- |
-| development / testing | 10 с   | 20 с    |
-| production            | 300 с  | 72000 с |
+| Окружение   | Access | Refresh |
+| ----------- | ------ | ------- |
+| development | 300 с  | 72000 с |
+| testing     | 10 с   | 20 с    |
+| production  | 300 с  | 72000 с |
 
 ### JWT payload
 

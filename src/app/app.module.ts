@@ -20,6 +20,7 @@ import { TypeOrmConfig } from '@/modules/database/typeorm.config';
 import { EmailModule } from '@/modules/email/email.module';
 import { MailerConfig } from '@/modules/email/mailer.config';
 import { PostModule } from '@/modules/post/post.module';
+import { QuizModule } from '@/modules/quiz/quiz.module';
 import { SecurityModule } from '@/modules/security/security.module';
 import { SessionModule } from '@/modules/session/session.module';
 import { TestingModule } from '@/modules/testing/testing.module';
@@ -53,6 +54,7 @@ import { SWAGGER_PATH } from './setup/swagger.setup';
     CommentModule,
     PostModule,
     BlogModule,
+    QuizModule,
     MailerModule.forRootAsync({
       imports: [EmailModule],
       useClass: MailerConfig,

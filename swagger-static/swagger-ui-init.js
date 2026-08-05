@@ -1752,6 +1752,462 @@ window.onload = function() {
           ]
         }
       },
+      "/sa/quiz/questions": {
+        "get": {
+          "operationId": "SaQuizQuestionsController_getQuestions",
+          "summary": "Returns quiz questions with pagination and filters",
+          "parameters": [
+            {
+              "name": "pageNumber",
+              "required": true,
+              "in": "query",
+              "example": 1,
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": true,
+              "in": "query",
+              "example": 10,
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "sortDirection",
+              "required": true,
+              "in": "query",
+              "example": "desc",
+              "schema": {
+                "default": "desc",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "type": "string"
+              }
+            },
+            {
+              "name": "bodySearchTerm",
+              "required": false,
+              "in": "query",
+              "example": "capital",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "publishedStatus",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "default": "all",
+                "enum": [
+                  "all",
+                  "published",
+                  "notPublished"
+                ],
+                "type": "string"
+              }
+            },
+            {
+              "name": "sortBy",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "default": "createdAt",
+                "enum": [
+                  "createdAt"
+                ],
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedQuizQuestionsViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid basic auth credentials"
+            }
+          },
+          "tags": [
+            "QuizQuestions"
+          ],
+          "security": [
+            {
+              "basic": []
+            }
+          ]
+        },
+        "post": {
+          "operationId": "SaQuizQuestionsController_createQuestion",
+          "summary": "Create new quiz question",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateQuizQuestionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/QuizQuestionViewDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid basic auth credentials"
+            }
+          },
+          "tags": [
+            "QuizQuestions"
+          ],
+          "security": [
+            {
+              "basic": []
+            }
+          ]
+        }
+      },
+      "/sa/quiz/questions/{id}": {
+        "put": {
+          "operationId": "SaQuizQuestionsController_updateQuestion",
+          "summary": "Update quiz question by id",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Question id",
+              "schema": {}
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateQuizQuestionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": "Question updated"
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid basic auth credentials"
+            },
+            "404": {
+              "description": "Question not found"
+            }
+          },
+          "tags": [
+            "QuizQuestions"
+          ],
+          "security": [
+            {
+              "basic": []
+            }
+          ]
+        },
+        "delete": {
+          "operationId": "SaQuizQuestionsController_deleteQuestion",
+          "summary": "Delete quiz question by id",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Question id",
+              "schema": {}
+            }
+          ],
+          "responses": {
+            "204": {
+              "description": "Question deleted"
+            },
+            "401": {
+              "description": "Invalid basic auth credentials"
+            },
+            "404": {
+              "description": "Question not found"
+            }
+          },
+          "tags": [
+            "QuizQuestions"
+          ],
+          "security": [
+            {
+              "basic": []
+            }
+          ]
+        }
+      },
+      "/sa/quiz/questions/{id}/publish": {
+        "put": {
+          "operationId": "SaQuizQuestionsController_publishQuestion",
+          "summary": "Publish or unpublish quiz question",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "description": "Question id",
+              "schema": {}
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishQuizQuestionDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "204": {
+              "description": "Publish status updated"
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid basic auth credentials"
+            },
+            "404": {
+              "description": "Question not found"
+            }
+          },
+          "tags": [
+            "QuizQuestions"
+          ],
+          "security": [
+            {
+              "basic": []
+            }
+          ]
+        }
+      },
+      "/pair-game-quiz/pairs/connection": {
+        "post": {
+          "operationId": "PairQuizGameController_connect",
+          "summary": "Connect to pair game (matchmaking)",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PairGameViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "User already in Active pair"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
+      "/pair-game-quiz/pairs/my-current": {
+        "get": {
+          "operationId": "PairQuizGameController_getMyCurrent",
+          "summary": "Get current pair game for user",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PairGameViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "404": {
+              "description": "No active or pending pair"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
+      "/pair-game-quiz/pairs/{id}": {
+        "get": {
+          "operationId": "PairQuizGameController_getById",
+          "summary": "Get pair game by id",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PairGameViewDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "User is not a participant"
+            },
+            "404": {
+              "description": "Pair game not found"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
+      "/pair-game-quiz/pairs/my-current/answers": {
+        "post": {
+          "operationId": "PairQuizGameController_submitAnswer",
+          "summary": "Submit answer for current pair game",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitPairGameAnswerDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AnswerResultViewDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "Not in Active pair or all questions answered"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
       "/security/devices": {
         "get": {
           "operationId": "SecurityController_getDevices",
@@ -2615,6 +3071,315 @@ window.onload = function() {
             "title",
             "shortDescription",
             "content"
+          ]
+        },
+        "QuizQuestionViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "body": {
+              "type": "object",
+              "example": "What is the capital of France?"
+            },
+            "correctAnswers": {
+              "example": [
+                "Paris"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "published": {
+              "type": "object",
+              "example": false
+            },
+            "createdAt": {
+              "type": "object",
+              "example": "2024-01-01T00:00:00.000Z"
+            },
+            "updatedAt": {
+              "type": "object",
+              "example": "2024-01-01T00:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "body",
+            "correctAnswers",
+            "published",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "PaginatedQuizQuestionsViewDto": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "object",
+              "example": 1
+            },
+            "pageSize": {
+              "type": "object",
+              "example": 10
+            },
+            "pagesCount": {
+              "type": "object",
+              "example": 1
+            },
+            "totalCount": {
+              "type": "object",
+              "example": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuizQuestionViewDto"
+              }
+            }
+          },
+          "required": [
+            "page",
+            "pageSize",
+            "pagesCount",
+            "totalCount",
+            "items"
+          ]
+        },
+        "CreateQuizQuestionDto": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "type": "object",
+              "maxLength": 1000,
+              "example": "What is the capital of France?"
+            },
+            "correctAnswers": {
+              "example": [
+                "Paris"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "body",
+            "correctAnswers"
+          ]
+        },
+        "UpdateQuizQuestionDto": {
+          "type": "object",
+          "properties": {
+            "body": {
+              "type": "object",
+              "maxLength": 1000,
+              "example": "What is the capital of France?"
+            },
+            "correctAnswers": {
+              "example": [
+                "Paris"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "body",
+            "correctAnswers"
+          ]
+        },
+        "PublishQuizQuestionDto": {
+          "type": "object",
+          "properties": {
+            "published": {
+              "type": "object",
+              "example": true
+            }
+          },
+          "required": [
+            "published"
+          ]
+        },
+        "PlayerInGameViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "login": {
+              "type": "object",
+              "example": "user1"
+            }
+          },
+          "required": [
+            "id",
+            "login"
+          ]
+        },
+        "AnswerInProgressViewDto": {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "answerStatus": {
+              "type": "string",
+              "enum": [
+                "Correct",
+                "Incorrect"
+              ],
+              "example": "Correct"
+            },
+            "addedAt": {
+              "type": "object",
+              "example": "2024-01-01T00:00:00.000Z"
+            }
+          },
+          "required": [
+            "questionId",
+            "answerStatus",
+            "addedAt"
+          ]
+        },
+        "PlayerProgressViewDto": {
+          "type": "object",
+          "properties": {
+            "player": {
+              "$ref": "#/components/schemas/PlayerInGameViewDto"
+            },
+            "answers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AnswerInProgressViewDto"
+              }
+            },
+            "score": {
+              "type": "object",
+              "example": 0
+            }
+          },
+          "required": [
+            "player",
+            "answers",
+            "score"
+          ]
+        },
+        "QuestionInGameViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "body": {
+              "type": "object",
+              "example": "What is the capital of France?"
+            }
+          },
+          "required": [
+            "id",
+            "body"
+          ]
+        },
+        "PairGameViewDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "PendingSecondPlayer",
+                "Active",
+                "Finished"
+              ]
+            },
+            "firstPlayerProgress": {
+              "$ref": "#/components/schemas/PlayerProgressViewDto"
+            },
+            "secondPlayerProgress": {
+              "nullable": true,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/PlayerProgressViewDto"
+                }
+              ]
+            },
+            "questions": {
+              "nullable": true,
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/QuestionInGameViewDto"
+              }
+            },
+            "startGameDate": {
+              "type": "object",
+              "example": null,
+              "nullable": true
+            },
+            "finishGameDate": {
+              "type": "object",
+              "example": null,
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "status",
+            "firstPlayerProgress",
+            "secondPlayerProgress",
+            "questions",
+            "startGameDate",
+            "finishGameDate"
+          ]
+        },
+        "SubmitPairGameAnswerDto": {
+          "type": "object",
+          "properties": {
+            "answer": {
+              "type": "object",
+              "example": "Paris"
+            }
+          },
+          "required": [
+            "answer"
+          ]
+        },
+        "AnswerResultViewDto": {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "object",
+              "example": "uuid"
+            },
+            "answerStatus": {
+              "type": "string",
+              "enum": [
+                "Correct",
+                "Incorrect"
+              ],
+              "example": "Correct"
+            },
+            "addedAt": {
+              "type": "object",
+              "example": "2024-01-01T00:00:00.000Z"
+            }
+          },
+          "required": [
+            "questionId",
+            "answerStatus",
+            "addedAt"
           ]
         },
         "SecurityDeviceViewDto": {

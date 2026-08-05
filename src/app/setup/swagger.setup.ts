@@ -9,7 +9,9 @@ import {
   LikeDetailsViewDto,
   LikesInfoViewDto,
 } from '@/core/swagger/like-view.dto';
+import { AnswerResultViewDto, PairGameViewDto } from '@/core/swagger/pair-game-view.dto';
 import { PaginatedPostsViewDto, PostViewDto } from '@/core/swagger/post-view.dto';
+import { PaginatedQuizQuestionsViewDto, QuizQuestionViewDto } from '@/core/swagger/quiz-view.dto';
 import { SecurityDeviceViewDto } from '@/core/swagger/security-device-view.dto';
 import { PaginatedUsersViewDto, UserViewDto } from '@/core/swagger/user-view.dto';
 import { ValidationErrorResponseDto } from '@/core/swagger/validation-error.dto';
@@ -42,6 +44,10 @@ export function swaggerSetup(app: INestApplication): void {
       LikesInfoViewDto,
       ExtendedLikesInfoViewDto,
       LikeDetailsViewDto,
+      QuizQuestionViewDto,
+      PaginatedQuizQuestionsViewDto,
+      PairGameViewDto,
+      AnswerResultViewDto,
     ],
   });
 

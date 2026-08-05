@@ -15,6 +15,10 @@ export class TestingRepository {
     try {
       await this.dataSource.query(`
         TRUNCATE TABLE
+          "quiz_pair_answers",
+          "quiz_pair_questions",
+          "quiz_pairs",
+          "quiz_questions",
           "comment_reactions",
           "comments",
           "post_reactions",
