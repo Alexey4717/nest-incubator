@@ -513,6 +513,9 @@ modules/database/
 | ON DELETE                            | `posts.blog_id` → RESTRICT; `comments.post_id`, `sessions.user_id` → CASCADE      |
 | Repository: create / update          | `.save()` для INSERT; `.update()` для command UPDATE (не change detection)        |
 | Транзакции                           | `dataSource.transaction()` для multi-step (reactions, rotate refresh token)       |
+| Pessimistic lock                     | `setLock('pessimistic_write')` в rotate refresh token и update like status        |
+| Retry при deadlock / serialization   | `runWithTransactionRetry` + `isRetryableDbError` (40P01, 40001, 55P03)            |
+| InternalIdResolver в транзакции      | optional `EntityManager` → `manager.query()` вместо `dataSource.query()`          |
 | Reactions                            | Junction entity + `ReactionUpdateService`; без cascade collections                |
 | Регистрация entities                 | `TypeOrmModule.forFeature` в feature-модулях; `BaseOrmEntity` без `@Entity`       |
 

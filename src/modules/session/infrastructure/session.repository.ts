@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, LessThan, Not, Repository } from 'typeorm';
 
+import { runWithTransactionRetry } from '@/core/database/run-with-transaction-retry';
+
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 
 import { SessionEntity } from '../domain/entities/session.entity';
@@ -49,19 +51,28 @@ export class SessionRepository {
     session: SessionEntity,
   ): Promise<boolean> {
     const data = session.toDb();
-    const userInternalId = await this.internalIdResolver.resolveUserId(userId);
 
-    return this.dataSource.transaction(async (manager) => {
-      const sessionsRepository = manager.getRepository(SessionOrmEntity);
-      const result = await sessionsRepository.update(
-        { deviceId, userId: userInternalId, currentRefreshTokenJti: expectedJti },
-        {
-          currentRefreshTokenJti: data.currentRefreshTokenJti,
-          lastActiveDate: data.lastActiveDate,
-        },
-      );
-      return (result.affected ?? 0) === 1;
-    });
+    return runWithTransactionRetry(() =>
+      this.dataSource.transaction(async (manager) => {
+        const userInternalId = await this.internalIdResolver.resolveUserId(userId, manager);
+        const sessionsRepository = manager.getRepository(SessionOrmEntity);
+
+        const sessionEntity = await sessionsRepository
+          .createQueryBuilder('session')
+          .setLock('pessimistic_write')
+          .where('session.deviceId = :deviceId', { deviceId })
+          .andWhere('session.userId = :userId', { userId: userInternalId })
+          .getOne();
+
+        if (!sessionEntity) return false;
+        if (sessionEntity.currentRefreshTokenJti !== expectedJti) return false;
+
+        sessionEntity.currentRefreshTokenJti = data.currentRefreshTokenJti;
+        sessionEntity.lastActiveDate = data.lastActiveDate;
+        await sessionsRepository.save(sessionEntity);
+        return true;
+      }),
+    );
   }
 
   async deleteOneSessionByUserAndDeviceId(userId: string, deviceId: string): Promise<boolean> {
