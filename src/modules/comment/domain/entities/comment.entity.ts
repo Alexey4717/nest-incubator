@@ -1,7 +1,6 @@
-import { randomUUID } from 'crypto';
-
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
+import { generatePublicId } from '@/core/id/public-id.generator';
 
 import { CommentOrmEntity } from '../../infrastructure/comment.orm-entity';
 
@@ -33,7 +32,7 @@ export class CommentEntity {
 
   static create(props: CommentCreateProps): CommentEntity {
     return new CommentEntity({
-      id: randomUUID(),
+      id: generatePublicId(),
       postId: props.postId,
       content: props.content,
       userId: props.userId,
@@ -46,7 +45,7 @@ export class CommentEntity {
 
   static reconstitute(raw: CommentOrmEntity | CommentDb): CommentEntity {
     return new CommentEntity({
-      id: raw.id,
+      id: 'publicId' in raw ? raw.publicId : raw.id,
       postId: raw.postId,
       content: raw.content,
       userId: raw.userId,

@@ -7,7 +7,7 @@ export class SessionOrmEntity {
   @PrimaryColumn({ name: 'device_id', type: 'varchar' })
   deviceId: string;
 
-  @Column({ name: 'user_id', type: 'uuid' })
+  @Column({ name: 'user_id', type: 'bigint' })
   userId: string;
 
   @Column({ type: 'varchar' })

@@ -1,7 +1,6 @@
-import { randomUUID } from 'crypto';
-
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
+import { generatePublicId } from '@/core/id/public-id.generator';
 
 import { BlogOrmEntity } from '../../infrastructure/blog.orm-entity';
 
@@ -31,7 +30,7 @@ export class BlogEntity {
 
   static create(props: BlogCreateProps): BlogEntity {
     return new BlogEntity({
-      id: randomUUID(),
+      id: generatePublicId(),
       name: props.name,
       websiteUrl: props.websiteUrl,
       description: props.description,
@@ -42,7 +41,7 @@ export class BlogEntity {
 
   static reconstitute(raw: BlogOrmEntity | BlogDb): BlogEntity {
     return new BlogEntity({
-      id: raw.id,
+      id: 'publicId' in raw ? raw.publicId : raw.id,
       name: raw.name,
       websiteUrl: raw.websiteUrl,
       description: raw.description,

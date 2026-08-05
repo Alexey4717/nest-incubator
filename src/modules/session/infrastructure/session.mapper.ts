@@ -3,9 +3,9 @@ import { SessionViewModel } from '../models/session-view.model';
 import { SessionModel } from '../models/session.model';
 import { SessionOrmEntity } from './session.orm-entity';
 
-export function toDomain(entity: SessionOrmEntity): SessionModel {
+export function toDomain(entity: SessionOrmEntity, userPublicId: string): SessionModel {
   return {
-    userId: entity.userId,
+    userId: userPublicId,
     deviceId: entity.deviceId,
     ip: entity.ip,
     title: entity.title,

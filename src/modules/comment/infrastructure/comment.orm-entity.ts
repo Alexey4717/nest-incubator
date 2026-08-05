@@ -7,13 +7,13 @@ import { CommentReactionEntity } from './comment-reaction.entity';
 @Entity('comments')
 @Index('IDX_comments_post_id_created_at', ['postId', 'createdAt'])
 export class CommentOrmEntity extends BaseOrmEntity {
-  @Column({ name: 'post_id', type: 'uuid' })
+  @Column({ name: 'post_id', type: 'bigint' })
   postId: string;
 
   @Column({ type: 'varchar' })
   content: string;
 
-  @Column({ name: 'user_id', type: 'varchar' })
+  @Column({ name: 'user_id', type: 'bigint' })
   userId: string;
 
   @Column({ name: 'user_login', type: 'varchar' })

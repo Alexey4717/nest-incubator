@@ -6,6 +6,8 @@ import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
 import { Paginator, SortDirections } from '@/core/types/common';
 
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';
+import { PostOrmEntity } from '@/modules/post/infrastructure/post.orm-entity';
+import { UserOrmEntity } from '@/modules/user/infrastructure/user.orm-entity';
 
 import {
   GetPostCommentsQueryParamsDto,
@@ -21,10 +23,10 @@ const SORT_COLUMN_MAP: Record<SortPostCommentsBy, keyof CommentOrmEntity> = {
 };
 
 const COMMENT_RAW_SELECT = [
-  'comment.id as "id"',
-  'comment.postId as "postId"',
+  'comment.publicId as "id"',
+  'post.publicId as "postId"',
   'comment.content as "content"',
-  'comment.userId as "userId"',
+  'author.publicId as "userId"',
   'comment.userLogin as "userLogin"',
   'comment.createdAt as "createdAt"',
 ];
@@ -32,7 +34,7 @@ const COMMENT_RAW_SELECT = [
 const COMMENT_REACTIONS_AGG = `COALESCE(
   jsonb_agg(
     json_build_object(
-      'userId', r.user_id,
+      'userId', ru.public_id,
       'likeStatus', r.like_status,
       'createdAt', r.created_at
     )
@@ -64,9 +66,12 @@ export class CommentQueryRepository {
 
       const rawRows = await this.createCommentsQueryBuilder(postId)
         .leftJoin('comment.reactions', 'r')
+        .leftJoin(UserOrmEntity, 'ru', 'r.user_id = ru.id')
         .select(COMMENT_RAW_SELECT)
         .addSelect(COMMENT_REACTIONS_AGG, 'reactions')
         .groupBy('comment.id')
+        .addGroupBy('post.id')
+        .addGroupBy('author.id')
         .orderBy(`comment.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC')
         .offset(skip)
         .limit(pageSize)
@@ -88,11 +93,16 @@ export class CommentQueryRepository {
     try {
       const raw = await this.commentsRepository
         .createQueryBuilder('comment')
+        .innerJoin(PostOrmEntity, 'post', 'comment.postId = post.id')
+        .innerJoin(UserOrmEntity, 'author', 'comment.userId = author.id')
         .leftJoin('comment.reactions', 'r')
+        .leftJoin(UserOrmEntity, 'ru', 'r.user_id = ru.id')
         .select(COMMENT_RAW_SELECT)
         .addSelect(COMMENT_REACTIONS_AGG, 'reactions')
-        .where('comment.id = :id', { id })
+        .where('comment.publicId = :id', { id })
         .groupBy('comment.id')
+        .addGroupBy('post.id')
+        .addGroupBy('author.id')
         .getRawOne<CommentRawRow>();
 
       return raw ? fromRaw(raw) : null;
@@ -102,9 +112,11 @@ export class CommentQueryRepository {
     }
   }
 
-  private createCommentsQueryBuilder(postId: string): SelectQueryBuilder<CommentOrmEntity> {
+  private createCommentsQueryBuilder(postPublicId: string): SelectQueryBuilder<CommentOrmEntity> {
     return this.commentsRepository
       .createQueryBuilder('comment')
-      .andWhere('comment.postId = :postId', { postId });
+      .innerJoin(PostOrmEntity, 'post', 'comment.postId = post.id')
+      .innerJoin(UserOrmEntity, 'author', 'comment.userId = author.id')
+      .andWhere('post.publicId = :postId', { postId: postPublicId });
   }
 }

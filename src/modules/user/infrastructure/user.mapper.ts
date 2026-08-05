@@ -32,7 +32,7 @@ export function fromRaw(row: UserRawRow): UserModel {
 
 export function toDomain(entity: UserOrmEntity): UserModel {
   return {
-    id: entity.id,
+    id: entity.publicId,
     login: entity.login,
     email: entity.email,
     passwordHash: entity.passwordHash,
@@ -47,7 +47,7 @@ export function toDomain(entity: UserOrmEntity): UserModel {
 
 export function toOrm(model: UserModel): UserOrmEntity {
   const entity = new UserOrmEntity();
-  entity.id = model.id;
+  entity.publicId = model.id;
   entity.login = model.login;
   entity.email = model.email;
   entity.passwordHash = model.passwordHash;

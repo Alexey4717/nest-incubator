@@ -55,7 +55,7 @@ export class TestingRepository {
       .createQueryBuilder()
       .update(UserOrmEntity)
       .set(values)
-      .where('id = :userId', { userId })
+      .where('public_id = :userId', { userId })
       .execute();
   }
 
@@ -68,7 +68,7 @@ export class TestingRepository {
       .createQueryBuilder()
       .delete()
       .from(UserOrmEntity)
-      .where('id = :userId', { userId })
+      .where('public_id = :userId', { userId })
       .execute();
   }
 }

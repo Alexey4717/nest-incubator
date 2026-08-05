@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 
+import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 import { ReactionUpdateService } from '@/modules/like/application/services/reaction-update.service';
 import { LikeStatus } from '@/modules/like/types/like-status';
 
@@ -27,16 +28,29 @@ export class CommentRepository {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly reactionUpdateService: ReactionUpdateService,
+    private readonly internalIdResolver: InternalIdResolver,
   ) {}
 
   async findById(id: string): Promise<CommentEntity | null> {
-    const entity = await this.commentsRepository.findOne({ where: { id } });
-    return entity ? CommentPersistenceMapper.toDomain(entity) : null;
+    const entity = await this.commentsRepository.findOne({ where: { publicId: id } });
+    if (!entity) return null;
+    const [postPublicId, userPublicId] = await Promise.all([
+      this.internalIdResolver.lookupPostPublicId(entity.postId),
+      this.internalIdResolver.lookupUserPublicId(entity.userId),
+    ]);
+    if (!postPublicId || !userPublicId) return null;
+    return CommentPersistenceMapper.toDomain(entity, {
+      postId: postPublicId,
+      userId: userPublicId,
+    });
   }
 
   async createCommentInPost(newComment: CommentEntity): Promise<boolean> {
     try {
+      const data = newComment.toDb();
       const entity = CommentPersistenceMapper.toPersistence(newComment);
+      entity.postId = await this.internalIdResolver.resolvePostId(data.postId);
+      entity.userId = await this.internalIdResolver.resolveUserId(data.userId);
       await this.commentsRepository.save(entity);
       return true;
     } catch (error) {
@@ -47,7 +61,10 @@ export class CommentRepository {
 
   async save(comment: CommentEntity): Promise<boolean> {
     const data = comment.toDb();
-    const result = await this.commentsRepository.update({ id: data.id }, { content: data.content });
+    const result = await this.commentsRepository.update(
+      { publicId: data.id },
+      { content: data.content },
+    );
     return (result.affected ?? 0) === 1;
   }
 
@@ -61,13 +78,18 @@ export class CommentRepository {
         const commentsRepository = manager.getRepository(CommentOrmEntity);
         const commentReactionsRepository = manager.getRepository(CommentReactionEntity);
 
-        const commentExists = await commentsRepository.exists({ where: { id: commentId } });
-        if (!commentExists) return false;
+        const commentEntity = await commentsRepository.findOne({ where: { publicId: commentId } });
+        if (!commentEntity) return false;
+
+        const resolvedCommentId = commentEntity.id;
+        const userInternalId = await this.internalIdResolver.resolveUserId(userId);
 
         const existingReactionEntity = await commentReactionsRepository.findOne({
-          where: { commentId, userId },
+          where: { commentId: resolvedCommentId, userId: userInternalId },
         });
-        const reactions = existingReactionEntity ? [reactionToDomain(existingReactionEntity)] : [];
+        const reactions = existingReactionEntity
+          ? [reactionToDomain(existingReactionEntity, userId)]
+          : [];
 
         const plan = this.reactionUpdateService.planReactionUpdate({
           reactions,
@@ -79,8 +101,8 @@ export class CommentRepository {
 
         if (plan.action === 'push') {
           const reaction = new CommentReactionEntity();
-          reaction.commentId = commentId;
-          reaction.userId = plan.reaction.userId;
+          reaction.commentId = resolvedCommentId;
+          reaction.userId = userInternalId;
           reaction.likeStatus = plan.reaction.likeStatus;
           reaction.createdAt = new Date(plan.reaction.createdAt);
           await commentReactionsRepository.save(reaction);
@@ -89,14 +111,14 @@ export class CommentRepository {
 
         if (plan.action === 'pull') {
           const result = await commentReactionsRepository.delete({
-            commentId,
-            userId: plan.userId,
+            commentId: resolvedCommentId,
+            userId: userInternalId,
           });
           return (result.affected ?? 0) === 1;
         }
 
         const result = await commentReactionsRepository.update(
-          { commentId, userId: plan.userId },
+          { commentId: resolvedCommentId, userId: userInternalId },
           {
             likeStatus: plan.likeStatus,
             createdAt: new Date(plan.createdAt),
@@ -115,7 +137,7 @@ export class CommentRepository {
 
   async deleteCommentById(id: string): Promise<boolean> {
     try {
-      const result = await this.commentsRepository.delete({ id });
+      const result = await this.commentsRepository.delete({ publicId: id });
       return (result.affected ?? 0) === 1;
     } catch (error) {
       console.log('commentsRepository.deleteCommentById error is occurred: ', error);

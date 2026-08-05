@@ -4,7 +4,7 @@ import { BlogOrmEntity } from './blog.orm-entity';
 
 export function toDomain(entity: BlogOrmEntity): BlogModel {
   return {
-    id: entity.id,
+    id: entity.publicId,
     name: entity.name,
     websiteUrl: entity.websiteUrl,
     description: entity.description,
@@ -15,7 +15,7 @@ export function toDomain(entity: BlogOrmEntity): BlogModel {
 
 export function toOrm(model: BlogModel): BlogOrmEntity {
   const entity = new BlogOrmEntity();
-  entity.id = model.id;
+  entity.publicId = model.id;
   entity.name = model.name;
   entity.websiteUrl = model.websiteUrl;
   entity.description = model.description;

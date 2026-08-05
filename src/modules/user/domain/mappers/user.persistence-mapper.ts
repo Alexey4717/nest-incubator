@@ -9,7 +9,7 @@ export const UserPersistenceMapper = {
   toPersistence(entity: UserEntity): UserOrmEntity {
     const data = entity.toDb();
     const orm = new UserOrmEntity();
-    orm.id = data.id;
+    orm.publicId = data.id;
     orm.login = data.login;
     orm.email = data.email;
     orm.passwordHash = data.passwordHash;

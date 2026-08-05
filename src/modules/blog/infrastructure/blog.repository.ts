@@ -29,14 +29,14 @@ export class BlogRepository {
   }
 
   async findById(id: string): Promise<BlogEntity | null> {
-    const entity = await this.blogsRepository.findOne({ where: { id } });
+    const entity = await this.blogsRepository.findOne({ where: { publicId: id } });
     return entity ? BlogPersistenceMapper.toDomain(entity) : null;
   }
 
   async save(blog: BlogEntity): Promise<boolean> {
     const data = blog.toDb();
     const result = await this.blogsRepository.update(
-      { id: data.id },
+      { publicId: data.id },
       {
         name: data.name,
         websiteUrl: data.websiteUrl,
@@ -54,7 +54,7 @@ export class BlogRepository {
 
   async deleteBlogById(id: string): Promise<boolean> {
     try {
-      const result = await this.blogsRepository.delete({ id });
+      const result = await this.blogsRepository.delete({ publicId: id });
       return (result.affected ?? 0) === 1;
     } catch (error) {
       console.log(`blogsRepository.deleteBlogById error is occurred: ${error}`);

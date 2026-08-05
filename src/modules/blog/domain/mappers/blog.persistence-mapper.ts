@@ -9,7 +9,7 @@ export const BlogPersistenceMapper = {
   toPersistence(entity: BlogEntity): BlogOrmEntity {
     const data = entity.toDb();
     const orm = new BlogOrmEntity();
-    orm.id = data.id;
+    orm.publicId = data.id;
     orm.name = data.name;
     orm.websiteUrl = data.websiteUrl;
     orm.description = data.description;

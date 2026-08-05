@@ -6,10 +6,10 @@ import { PostOrmEntity } from './post.orm-entity';
 
 @Entity('post_reactions')
 export class PostReactionEntity {
-  @PrimaryColumn({ name: 'post_id', type: 'uuid' })
+  @PrimaryColumn({ name: 'post_id', type: 'bigint' })
   postId: string;
 
-  @PrimaryColumn({ name: 'user_id', type: 'varchar' })
+  @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId: string;
 
   @Column({ name: 'user_login', type: 'varchar' })

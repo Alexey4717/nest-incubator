@@ -18,6 +18,7 @@ export interface ExplainMetrics {
   scanType: ScanType;
   indexName: string | null;
   buffers: ExplainBuffers;
+  usesIndexScan: boolean;
 }
 
 export interface BenchmarkScenarioConfig {

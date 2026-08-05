@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { generatePublicId } from '@/core/id/public-id.generator';
 
 import { PostOrmEntity } from '../../infrastructure/post.orm-entity';
 
@@ -38,7 +38,7 @@ export class PostEntity {
 
   static create(props: PostCreateProps, blogName: string): PostEntity {
     return new PostEntity({
-      id: randomUUID(),
+      id: generatePublicId(),
       title: props.title,
       shortDescription: props.shortDescription,
       content: props.content,
@@ -52,7 +52,7 @@ export class PostEntity {
 
   static reconstitute(raw: PostOrmEntity | PostDb): PostEntity {
     return new PostEntity({
-      id: raw.id,
+      id: 'publicId' in raw ? raw.publicId : raw.id,
       title: raw.title,
       shortDescription: raw.shortDescription,
       content: raw.content,

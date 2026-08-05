@@ -6,10 +6,10 @@ import { CommentOrmEntity } from './comment.orm-entity';
 
 @Entity('comment_reactions')
 export class CommentReactionEntity {
-  @PrimaryColumn({ name: 'comment_id', type: 'uuid' })
+  @PrimaryColumn({ name: 'comment_id', type: 'bigint' })
   commentId: string;
 
-  @PrimaryColumn({ name: 'user_id', type: 'varchar' })
+  @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId: string;
 
   @Column({ name: 'like_status', type: 'varchar' })

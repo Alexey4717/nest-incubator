@@ -44,7 +44,7 @@ export class UserRepository {
   async save(user: UserEntity): Promise<boolean> {
     const data = user.toDb();
     const result = await this.usersRepository.update(
-      { id: data.id },
+      { publicId: data.id },
       {
         login: data.login,
         email: data.email,
@@ -60,7 +60,7 @@ export class UserRepository {
   }
 
   async findById(id: string): Promise<UserEntity | null> {
-    const entity = await this.usersRepository.findOne({ where: { id } });
+    const entity = await this.usersRepository.findOne({ where: { publicId: id } });
     return entity ? UserPersistenceMapper.toDomain(entity) : null;
   }
 
@@ -107,7 +107,7 @@ export class UserRepository {
 
   async deleteUserById(id: string): Promise<boolean> {
     try {
-      const result = await this.usersRepository.delete({ id });
+      const result = await this.usersRepository.delete({ publicId: id });
       return (result.affected ?? 0) === 1;
     } catch (error) {
       console.log(`usersRepository.deleteUserById error is occurred: ${error}`);

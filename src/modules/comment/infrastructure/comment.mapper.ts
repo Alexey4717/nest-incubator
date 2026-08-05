@@ -3,9 +3,12 @@ import { CommentModel, CommentReactionModel } from '../models/comment.model';
 import { CommentReactionEntity } from './comment-reaction.entity';
 import { CommentOrmEntity } from './comment.orm-entity';
 
-export function reactionToDomain(reaction: CommentReactionEntity): CommentReactionModel {
+export function reactionToDomain(
+  reaction: CommentReactionEntity,
+  userPublicId: string,
+): CommentReactionModel {
   return {
-    userId: reaction.userId,
+    userId: userPublicId,
     likeStatus: reaction.likeStatus,
     createdAt: reaction.createdAt.toISOString(),
   };
@@ -26,20 +29,26 @@ export function reactionToOrm(
 export function toDomain(
   entity: CommentOrmEntity,
   reactions: CommentReactionEntity[] = [],
+  fkPublicIds?: { postId: string; userId: string },
 ): CommentModel {
   return {
-    id: entity.id,
-    postId: entity.postId,
+    id: entity.publicId,
+    postId: fkPublicIds?.postId ?? entity.postId,
     content: entity.content,
-    commentatorInfo: { userId: entity.userId, userLogin: entity.userLogin },
+    commentatorInfo: {
+      userId: fkPublicIds?.userId ?? entity.userId,
+      userLogin: entity.userLogin,
+    },
     createdAt: entity.createdAt.toISOString(),
-    reactions: reactions.map(reactionToDomain),
+    reactions: reactions.map((reaction) =>
+      reactionToDomain(reaction, fkPublicIds?.userId ?? reaction.userId),
+    ),
   };
 }
 
 export function toOrm(model: CommentModel): CommentOrmEntity {
   const entity = new CommentOrmEntity();
-  entity.id = model.id;
+  entity.publicId = model.id;
   entity.postId = model.postId;
   entity.content = model.content;
   entity.userId = model.commentatorInfo.userId;

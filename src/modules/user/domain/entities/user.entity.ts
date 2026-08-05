@@ -3,6 +3,7 @@ import { add } from 'date-fns';
 
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
 import { DomainException } from '@/core/exceptions/domain.exception';
+import { generatePublicId } from '@/core/id/public-id.generator';
 
 import { UserOrmEntity } from '../../infrastructure/user.orm-entity';
 
@@ -36,7 +37,7 @@ export class UserEntity {
 
   static create(props: UserCreateProps): UserEntity {
     return new UserEntity({
-      id: randomUUID(),
+      id: generatePublicId(),
       login: props.login,
       email: props.email,
       passwordHash: props.passwordHash,
@@ -51,7 +52,7 @@ export class UserEntity {
 
   static reconstitute(raw: UserOrmEntity | UserDb): UserEntity {
     return new UserEntity({
-      id: raw.id,
+      id: 'publicId' in raw ? raw.publicId : raw.id,
       login: raw.login,
       email: raw.email,
       passwordHash: raw.passwordHash,

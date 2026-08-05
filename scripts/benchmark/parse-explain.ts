@@ -62,6 +62,15 @@ function unwrapExplainRows(raw: unknown): ExplainJsonPlan[] {
   return raw as ExplainJsonPlan[];
 }
 
+function planUsesIndexScan(node: ExplainPlanNode): boolean {
+  const nodes = collectScanNodes(node);
+  return nodes.some((scanNode) =>
+    ['Index Scan', 'Index Only Scan', 'Bitmap Index Scan', 'Bitmap Heap Scan'].includes(
+      scanNode['Node Type'],
+    ),
+  );
+}
+
 export function parseExplainJson(raw: unknown): ExplainMetrics {
   const rows = unwrapExplainRows(raw);
   const root = rows[0];
@@ -79,10 +88,15 @@ export function parseExplainJson(raw: unknown): ExplainMetrics {
     scanType: primary['Node Type'] as ScanType,
     indexName: primary['Index Name'] ?? null,
     buffers: sumBuffers(allNodes),
+    usesIndexScan: planUsesIndexScan(root.Plan),
   };
 }
 
-export function isIndexScan(scanType: ScanType): boolean {
+export function isIndexScan(scanType: ScanType, usesIndexScan?: boolean): boolean {
+  if (usesIndexScan === true) {
+    return true;
+  }
+
   return ['Index Scan', 'Index Only Scan', 'Bitmap Index Scan', 'Bitmap Heap Scan'].includes(
     scanType,
   );

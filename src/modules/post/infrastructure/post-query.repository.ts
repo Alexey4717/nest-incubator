@@ -6,6 +6,8 @@ import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
 import { Paginator, SortDirections } from '@/core/types/common';
 import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
 
+import { BlogOrmEntity } from '@/modules/blog/infrastructure/blog.orm-entity';
+
 import { GetPostsQueryParamsDto, SortPostsBy } from '../dto/get-posts-query-params.dto';
 import { PostModel } from '../models/post.model';
 import { fromRaw, PostRawRow, toDomain } from './post.mapper';
@@ -18,11 +20,11 @@ const SORT_COLUMN_MAP: Record<SortPostsBy, keyof PostOrmEntity> = {
 };
 
 const POST_RAW_SELECT = [
-  'post.id as "id"',
+  'post.publicId as "id"',
   'post.title as "title"',
   'post.shortDescription as "shortDescription"',
   'post.content as "content"',
-  'post.blogId as "blogId"',
+  'blog.publicId as "blogId"',
   'post.blogName as "blogName"',
   'post.createdAt as "createdAt"',
 ];
@@ -30,7 +32,7 @@ const POST_RAW_SELECT = [
 const POST_REACTIONS_AGG = `COALESCE(
   jsonb_agg(
     json_build_object(
-      'userId', r.user_id,
+      'userId', ru.public_id,
       'userLogin', r.user_login,
       'likeStatus', r.like_status,
       'createdAt', r.created_at
@@ -51,16 +53,18 @@ export class PostQueryRepository {
   }
 
   async postExists(id: string): Promise<boolean> {
-    return this.postsRepository.exists({ where: { id } });
+    return this.postsRepository.exists({ where: { publicId: id } });
   }
 
   async findPostById(id: string): Promise<PostModel | null> {
     const raw = await this.createPostsQueryBuilder()
       .leftJoin('post.reactions', 'r')
+      .leftJoin('users', 'ru', 'r.user_id = ru.id')
       .select(POST_RAW_SELECT)
       .addSelect(POST_REACTIONS_AGG, 'reactions')
-      .where('post.id = :id', { id })
+      .where('post.publicId = :id', { id })
       .groupBy('post.id')
+      .addGroupBy('blog.id')
       .getRawOne<PostRawRow>();
 
     return raw ? fromRaw(raw) : null;
@@ -73,11 +77,13 @@ export class PostQueryRepository {
     return this.getPaginatedPosts(query, blogId);
   }
 
-  private createPostsQueryBuilder(blogId?: string): SelectQueryBuilder<PostOrmEntity> {
-    const qb = this.postsRepository.createQueryBuilder('post');
+  private createPostsQueryBuilder(blogPublicId?: string): SelectQueryBuilder<PostOrmEntity> {
+    const qb = this.postsRepository
+      .createQueryBuilder('post')
+      .innerJoin(BlogOrmEntity, 'blog', 'post.blogId = blog.id');
 
-    if (blogId) {
-      qb.andWhere('post.blogId = :blogId', { blogId });
+    if (blogPublicId) {
+      qb.andWhere('blog.publicId = :blogId', { blogId: blogPublicId });
     }
 
     return qb;
@@ -95,9 +101,11 @@ export class PostQueryRepository {
 
     const rawRows = await this.createPostsQueryBuilder(blogId)
       .leftJoin('post.reactions', 'r')
+      .leftJoin('users', 'ru', 'r.user_id = ru.id')
       .select(POST_RAW_SELECT)
       .addSelect(POST_REACTIONS_AGG, 'reactions')
       .groupBy('post.id')
+      .addGroupBy('blog.id')
       .orderBy(`post.${sortColumn}`, sortDirection === SortDirections.asc ? 'ASC' : 'DESC')
       .offset(skip)
       .limit(pageSize)

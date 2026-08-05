@@ -17,7 +17,7 @@ const SORT_COLUMN_MAP: Record<SortUsersBy, keyof UserOrmEntity> = {
 };
 
 const USER_RAW_SELECT = [
-  'user.id as "id"',
+  'user.publicId as "id"',
   'user.login as "login"',
   'user.email as "email"',
   'user.passwordHash as "passwordHash"',
@@ -82,13 +82,13 @@ export class UserQueryRepository {
   }
 
   async findUserById(id: string): Promise<UserModel | null> {
-    const entity = await this.usersRepository.findOne({ where: { id } });
+    const entity = await this.usersRepository.findOne({ where: { publicId: id } });
     return entity ? toDomain(entity) : null;
   }
 
   async findUserLoginById(id: string): Promise<string | null> {
     const entity = await this.usersRepository.findOne({
-      where: { id },
+      where: { publicId: id },
       select: { login: true },
     });
     return entity?.login ?? null;

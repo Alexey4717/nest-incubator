@@ -3,9 +3,12 @@ import { PostModel, PostReactionModel } from '../models/post.model';
 import { PostReactionEntity } from './post-reaction.entity';
 import { PostOrmEntity } from './post.orm-entity';
 
-export function reactionToDomain(reaction: PostReactionEntity): PostReactionModel {
+export function reactionToDomain(
+  reaction: PostReactionEntity,
+  userPublicId: string,
+): PostReactionModel {
   return {
-    userId: reaction.userId,
+    userId: userPublicId,
     userLogin: reaction.userLogin,
     likeStatus: reaction.likeStatus,
     createdAt: reaction.createdAt.toISOString(),
@@ -14,20 +17,20 @@ export function reactionToDomain(reaction: PostReactionEntity): PostReactionMode
 
 export function toDomain(entity: PostOrmEntity, reactions: PostReactionEntity[] = []): PostModel {
   return {
-    id: entity.id,
+    id: entity.publicId,
     title: entity.title,
     shortDescription: entity.shortDescription,
     content: entity.content,
     blogId: entity.blogId,
     blogName: entity.blogName,
     createdAt: entity.createdAt.toISOString(),
-    reactions: reactions.map(reactionToDomain),
+    reactions: reactions.map((reaction) => reactionToDomain(reaction, reaction.userId)),
   };
 }
 
 export function toOrm(model: PostModel): PostOrmEntity {
   const entity = new PostOrmEntity();
-  entity.id = model.id;
+  entity.publicId = model.id;
   entity.title = model.title;
   entity.shortDescription = model.shortDescription;
   entity.content = model.content;

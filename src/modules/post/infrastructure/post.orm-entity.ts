@@ -16,7 +16,7 @@ export class PostOrmEntity extends BaseOrmEntity {
   @Column({ type: 'varchar' })
   content: string;
 
-  @Column({ name: 'blog_id', type: 'uuid' })
+  @Column({ name: 'blog_id', type: 'bigint' })
   blogId: string;
 
   @Column({ name: 'blog_name', type: 'varchar' })

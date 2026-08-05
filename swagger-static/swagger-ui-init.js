@@ -523,6 +523,9 @@ window.onload = function() {
             },
             "401": {
               "description": "Invalid access token"
+            },
+            "404": {
+              "description": "User not found"
             }
           },
           "tags": [
@@ -1824,6 +1827,12 @@ window.onload = function() {
             },
             "401": {
               "description": "Invalid refresh token"
+            },
+            "403": {
+              "description": "Cannot terminate current device session"
+            },
+            "404": {
+              "description": "Device not found"
             }
           },
           "tags": [

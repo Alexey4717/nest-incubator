@@ -151,13 +151,13 @@ function computeScalingRatios(measurements: ScaleMeasurement[]): ScalingRatio[] 
   return ratios;
 }
 
-function assertScenario(report: ScenarioReport): AssertionResult[] {
+function assertScenario(report: ScenarioReport, quick: boolean): AssertionResult[] {
   const assertions: AssertionResult[] = [];
   const maxMeasurement = report.measurements[report.measurements.length - 1];
 
   assertions.push({
     name: 'index-scan-at-max-scale',
-    passed: isIndexScan(maxMeasurement.withIndex.scanType),
+    passed: isIndexScan(maxMeasurement.withIndex.scanType, maxMeasurement.withIndex.usesIndexScan),
     message: `Expected Index Scan at max scale, got ${maxMeasurement.withIndex.scanType}`,
   });
 
@@ -175,6 +175,10 @@ function assertScenario(report: ScenarioReport): AssertionResult[] {
     passed: speedup >= 10,
     message: `Expected speedup >= 10x, got ${speedup.toFixed(1)}x`,
   });
+
+  if (quick) {
+    return assertions;
+  }
 
   for (const ratio of report.scalingRatios) {
     assertions.push({
@@ -232,6 +236,7 @@ async function runScenario(
   dataSource: DataSource,
   scenario: BenchmarkScenarioConfig,
   scales: number[],
+  quick: boolean,
 ): Promise<ScenarioReport> {
   const template = readFileSync(join(BENCHMARK_DIR, scenario.sqlTemplate), 'utf8');
   const measurements: ScaleMeasurement[] = [];
@@ -262,7 +267,7 @@ async function runScenario(
     assertions: [],
   };
 
-  partialReport.assertions = assertScenario(partialReport);
+  partialReport.assertions = assertScenario(partialReport, quick);
   return partialReport;
 }
 
@@ -276,7 +281,7 @@ async function bootstrap(): Promise<void> {
     const scenarios: ScenarioReport[] = [];
     for (const scenario of SCENARIOS) {
       console.log(`\nScenario: ${scenario.label}`);
-      scenarios.push(await runScenario(dataSource, scenario, args.scales));
+      scenarios.push(await runScenario(dataSource, scenario, args.scales, args.quick));
     }
 
     const report: BenchmarkReport = {

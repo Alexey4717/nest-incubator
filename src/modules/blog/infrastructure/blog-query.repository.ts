@@ -58,7 +58,7 @@ export class BlogQueryRepository {
     query: GetPostsQueryParamsDto,
   ): Promise<Paginator<PostModel[]> | null> {
     try {
-      const foundBlog = await this.blogsRepository.findOne({ where: { id: blogId } });
+      const foundBlog = await this.blogsRepository.findOne({ where: { publicId: blogId } });
       if (!foundBlog) return null;
 
       return this.postQueryRepository.getPostsByBlogId(blogId, query);
@@ -69,7 +69,7 @@ export class BlogQueryRepository {
   }
 
   async findBlogById(id: string): Promise<BlogModel | null> {
-    const entity = await this.blogsRepository.findOne({ where: { id } });
+    const entity = await this.blogsRepository.findOne({ where: { publicId: id } });
     return entity ? toDomain(entity) : null;
   }
 

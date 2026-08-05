@@ -40,7 +40,9 @@
     "db:seed:bulk:clean": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/seed-bulk.ts -- --clean",
     "db:explain": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-explain.ts",
     "db:benchmark": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-benchmark.ts",
-    "db:benchmark:quick": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-benchmark.ts -- --quick"
+    "db:benchmark:quick": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/run-benchmark.ts -- --quick",
+    "db:benchmark:insert-pk": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/bench-insert-pk.ts",
+    "db:benchmark:insert-pk:quick": "cross-env NODE_ENV=development node -r tsconfig-paths/register -r ts-node/register scripts/benchmark/bench-insert-pk.ts -- --quick"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.8.1",
@@ -76,7 +78,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "typeorm": "^1.0.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "uuidv7": "^1.2.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
