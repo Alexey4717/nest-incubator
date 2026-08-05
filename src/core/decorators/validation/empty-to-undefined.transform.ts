@@ -8,32 +8,56 @@ function unwrapQueryParam(value: unknown): unknown {
   return value;
 }
 
-export function emptyToUndefined({ value }: TransformFnParams): unknown {
+function normalizeQueryString(value: unknown): unknown {
   const unwrapped = unwrapQueryParam(value);
 
-  return unwrapped === '' ? undefined : unwrapped;
+  if (typeof unwrapped === 'string') {
+    return unwrapped.trim();
+  }
+
+  return unwrapped;
+}
+
+function isEmptyQueryParamValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    return value === '' || value === 'null' || value === 'undefined';
+  }
+
+  return false;
+}
+
+export function emptyToUndefined({ value }: TransformFnParams): unknown {
+  const normalized = normalizeQueryString(value);
+
+  return isEmptyQueryParamValue(normalized) ? undefined : normalized;
 }
 
 export function queryParamToIntWithDefault(defaultValue: number) {
   return ({ value }: TransformFnParams): number => {
-    const unwrapped = unwrapQueryParam(value);
+    const normalized = normalizeQueryString(value);
 
-    if (unwrapped === '' || unwrapped === null || unwrapped === undefined) {
+    if (isEmptyQueryParamValue(normalized)) {
       return defaultValue;
     }
 
-    return Number(unwrapped);
+    const parsed = Number(normalized);
+
+    return Number.isFinite(parsed) ? parsed : defaultValue;
   };
 }
 
 export function queryParamToStringWithDefault<T extends string>(defaultValue: T) {
   return ({ value }: TransformFnParams): T => {
-    const unwrapped = unwrapQueryParam(value);
+    const normalized = normalizeQueryString(value);
 
-    if (unwrapped === '' || unwrapped === null || unwrapped === undefined) {
+    if (isEmptyQueryParamValue(normalized)) {
       return defaultValue;
     }
 
-    return unwrapped as T;
+    return normalized as T;
   };
 }

@@ -88,6 +88,19 @@ describe('Quiz SA API (e2e)', () => {
 
       expectPaginatorItemsCount(res.body, 1);
     });
+
+    it('should accept bracket-style array query params — 200', async () => {
+      await quiz.createQuestion('question body03', ['correct3']);
+
+      const res = await request(ctx.httpServer)
+        .get(
+          '/sa/quiz/questions?pageNumber[]=1&pageSize[]=10&sortBy[]=createdAt&sortDirection[]=desc&publishedStatus[]=all',
+        )
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .expect(constants.HTTP_STATUS_OK);
+
+      expectPaginatorItemsCount(res.body, 1);
+    });
   });
 
   describe('POST /sa/quiz/questions', () => {
