@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
-import { join } from 'path';
 
 import { CoreConfig } from '@/core/core.config';
 
@@ -30,7 +29,7 @@ export class TypeOrmConfig implements TypeOrmOptionsFactory {
       }),
       autoLoadEntities: true,
       logging: this.coreConfig.isDevelopment,
-      migrations: [join(__dirname, 'migrations', '*.{ts,js}')],
+      // migrations только в data-source.ts (CLI); здесь не грузим — лишняя I/O и баг путей Jest/Windows
       synchronize: false,
       migrationsRun: false,
     };

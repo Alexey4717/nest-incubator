@@ -6,7 +6,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
-  MaxLength,
+  Length,
 } from 'class-validator';
 
 import { Trim } from '@/core/decorators/validation/trim.decorator';
@@ -36,10 +36,10 @@ export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
 }
 
 export class CreateQuizQuestionDto {
-  @ApiProperty({ maxLength: 1000, example: 'What is the capital of France?' })
+  @ApiProperty({ minLength: 10, maxLength: 1000, example: 'What is the capital of France?' })
   @Trim()
   @IsString()
-  @MaxLength(1000)
+  @Length(10, 1000)
   body = '';
 
   @ApiProperty({ type: [String], example: ['Paris'] })

@@ -54,6 +54,9 @@ export class PairGameViewDto {
   @ApiProperty({ type: [QuestionInGameViewDto], nullable: true })
   questions: QuestionInGameViewDto[] | null = null;
 
+  @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
+  pairCreatedDate = '';
+
   @ApiProperty({ example: null, nullable: true })
   startGameDate: string | null = null;
 

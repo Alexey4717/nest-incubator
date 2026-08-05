@@ -28,6 +28,7 @@ export type PairGameViewModel = {
   firstPlayerProgress: PlayerProgressView;
   secondPlayerProgress: PlayerProgressView | null;
   questions: QuestionInGameView[] | null;
+  pairCreatedDate: string;
   startGameDate: string | null;
   finishGameDate: string | null;
 };

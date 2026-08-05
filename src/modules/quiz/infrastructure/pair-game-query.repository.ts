@@ -89,6 +89,7 @@ export class PairGameQueryRepository {
       firstPlayerProgress,
       secondPlayerProgress,
       questions,
+      pairCreatedDate: pair.createdAt.toISOString(),
       startGameDate: pair.startGameDate?.toISOString() ?? null,
       finishGameDate: pair.finishGameDate?.toISOString() ?? null,
     };

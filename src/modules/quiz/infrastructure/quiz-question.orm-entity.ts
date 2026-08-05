@@ -15,6 +15,6 @@ export class QuizQuestionOrmEntity extends BaseOrmEntity {
   @Column({ type: 'boolean', default: false })
   published: boolean;
 
-  @Column({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt: Date;
+  @Column({ name: 'updated_at', type: 'timestamptz', nullable: true })
+  updatedAt: Date | null;
 }

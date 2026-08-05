@@ -20,21 +20,20 @@ export type QuizQuestionDb = {
   correctAnswers: string[];
   published: boolean;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 };
 
 export class QuizQuestionEntity {
   private constructor(private data: QuizQuestionDb) {}
 
   static create(props: QuizQuestionCreateProps): QuizQuestionEntity {
-    const now = new Date();
     return new QuizQuestionEntity({
       id: generatePublicId(),
       body: props.body,
       correctAnswers: props.correctAnswers,
       published: false,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: null,
     });
   }
 
@@ -45,7 +44,11 @@ export class QuizQuestionEntity {
       correctAnswers: raw.correctAnswers,
       published: raw.published,
       createdAt: raw.createdAt instanceof Date ? raw.createdAt : new Date(raw.createdAt),
-      updatedAt: raw.updatedAt instanceof Date ? raw.updatedAt : new Date(raw.updatedAt),
+      updatedAt: raw.updatedAt
+        ? raw.updatedAt instanceof Date
+          ? raw.updatedAt
+          : new Date(raw.updatedAt)
+        : null,
     });
   }
 

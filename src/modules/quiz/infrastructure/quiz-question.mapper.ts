@@ -9,7 +9,7 @@ export function toDomain(entity: QuizQuestionOrmEntity): QuizQuestionModel {
     correctAnswers: entity.correctAnswers,
     published: entity.published,
     createdAt: entity.createdAt.toISOString(),
-    updatedAt: entity.updatedAt.toISOString(),
+    updatedAt: entity.updatedAt?.toISOString() ?? null,
   };
 }
 
@@ -21,6 +21,6 @@ export function fromEntity(entity: QuizQuestionEntity): QuizQuestionModel {
     correctAnswers: data.correctAnswers,
     published: data.published,
     createdAt: data.createdAt.toISOString(),
-    updatedAt: data.updatedAt.toISOString(),
+    updatedAt: data.updatedAt?.toISOString() ?? null,
   };
 }

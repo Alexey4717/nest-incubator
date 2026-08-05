@@ -1,10 +1,19 @@
 import { constants } from 'http2';
+import { join } from 'path';
 import request from 'supertest';
 
+import { convertToBoolean } from '../src/core/config-validation.utility';
+import { loadEnvFiles } from '../src/core/env-files.utility';
 import { clearAllData } from './helpers/db.helper';
 import { E2eContext, initSettings } from './helpers/init-settings';
 
-describe('Auth throttle (e2e)', () => {
+loadEnvFiles(join(__dirname, '../src/env'), process.env.NODE_ENV || 'testing');
+
+const describeIfThrottle = convertToBoolean(process.env.IP_RESTRICTION_ENABLED ?? 'false')
+  ? describe
+  : describe.skip;
+
+describeIfThrottle('Auth throttle (e2e)', () => {
   let ctx: E2eContext;
 
   beforeAll(async () => {

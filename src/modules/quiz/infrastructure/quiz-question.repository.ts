@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -8,6 +8,8 @@ import { QuizQuestionOrmEntity } from './quiz-question.orm-entity';
 
 @Injectable()
 export class QuizQuestionRepository {
+  private readonly logger = new Logger(QuizQuestionRepository.name);
+
   constructor(
     @InjectRepository(QuizQuestionOrmEntity)
     private readonly questionsRepository: Repository<QuizQuestionOrmEntity>,
@@ -19,7 +21,7 @@ export class QuizQuestionRepository {
       const saved = await this.questionsRepository.save(entity);
       return QuizQuestionPersistenceMapper.toDomain(saved);
     } catch (error: unknown) {
-      console.log(`QuizQuestionRepository.create error: ${error}`);
+      this.logger.error('create failed', error instanceof Error ? error.stack : String(error));
       return null;
     }
   }
@@ -48,7 +50,7 @@ export class QuizQuestionRepository {
       const result = await this.questionsRepository.delete({ publicId: id });
       return (result.affected ?? 0) === 1;
     } catch (error: unknown) {
-      console.log(`QuizQuestionRepository.deleteById error: ${error}`);
+      this.logger.error('deleteById failed', error instanceof Error ? error.stack : String(error));
       return false;
     }
   }

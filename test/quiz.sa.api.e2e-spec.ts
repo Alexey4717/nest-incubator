@@ -74,7 +74,7 @@ describe('Quiz SA API (e2e)', () => {
         correctAnswers: ['4'],
         published: false,
         createdAt: expect.any(String),
-        updatedAt: expect.any(String),
+        updatedAt: null,
       });
     });
 
@@ -82,7 +82,7 @@ describe('Quiz SA API (e2e)', () => {
       const res = await request(ctx.httpServer)
         .post('/sa/quiz/questions')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-        .send({ body: '', correctAnswers: [] })
+        .send({ body: 'short', correctAnswers: [] })
         .expect(constants.HTTP_STATUS_BAD_REQUEST);
 
       const fields = res.body.errorsMessages.map((e: { field: string }) => e.field);
@@ -100,23 +100,24 @@ describe('Quiz SA API (e2e)', () => {
     });
 
     it('should update question — 204', async () => {
-      const created = await quiz.createQuestion('Old body', ['old']);
+      const created = await quiz.createQuestion('Old question body', ['old']);
 
       await request(ctx.httpServer)
         .put(`/sa/quiz/questions/${created.id}`)
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-        .send({ body: 'New body', correctAnswers: ['new'] })
+        .send({ body: 'Updated question body', correctAnswers: ['new'] })
         .expect(constants.HTTP_STATUS_NO_CONTENT);
 
-      const list = await quiz.getQuestions({ bodySearchTerm: 'New body' });
-      expect(list.body.items[0].body).toBe('New body');
+      const list = await quiz.getQuestions({ bodySearchTerm: 'Updated question body' });
+      expect(list.body.items[0].body).toBe('Updated question body');
+      expect(list.body.items[0].updatedAt).toEqual(expect.any(String));
     });
 
     it('should return 404 for non-existent question', async () => {
       await request(ctx.httpServer)
         .put('/sa/quiz/questions/00000000-0000-0000-0000-000000000001')
         .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
-        .send({ body: 'Q', correctAnswers: ['A'] })
+        .send({ body: 'Valid body!', correctAnswers: ['A'] })
         .expect(constants.HTTP_STATUS_NOT_FOUND);
     });
   });
@@ -138,6 +139,7 @@ describe('Quiz SA API (e2e)', () => {
 
       const list = await quiz.getQuestions({ publishedStatus: 'published' });
       expect(list.body.items[0].published).toBe(true);
+      expect(list.body.items[0].updatedAt).toEqual(expect.any(String));
     });
   });
 
@@ -149,7 +151,7 @@ describe('Quiz SA API (e2e)', () => {
     });
 
     it('should delete question — 204', async () => {
-      const created = await quiz.createQuestion('To delete', ['x']);
+      const created = await quiz.createQuestion('To delete!', ['x']);
       await quiz.deleteQuestion(created.id);
 
       const list = await quiz.getQuestions();

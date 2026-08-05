@@ -20,6 +20,7 @@ type PairGameView = {
     score: number;
   } | null;
   questions: { id: string; body: string }[] | null;
+  pairCreatedDate: string;
   startGameDate: string | null;
   finishGameDate: string | null;
 };
@@ -114,6 +115,7 @@ describe('Quiz Pair Game API (e2e)', () => {
     expect(body.status).toBe('PendingSecondPlayer');
     expect(body.secondPlayerProgress).toBeNull();
     expect(body.questions).toBeNull();
+    expect(body.pairCreatedDate).toEqual(expect.any(String));
     expect(body.startGameDate).toBeNull();
     expect(body.finishGameDate).toBeNull();
     expect(body.firstPlayerProgress.player.id).toBe(user1Id);

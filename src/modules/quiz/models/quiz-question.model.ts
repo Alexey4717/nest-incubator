@@ -4,5 +4,5 @@ export type QuizQuestionModel = {
   correctAnswers: string[];
   published: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
 };
