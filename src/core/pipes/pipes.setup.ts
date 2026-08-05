@@ -8,6 +8,7 @@ export function setupValidationPipe(app: INestApplication): void {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      transformOptions: { exposeDefaultValues: true },
       stopAtFirstError: true,
       whitelist: true,
       exceptionFactory: (errors) => {

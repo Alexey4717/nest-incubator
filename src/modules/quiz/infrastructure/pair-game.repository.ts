@@ -55,6 +55,9 @@ export class PairGameRepository {
 
     return runWithTransactionRetry(() =>
       this.dataSource.transaction(async (manager) => {
+        await manager.query(`SET LOCAL lock_timeout = '2s'`);
+        await manager.query(`SET LOCAL statement_timeout = '5s'`);
+
         const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
 
         const waitingPair = await manager
@@ -118,6 +121,9 @@ export class PairGameRepository {
   async submitAnswer(userPublicId: string, answerText: string): Promise<AnswerResultViewModel> {
     return runWithTransactionRetry(() =>
       this.dataSource.transaction(async (manager) => {
+        await manager.query(`SET LOCAL lock_timeout = '2s'`);
+        await manager.query(`SET LOCAL statement_timeout = '5s'`);
+
         const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
 
         const pair = await manager

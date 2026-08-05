@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { createWriteStream } from 'fs';
 import { get } from 'http';
+import 'reflect-metadata';
 
 import './register-paths';
 
