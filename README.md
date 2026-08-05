@@ -897,7 +897,23 @@ Refresh token:
 
 Индексы ускоряют **точечный поиск** и **сортировку по отфильтрованному подмножеству**. Без индекса PostgreSQL делает **Seq Scan** — читает всю таблицу; время растёт **линейно** O(n). С B-tree индексом — **Index Scan**, время растёт **логарифмически** O(log n).
 
-**Селективность:** индекс оправдан, если условие WHERE отсеивает **>95%** строк. Для boolean/enum с низкой селективностью — **partial index** (`WHERE recovery_code IS NOT NULL`).
+**Селективность:** индекс оправдан, если условие WHERE отсеивает **>95%** строк. Для boolean/enum с низкой селективностью — **partial index** (`WHERE recovery_code IS NOT NULL`, `WHERE confirmation_code IS NOT NULL`).
+
+### Partial index
+
+**Partial index** — B-tree только по строкам, удовлетворяющим условию `WHERE` в определении индекса. Индекс меньше по размеру и быстрее обновляется, чем полный индекс по той же колонке.
+
+Главный кейс — **soft delete + unique**: `CREATE UNIQUE INDEX ... WHERE "deletedAt" IS NULL` позволяет хранить несколько «удалённых» записей с одинаковым `login`, но только одну активную. В проекте soft delete **не реализован** (hard delete); этот паттерн зафиксирован как reference на будущее.
+
+Кейс проекта — **nullable одноразовые коды** (`confirmation_code`, `recovery_code`): у большинства пользователей код `NULL`, уникальность нужна только среди NOT NULL. Partial unique index явно документирует намерение и компактнее полного `UNIQUE` на nullable-колонке.
+
+| Тема лекции                              | Решение в проекте                                                                   |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| Partial unique для nullable-колонки      | `UQ_users_recovery_code_partial`, `UQ_users_confirmation_code_partial`              |
+| `@Index` с `where` в TypeORM             | [`user.orm-entity.ts`](src/modules/user/infrastructure/user.orm-entity.ts)          |
+| Двойные кавычки для camelCase/snake_case | `'"recovery_code" IS NOT NULL'`, `'"confirmation_code" IS NOT NULL'`                |
+| Soft delete + unique                     | Не внедрено; при добавлении `@DeleteDateColumn` — partial unique на `login`/`email` |
+| Запрос должен попадать в условие индекса | Поиск по коду = equality на NOT NULL значении                                       |
 
 ### Шпаргалка по плану
 
@@ -920,6 +936,8 @@ Refresh token:
 | Cron: удаление просроченных сессий | `IDX_sessions_last_active_date`                | Index Scan     |
 | Поиск блога по имени               | `IDX_blogs_name`                               | Index Scan     |
 | Списки users/blogs по `createdAt`  | `IDX_users_created_at`, `IDX_blogs_created_at` | Index Scan     |
+| Подтверждение регистрации по коду  | `UQ_users_confirmation_code_partial`           | Index Scan     |
+| Восстановление пароля по коду      | `UQ_users_recovery_code_partial`               | Index Scan     |
 
 ### Команды
 
@@ -932,6 +950,9 @@ yarn db:benchmark:quick
 
 # Один EXPLAIN вручную (добавьте --no-index для Seq Scan)
 yarn db:explain 03-posts-by-blog.sql
+
+# Partial unique index на confirmation_code (лекция 08)
+yarn db:explain 09-users-by-confirmation-code.sql
 
 # Bulk-данные для экспериментов
 yarn db:seed:bulk -- --scale=100000 --scenario=posts

@@ -4,6 +4,10 @@ import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
 @Entity('users')
 @Index('IDX_users_created_at', ['createdAt'])
+@Index('UQ_users_confirmation_code_partial', ['confirmationCode'], {
+  unique: true,
+  where: '"confirmation_code" IS NOT NULL',
+})
 @Index('UQ_users_recovery_code_partial', ['recoveryCode'], {
   unique: true,
   where: '"recovery_code" IS NOT NULL',
@@ -18,7 +22,7 @@ export class UserOrmEntity extends BaseOrmEntity {
   @Column({ name: 'password_hash', type: 'varchar' })
   passwordHash: string;
 
-  @Column({ name: 'confirmation_code', type: 'varchar', unique: true, nullable: true })
+  @Column({ name: 'confirmation_code', type: 'varchar', nullable: true })
   confirmationCode: string | null;
 
   @Column({ name: 'confirmation_expiration', type: 'timestamptz', nullable: true })

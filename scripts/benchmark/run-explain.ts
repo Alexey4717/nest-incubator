@@ -24,7 +24,7 @@ const DEFAULT_PARAMS: Record<string, string> = {
 
 function renderSql(template: string, params: Record<string, string>): string {
   return Object.entries(params).reduce(
-    (sql, [key, value]) => sql.replaceAll(`{{${key}}}`, value),
+    (sql, [key, value]) => sql.replace(new RegExp(`{{${key}}}`, "g"), value),
     template,
   );
 }

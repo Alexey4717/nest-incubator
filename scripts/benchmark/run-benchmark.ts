@@ -77,7 +77,7 @@ function renderSql(template: string, scale: number): string {
   };
 
   return Object.entries(params).reduce(
-    (sql, [key, value]) => sql.replaceAll(`{{${key}}}`, value),
+    (sql, [key, value]) => sql.replace(new RegExp(`\{\{${key}\}\}`, "g"), value),
     template,
   );
 }
@@ -124,7 +124,9 @@ async function runExplain(
     await runner.commitTransaction();
     return parseExplainJson(raw);
   } catch (error) {
-    await runner.rollbackTransaction();
+    if (runner.isTransactionActive) {
+      await runner.rollbackTransaction();
+    }
     throw error;
   } finally {
     await runner.release();

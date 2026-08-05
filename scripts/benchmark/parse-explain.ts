@@ -42,8 +42,28 @@ function sumBuffers(nodes: ExplainPlanNode[]): ExplainBuffers {
   );
 }
 
+
+function unwrapExplainRows(raw: unknown): ExplainJsonPlan[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [];
+  }
+
+  const first = raw[0] as Record<string, unknown>;
+  if (first && typeof first === 'object' && 'QUERY PLAN' in first) {
+    const queryPlan = first['QUERY PLAN'];
+    if (typeof queryPlan === 'string') {
+      return JSON.parse(queryPlan) as ExplainJsonPlan[];
+    }
+    if (Array.isArray(queryPlan)) {
+      return queryPlan as ExplainJsonPlan[];
+    }
+  }
+
+  return raw as ExplainJsonPlan[];
+}
+
 export function parseExplainJson(raw: unknown): ExplainMetrics {
-  const rows = raw as ExplainJsonPlan[];
+  const rows = unwrapExplainRows(raw);
   const root = rows[0];
 
   if (!root?.Plan) {
