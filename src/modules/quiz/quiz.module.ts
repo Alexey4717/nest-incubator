@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AuthModule } from '@/modules/auth/auth.module';
 
+import { PairQuizGameUsersController } from './api/pair-quiz-game-users.controller';
 import { PairQuizGameController } from './api/pair-quiz-game.controller';
 import { SaQuizQuestionsController } from './api/sa-quiz-questions.controller';
 import { ConnectPairGameHandler } from './application/commands/connect-pair-game.command';
@@ -13,12 +14,16 @@ import { PublishQuizQuestionHandler } from './application/commands/publish-quiz-
 import { SubmitPairGameAnswerHandler } from './application/commands/submit-pair-game-answer.command';
 import { UpdateQuizQuestionHandler } from './application/commands/update-quiz-question.command';
 import { GetMyCurrentPairGameHandler } from './application/queries/get-my-current-pair-game.query';
+import { GetMyPairGamesHandler } from './application/queries/get-my-pair-games.query';
+import { GetMyStatisticHandler } from './application/queries/get-my-statistic.query';
 import { GetPairGameByIdHandler } from './application/queries/get-pair-game-by-id.query';
 import { GetQuizQuestionsHandler } from './application/queries/get-quiz-questions.query';
 import { ConnectPairGameUseCase } from './application/use-cases/connect-pair-game.use-case';
 import { CreateQuizQuestionUseCase } from './application/use-cases/create-quiz-question.use-case';
 import { DeleteQuizQuestionUseCase } from './application/use-cases/delete-quiz-question.use-case';
 import { GetMyCurrentPairGameUseCase } from './application/use-cases/get-my-current-pair-game.use-case';
+import { GetMyPairGamesUseCase } from './application/use-cases/get-my-pair-games.use-case';
+import { GetMyStatisticUseCase } from './application/use-cases/get-my-statistic.use-case';
 import { GetPairGameByIdUseCase } from './application/use-cases/get-pair-game-by-id.use-case';
 import { GetQuizQuestionsUseCase } from './application/use-cases/get-quiz-questions.use-case';
 import { PublishQuizQuestionUseCase } from './application/use-cases/publish-quiz-question.use-case';
@@ -41,6 +46,8 @@ const quizUseCases = [
   DeleteQuizQuestionUseCase,
   ConnectPairGameUseCase,
   GetMyCurrentPairGameUseCase,
+  GetMyPairGamesUseCase,
+  GetMyStatisticUseCase,
   GetPairGameByIdUseCase,
   SubmitPairGameAnswerUseCase,
 ];
@@ -57,6 +64,8 @@ const quizCommandHandlers = [
 const quizQueryHandlers = [
   GetQuizQuestionsHandler,
   GetMyCurrentPairGameHandler,
+  GetMyPairGamesHandler,
+  GetMyStatisticHandler,
   GetPairGameByIdHandler,
 ];
 
@@ -71,7 +80,7 @@ const quizQueryHandlers = [
       QuizPairAnswerOrmEntity,
     ]),
   ],
-  controllers: [SaQuizQuestionsController, PairQuizGameController],
+  controllers: [SaQuizQuestionsController, PairQuizGameController, PairQuizGameUsersController],
   providers: [
     QuizQuestionRepository,
     QuizQuestionQueryRepository,

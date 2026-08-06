@@ -41,6 +41,15 @@ export type AnswerResultViewModel = {
 
 export const PAIR_GAME_QUESTIONS_COUNT = 5;
 
+export type UserStatisticViewModel = {
+  sumScore: number;
+  avgScores: number;
+  gamesCount: number;
+  winsCount: number;
+  lossesCount: number;
+  drawsCount: number;
+};
+
 export function calculateFinalScores(
   firstCorrectCount: number,
   secondCorrectCount: number,
@@ -61,6 +70,13 @@ export function calculateFinalScores(
   }
 
   return { firstScore, secondScore };
+}
+
+export function roundAvgScores(sumScore: number, gamesCount: number): number {
+  if (gamesCount <= 0) {
+    return 0;
+  }
+  return Number((sumScore / gamesCount).toFixed(2));
 }
 
 export function isAnswerCorrect(answer: string, correctAnswers: string[]): boolean {

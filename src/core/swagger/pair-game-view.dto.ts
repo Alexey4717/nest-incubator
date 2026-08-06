@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { PaginatedMetaDto } from './paginated-meta.dto';
+
 export class PlayerInGameViewDto {
   @ApiProperty({ example: 'uuid' })
   id = '';
@@ -73,4 +75,29 @@ export class AnswerResultViewDto {
 
   @ApiProperty({ example: '2024-01-01T00:00:00.000Z' })
   addedAt = '';
+}
+
+export class PaginatedPairGamesViewDto extends PaginatedMetaDto {
+  @ApiProperty({ type: [PairGameViewDto] })
+  items: PairGameViewDto[] = [];
+}
+
+export class UserStatisticViewDto {
+  @ApiProperty({ example: 0 })
+  sumScore = 0;
+
+  @ApiProperty({ example: 0 })
+  avgScores = 0;
+
+  @ApiProperty({ example: 0 })
+  gamesCount = 0;
+
+  @ApiProperty({ example: 0 })
+  winsCount = 0;
+
+  @ApiProperty({ example: 0 })
+  lossesCount = 0;
+
+  @ApiProperty({ example: 0 })
+  drawsCount = 0;
 }

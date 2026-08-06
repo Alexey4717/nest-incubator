@@ -733,12 +733,21 @@ Query-параметры GET: `bodySearchTerm`, `publishedStatus` (`all` \| `pub
 | ------ | --------------------- | --- | ----------------------------------------------- |
 | `POST` | `/connection`         | 200 | Matchmaking (подключение к игре)                |
 | `GET`  | `/my-current`         | 200 | Текущая пара (`PendingSecondPlayer` / `Active`) |
+| `GET`  | `/my`                 | 200 | История игр пользователя (pagination + sort)    |
 | `GET`  | `/:id`                | 200 | Пара по id (любой status)                       |
 | `POST` | `/my-current/answers` | 200 | Ответ на следующий вопрос                       |
 
+| Метод | Путь                                 | Код | Описание                         |
+| ----- | ------------------------------------ | --- | -------------------------------- |
+| `GET` | `/pair-game-quiz/users/my-statistic` | 200 | Статистика текущего пользователя |
+
 Коды ошибок: 401 (нет JWT), 403 (уже в Active-паре / не участник / все 5 ответов даны), 404 (нет активной пары / игра не найдена), 400 (невалидный UUID в `/:id`).
 
-**PairGameView:** `id`, `status`, `firstPlayerProgress`, `secondPlayerProgress`, `questions`, `startGameDate`, `finishGameDate`.
+`GET /my`: все игры пользователя (`PendingSecondPlayer` \| `Active` \| `Finished`). Query: `sortBy` (default `pairCreatedDate`), `sortDirection` (default `desc`), `pageNumber`, `pageSize`. Primary sort по `SORT_COLUMN_MAP` (неизвестный `sortBy` → `createdAt`); secondary всегда `pairCreatedDate DESC`, кроме случая когда primary уже `createdAt`/`pairCreatedDate`.
+
+`GET /users/my-statistic`: только `Finished` игры. Поля: `sumScore`, `avgScores`, `gamesCount`, `winsCount`, `lossesCount`, `drawsCount`. `avgScores = Number((sumScore / gamesCount).toFixed(2))` при `gamesCount > 0`, иначе `0` (например `2`, не `2.00`).
+
+**PairGameView:** `id`, `status`, `firstPlayerProgress`, `secondPlayerProgress`, `questions`, `pairCreatedDate`, `startGameDate`, `finishGameDate`.
 
 | status                | secondPlayerProgress | questions | startGameDate | finishGameDate |
 | --------------------- | -------------------- | --------- | ------------- | -------------- |

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
@@ -12,12 +12,14 @@ import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard'
 import { ConnectPairGameCommand } from '../application/commands/connect-pair-game.command';
 import { SubmitPairGameAnswerCommand } from '../application/commands/submit-pair-game-answer.command';
 import { GetMyCurrentPairGameQuery } from '../application/queries/get-my-current-pair-game.query';
+import { GetMyPairGamesQuery } from '../application/queries/get-my-pair-games.query';
 import { GetPairGameByIdQuery } from '../application/queries/get-pair-game-by-id.query';
 import { GetPairGameByIdParamsDto } from '../dto/get-pair-game-by-id-params.dto';
-import { SubmitPairGameAnswerDto } from '../dto/pair-game.dto';
+import { GetMyPairGamesQueryParamsDto, SubmitPairGameAnswerDto } from '../dto/pair-game.dto';
 import {
   ApiConnectPairGame,
   ApiGetMyCurrentPairGame,
+  ApiGetMyPairGames,
   ApiGetPairGameById,
   ApiSubmitPairGameAnswer,
 } from './pair-quiz-game.swagger.decorators';
@@ -45,6 +47,13 @@ export class PairQuizGameController {
   @ApiGetMyCurrentPairGame()
   getMyCurrent(@CurrentUserId() userId: string) {
     return this.queryBus.execute(new GetMyCurrentPairGameQuery(userId));
+  }
+
+  @Get('my')
+  @HttpCode(constants.HTTP_STATUS_OK)
+  @ApiGetMyPairGames()
+  getMy(@CurrentUserId() userId: string, @Query() query: GetMyPairGamesQueryParamsDto) {
+    return this.queryBus.execute(new GetMyPairGamesQuery(userId, query));
   }
 
   @Get(':id')

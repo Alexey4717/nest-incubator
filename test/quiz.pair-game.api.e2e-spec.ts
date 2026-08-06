@@ -99,12 +99,70 @@ describe('Quiz Pair Game API (e2e)', () => {
       .send({ answer });
   }
 
+  function getMyGames(token: string, query: Record<string, string | number> = {}) {
+    return request(ctx.httpServer)
+      .get('/pair-game-quiz/pairs/my')
+      .query(query)
+      .set('Authorization', `Bearer ${token}`);
+  }
+
+  function getMyStatistic(token: string) {
+    return request(ctx.httpServer)
+      .get('/pair-game-quiz/users/my-statistic')
+      .set('Authorization', `Bearer ${token}`);
+  }
+
+  async function finishDrawGame(firstToken: string, secondToken: string): Promise<PairGameView> {
+    await connect(firstToken);
+    const gameRes = await connect(secondToken);
+    const game = gameRes.body as PairGameView;
+    const questions = game.questions!;
+
+    for (let i = 0; i < 5; i++) {
+      const answer = i < 2 ? correctAnswerFor(questions[i]) : 'wrong';
+      await submitAnswer(firstToken, answer);
+    }
+
+    for (let i = 0; i < 5; i++) {
+      const answer = i < 3 ? correctAnswerFor(questions[i]) : 'wrong';
+      await submitAnswer(secondToken, answer);
+    }
+
+    const finished = await getById(firstToken, game.id).expect(constants.HTTP_STATUS_OK);
+    return finished.body as PairGameView;
+  }
+
+  async function finishBWinsGame(firstToken: string, secondToken: string): Promise<PairGameView> {
+    await connect(firstToken);
+    const gameRes = await connect(secondToken);
+    const game = gameRes.body as PairGameView;
+    const questions = game.questions!;
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(firstToken, 'wrong');
+    }
+
+    await submitAnswer(secondToken, correctAnswerFor(questions[0]));
+    for (let i = 1; i < 5; i++) {
+      await submitAnswer(secondToken, 'wrong');
+    }
+
+    const finished = await getById(secondToken, game.id).expect(constants.HTTP_STATUS_OK);
+    return finished.body as PairGameView;
+  }
+
   it('401 without JWT on public endpoints', async () => {
     await request(ctx.httpServer)
       .post('/pair-game-quiz/pairs/connection')
       .expect(constants.HTTP_STATUS_UNAUTHORIZED);
     await request(ctx.httpServer)
       .get('/pair-game-quiz/pairs/my-current')
+      .expect(constants.HTTP_STATUS_UNAUTHORIZED);
+    await request(ctx.httpServer)
+      .get('/pair-game-quiz/pairs/my')
+      .expect(constants.HTTP_STATUS_UNAUTHORIZED);
+    await request(ctx.httpServer)
+      .get('/pair-game-quiz/users/my-statistic')
       .expect(constants.HTTP_STATUS_UNAUTHORIZED);
   });
 
@@ -231,22 +289,90 @@ describe('Quiz Pair Game API (e2e)', () => {
   });
 
   it('B wins scenario — scores 0:1', async () => {
+    const finished = await finishBWinsGame(token1, token2);
+    expect(finished.firstPlayerProgress.score).toBe(0);
+    expect(finished.secondPlayerProgress!.score).toBe(1);
+  });
+
+  it('GET my and my-statistic: history includes pending, statistic only finished', async () => {
+    await finishDrawGame(token1, token2);
+    await connect(token1).expect(constants.HTTP_STATUS_OK);
+
+    const history = await getMyGames(token1).expect(constants.HTTP_STATUS_OK);
+    expect(history.body.totalCount).toBe(2);
+    expect(history.body.items).toHaveLength(2);
+    const statuses = history.body.items.map((item: PairGameView) => item.status).sort();
+    expect(statuses).toEqual(['Finished', 'PendingSecondPlayer']);
+
+    const statistic = await getMyStatistic(token1).expect(constants.HTTP_STATUS_OK);
+    expect(statistic.body).toEqual({
+      sumScore: 3,
+      avgScores: 3,
+      gamesCount: 1,
+      winsCount: 0,
+      lossesCount: 0,
+      drawsCount: 1,
+    });
+  });
+
+  it('GET my: sortBy=status uses secondary pairCreatedDate desc', async () => {
+    const olderFinished = await finishDrawGame(token1, token2);
+    const newerFinished = await finishBWinsGame(token1, token2);
+
+    const history = await getMyGames(token1, {
+      sortBy: 'status',
+      sortDirection: 'asc',
+    }).expect(constants.HTTP_STATUS_OK);
+
+    expect(history.body.totalCount).toBe(2);
+    expect(history.body.items[0].status).toBe('Finished');
+    expect(history.body.items[1].status).toBe('Finished');
+    expect(history.body.items[0].id).toBe(newerFinished.id);
+    expect(history.body.items[1].id).toBe(olderFinished.id);
+  });
+
+  it('GET my: pageSize=1 paginates', async () => {
+    await finishDrawGame(token1, token2);
     await connect(token1);
-    const gameRes = await connect(token2);
-    const game = gameRes.body as PairGameView;
-    const questions = game.questions!;
 
-    for (let i = 0; i < 5; i++) {
-      await submitAnswer(token1, 'wrong');
-    }
+    const page1 = await getMyGames(token1, { pageSize: 1, pageNumber: 1 }).expect(
+      constants.HTTP_STATUS_OK,
+    );
+    const page2 = await getMyGames(token1, { pageSize: 1, pageNumber: 2 }).expect(
+      constants.HTTP_STATUS_OK,
+    );
 
-    await submitAnswer(token2, correctAnswerFor(questions[0]));
-    for (let i = 1; i < 5; i++) {
-      await submitAnswer(token2, 'wrong');
-    }
+    expect(page1.body.totalCount).toBe(2);
+    expect(page1.body.pagesCount).toBe(2);
+    expect(page1.body.items).toHaveLength(1);
+    expect(page2.body.items).toHaveLength(1);
+    expect(page1.body.items[0].id).not.toBe(page2.body.items[0].id);
+  });
 
-    const finished = await getById(token2, game.id).expect(constants.HTTP_STATUS_OK);
-    expect(finished.body.firstPlayerProgress.score).toBe(0);
-    expect(finished.body.secondPlayerProgress.score).toBe(1);
+  it('GET my-statistic: win/loss/draw and avgScores without .00', async () => {
+    await finishDrawGame(token1, token2);
+    await finishBWinsGame(token1, token2);
+
+    const statistic = await getMyStatistic(token1).expect(constants.HTTP_STATUS_OK);
+    expect(statistic.body).toEqual({
+      sumScore: 3,
+      avgScores: 1.5,
+      gamesCount: 2,
+      winsCount: 0,
+      lossesCount: 1,
+      drawsCount: 1,
+    });
+    expect(JSON.stringify(statistic.body.avgScores)).not.toContain('.00');
+
+    const statistic2 = await getMyStatistic(token2).expect(constants.HTTP_STATUS_OK);
+    expect(statistic2.body).toEqual({
+      sumScore: 4,
+      avgScores: 2,
+      gamesCount: 2,
+      winsCount: 1,
+      lossesCount: 0,
+      drawsCount: 1,
+    });
+    expect(statistic2.body.avgScores).toBe(2);
   });
 });

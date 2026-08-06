@@ -10,7 +10,12 @@ import {
 } from '@nestjs/swagger';
 
 import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
-import { AnswerResultViewDto, PairGameViewDto } from '@/core/swagger/pair-game-view.dto';
+import {
+  AnswerResultViewDto,
+  PaginatedPairGamesViewDto,
+  PairGameViewDto,
+  UserStatisticViewDto,
+} from '@/core/swagger/pair-game-view.dto';
 
 import { SubmitPairGameAnswerDto } from '../dto/pair-game.dto';
 
@@ -29,6 +34,14 @@ export function ApiGetMyCurrentPairGame() {
     ApiOkResponse({ type: PairGameViewDto }),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
     ApiNotFoundResponse({ description: 'No active or pending pair' }),
+  );
+}
+
+export function ApiGetMyPairGames() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Returns all my pair games with pagination' }),
+    ApiOkResponse({ type: PaginatedPairGamesViewDto }),
+    ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   );
 }
 
@@ -52,5 +65,13 @@ export function ApiSubmitPairGameAnswer() {
     ApiValidationError(),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
     ApiForbiddenResponse({ description: 'Not in Active pair or all questions answered' }),
+  );
+}
+
+export function ApiGetMyStatistic() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get current user statistic' }),
+    ApiOkResponse({ type: UserStatisticViewDto }),
+    ApiUnauthorizedResponse({ description: 'Unauthorized' }),
   );
 }

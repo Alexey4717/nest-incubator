@@ -2,14 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
+import { Paginator } from '@/core/types/common';
+import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
+
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 
 import { AnswerStatus, PairGameStatus } from '../domain/pair-game-status.enum';
+import { GetMyPairGamesQueryParamsDto } from '../dto/pair-game.dto';
 import {
   AnswerInProgressView,
   PairGameViewModel,
   PlayerProgressView,
   QuestionInGameView,
+  roundAvgScores,
+  UserStatisticViewModel,
 } from '../models/pair-game.model';
 import { QuizPairOrmEntity } from './quiz-pair.orm-entity';
 
@@ -21,6 +28,22 @@ type AnswerRow = {
   answered_at: Date;
   question_order: number;
   user_internal_id: string;
+};
+
+type StatisticAggRow = {
+  sum_score: string | null;
+  games_count: string;
+  wins_count: string;
+  losses_count: string;
+  draws_count: string;
+};
+
+const SORT_COLUMN_MAP: Record<string, keyof QuizPairOrmEntity> = {
+  pairCreatedDate: 'createdAt',
+  createdAt: 'createdAt',
+  status: 'status',
+  startGameDate: 'startGameDate',
+  finishGameDate: 'finishGameDate',
 };
 
 @Injectable()
@@ -45,6 +68,114 @@ export class PairGameQueryRepository {
       .getOne();
 
     return pair?.publicId ?? null;
+  }
+
+  async getMyGames(
+    userPublicId: string,
+    query: GetMyPairGamesQueryParamsDto,
+  ): Promise<Paginator<PairGameViewModel[]>> {
+    const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
+    const { sortBy, sortDirection, pageNumber, pageSize } = query;
+
+    const qb = this.pairsRepository
+      .createQueryBuilder('pair')
+      .where('(pair.firstPlayerUserId = :userId OR pair.secondPlayerUserId = :userId)', {
+        userId: userInternalId,
+      });
+
+    const sortColumn = SORT_COLUMN_MAP[sortBy] ?? 'createdAt';
+    applySort(qb, 'pair', sortColumn, sortDirection);
+    if (sortColumn !== 'createdAt') {
+      qb.addOrderBy('pair.createdAt', 'DESC');
+    }
+    applyPagination(qb, query.calculateSkip(), pageSize);
+
+    const [entities, totalCount] = await qb.getManyAndCount();
+
+    const items: PairGameViewModel[] = [];
+    for (const entity of entities) {
+      const view = await this.getPairGameView(entity.publicId);
+      if (view) {
+        items.push(view);
+      }
+    }
+
+    return PaginatedViewDto.mapToView({
+      items,
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
+  }
+
+  async getMyStatistic(userPublicId: string): Promise<UserStatisticViewModel> {
+    const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
+
+    const rows: StatisticAggRow[] = await this.pairsRepository.manager.query(
+      `
+        SELECT
+          COALESCE(SUM(
+            CASE
+              WHEN p."first_player_user_id" = $1 THEN p."first_player_score"
+              ELSE p."second_player_score"
+            END
+          ), 0)::text AS sum_score,
+          COUNT(*)::text AS games_count,
+          COUNT(*) FILTER (
+            WHERE
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."first_player_score"
+                ELSE p."second_player_score"
+              END
+              >
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."second_player_score"
+                ELSE p."first_player_score"
+              END
+          )::text AS wins_count,
+          COUNT(*) FILTER (
+            WHERE
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."first_player_score"
+                ELSE p."second_player_score"
+              END
+              <
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."second_player_score"
+                ELSE p."first_player_score"
+              END
+          )::text AS losses_count,
+          COUNT(*) FILTER (
+            WHERE
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."first_player_score"
+                ELSE p."second_player_score"
+              END
+              =
+              CASE
+                WHEN p."first_player_user_id" = $1 THEN p."second_player_score"
+                ELSE p."first_player_score"
+              END
+          )::text AS draws_count
+        FROM "quiz_pairs" p
+        WHERE p."status" = $2
+          AND (p."first_player_user_id" = $1 OR p."second_player_user_id" = $1)
+      `,
+      [userInternalId, PairGameStatus.Finished],
+    );
+
+    const row = rows[0];
+    const sumScore = Number(row?.sum_score ?? 0);
+    const gamesCount = Number(row?.games_count ?? 0);
+
+    return {
+      sumScore,
+      avgScores: roundAvgScores(sumScore, gamesCount),
+      gamesCount,
+      winsCount: Number(row?.wins_count ?? 0),
+      lossesCount: Number(row?.losses_count ?? 0),
+      drawsCount: Number(row?.draws_count ?? 0),
+    };
   }
 
   async isUserParticipant(pairPublicId: string, userPublicId: string): Promise<boolean> {

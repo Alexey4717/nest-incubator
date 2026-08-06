@@ -40,7 +40,7 @@ export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
   @Transform(queryParamToStringWithDefault('createdAt'))
   @IsOptional()
   @IsString()
-  sortBy: string = 'createdAt';
+  sortBy = 'createdAt';
 }
 
 export class CreateQuizQuestionDto {
