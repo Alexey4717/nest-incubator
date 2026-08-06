@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 
 import { runWithTransactionRetry } from '@/core/database/run-with-transaction-retry';
 import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
@@ -26,44 +26,37 @@ export class PairGameRepository {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
-    @InjectRepository(QuizPairOrmEntity)
-    private readonly pairsRepository: Repository<QuizPairOrmEntity>,
     private readonly internalIdResolver: InternalIdResolver,
   ) {}
 
-  async findCurrentPairPublicIdForUser(userPublicId: string): Promise<string | null> {
-    const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
-    const pair = await this.pairsRepository
-      .createQueryBuilder('pair')
-      .where('pair.status IN (:...statuses)', {
-        statuses: [PairGameStatus.PendingSecondPlayer, PairGameStatus.Active],
-      })
-      .andWhere('(pair.first_player_user_id = :userId OR pair.second_player_user_id = :userId)', {
-        userId: userInternalId,
-      })
-      .orderBy('pair.created_at', 'DESC')
-      .getOne();
-
-    return pair?.publicId ?? null;
-  }
-
   async connect(userPublicId: string): Promise<string> {
-    const currentPairId = await this.findCurrentPairPublicIdForUser(userPublicId);
-    if (currentPairId) {
-      throw new DomainException(DomainExceptionCode.Forbidden);
-    }
-
     return runWithTransactionRetry(() =>
       this.dataSource.transaction(async (manager) => {
-        await manager.query(`SET LOCAL lock_timeout = '2s'`);
-        await manager.query(`SET LOCAL statement_timeout = '5s'`);
-
         const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
+
+        const currentPair = await manager
+          .getRepository(QuizPairOrmEntity)
+          .createQueryBuilder('pair')
+          .where('pair.status IN (:...statuses)', {
+            statuses: [PairGameStatus.PendingSecondPlayer, PairGameStatus.Active],
+          })
+          .andWhere(
+            '(pair.first_player_user_id = :userId OR pair.second_player_user_id = :userId)',
+            {
+              userId: userInternalId,
+            },
+          )
+          .getOne();
+
+        if (currentPair) {
+          throw new DomainException(DomainExceptionCode.Forbidden);
+        }
 
         const waitingPair = await manager
           .getRepository(QuizPairOrmEntity)
           .createQueryBuilder('pair')
           .setLock('pessimistic_write')
+          .setOnLocked('skip_locked')
           .where('pair.status = :status', { status: PairGameStatus.PendingSecondPlayer })
           .andWhere('pair.second_player_user_id IS NULL')
           .andWhere('pair.first_player_user_id != :userId', { userId: userInternalId })
@@ -121,9 +114,6 @@ export class PairGameRepository {
   async submitAnswer(userPublicId: string, answerText: string): Promise<AnswerResultViewModel> {
     return runWithTransactionRetry(() =>
       this.dataSource.transaction(async (manager) => {
-        await manager.query(`SET LOCAL lock_timeout = '2s'`);
-        await manager.query(`SET LOCAL statement_timeout = '5s'`);
-
         const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
 
         const pair = await manager
@@ -253,12 +243,12 @@ export class PairGameRepository {
     questions: QuizQuestionOrmEntity[],
   ): Promise<void> {
     const pairQuestionRepo = manager.getRepository(QuizPairQuestionOrmEntity);
-    for (let i = 0; i < questions.length; i++) {
-      await pairQuestionRepo.save({
+    await pairQuestionRepo.save(
+      questions.map((question, i) => ({
         pairId: pairInternalId,
-        questionId: questions[i].id,
+        questionId: question.id,
         order: i + 1,
-      });
-    }
+      })),
+    );
   }
 }
