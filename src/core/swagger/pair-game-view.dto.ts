@@ -101,3 +101,13 @@ export class UserStatisticViewDto {
   @ApiProperty({ example: 0 })
   drawsCount = 0;
 }
+
+export class TopUserStatisticViewDto extends UserStatisticViewDto {
+  @ApiProperty({ type: PlayerInGameViewDto })
+  player: PlayerInGameViewDto = new PlayerInGameViewDto();
+}
+
+export class PaginatedTopUsersViewDto extends PaginatedMetaDto {
+  @ApiProperty({ type: [TopUserStatisticViewDto] })
+  items: TopUserStatisticViewDto[] = [];
+}

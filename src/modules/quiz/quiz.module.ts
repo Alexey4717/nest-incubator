@@ -18,6 +18,7 @@ import { GetMyPairGamesHandler } from './application/queries/get-my-pair-games.q
 import { GetMyStatisticHandler } from './application/queries/get-my-statistic.query';
 import { GetPairGameByIdHandler } from './application/queries/get-pair-game-by-id.query';
 import { GetQuizQuestionsHandler } from './application/queries/get-quiz-questions.query';
+import { GetTopUsersHandler } from './application/queries/get-top-users.query';
 import { ConnectPairGameUseCase } from './application/use-cases/connect-pair-game.use-case';
 import { CreateQuizQuestionUseCase } from './application/use-cases/create-quiz-question.use-case';
 import { DeleteQuizQuestionUseCase } from './application/use-cases/delete-quiz-question.use-case';
@@ -26,6 +27,7 @@ import { GetMyPairGamesUseCase } from './application/use-cases/get-my-pair-games
 import { GetMyStatisticUseCase } from './application/use-cases/get-my-statistic.use-case';
 import { GetPairGameByIdUseCase } from './application/use-cases/get-pair-game-by-id.use-case';
 import { GetQuizQuestionsUseCase } from './application/use-cases/get-quiz-questions.use-case';
+import { GetTopUsersUseCase } from './application/use-cases/get-top-users.use-case';
 import { PublishQuizQuestionUseCase } from './application/use-cases/publish-quiz-question.use-case';
 import { SubmitPairGameAnswerUseCase } from './application/use-cases/submit-pair-game-answer.use-case';
 import { UpdateQuizQuestionUseCase } from './application/use-cases/update-quiz-question.use-case';
@@ -48,6 +50,7 @@ const quizUseCases = [
   GetMyCurrentPairGameUseCase,
   GetMyPairGamesUseCase,
   GetMyStatisticUseCase,
+  GetTopUsersUseCase,
   GetPairGameByIdUseCase,
   SubmitPairGameAnswerUseCase,
 ];
@@ -66,6 +69,7 @@ const quizQueryHandlers = [
   GetMyCurrentPairGameHandler,
   GetMyPairGamesHandler,
   GetMyStatisticHandler,
+  GetTopUsersHandler,
   GetPairGameByIdHandler,
 ];
 

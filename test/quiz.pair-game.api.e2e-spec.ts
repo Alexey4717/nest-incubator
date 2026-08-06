@@ -112,6 +112,10 @@ describe('Quiz Pair Game API (e2e)', () => {
       .set('Authorization', `Bearer ${token}`);
   }
 
+  function getTopUsers(query: Record<string, string | number | string[]> = {}) {
+    return request(ctx.httpServer).get('/pair-game-quiz/users/top').query(query);
+  }
+
   async function finishDrawGame(firstToken: string, secondToken: string): Promise<PairGameView> {
     await connect(firstToken);
     const gameRes = await connect(secondToken);
@@ -374,5 +378,72 @@ describe('Quiz Pair Game API (e2e)', () => {
       drawsCount: 1,
     });
     expect(statistic2.body.avgScores).toBe(2);
+  });
+
+  it('GET users/top: public, default order by avgScores then sumScore', async () => {
+    await finishDrawGame(token1, token2);
+    await finishBWinsGame(token1, token2);
+
+    const top = await getTopUsers().expect(constants.HTTP_STATUS_OK);
+
+    expect(top.body.totalCount).toBe(2);
+    expect(top.body.items).toHaveLength(2);
+    expect(top.body.items[0]).toEqual({
+      sumScore: 4,
+      avgScores: 2,
+      gamesCount: 2,
+      winsCount: 1,
+      lossesCount: 0,
+      drawsCount: 1,
+      player: { id: user2Id, login: 'player2' },
+    });
+    expect(top.body.items[1]).toEqual({
+      sumScore: 3,
+      avgScores: 1.5,
+      gamesCount: 2,
+      winsCount: 0,
+      lossesCount: 1,
+      drawsCount: 1,
+      player: { id: user1Id, login: 'player1' },
+    });
+  });
+
+  it('GET users/top: multi-sort and pagination', async () => {
+    await finishDrawGame(token1, token2);
+    await finishBWinsGame(token1, token2);
+
+    const byWins = await getTopUsers({
+      sort: ['winsCount desc', 'lossesCount asc'],
+    }).expect(constants.HTTP_STATUS_OK);
+
+    expect(
+      byWins.body.items.map((item: { player: { login: string } }) => item.player.login),
+    ).toEqual(['player2', 'player1']);
+
+    const page1 = await getTopUsers({ pageSize: 1, pageNumber: 1 }).expect(
+      constants.HTTP_STATUS_OK,
+    );
+    const page2 = await getTopUsers({ pageSize: 1, pageNumber: 2 }).expect(
+      constants.HTTP_STATUS_OK,
+    );
+
+    expect(page1.body.totalCount).toBe(2);
+    expect(page1.body.pagesCount).toBe(2);
+    expect(page1.body.items).toHaveLength(1);
+    expect(page2.body.items).toHaveLength(1);
+    expect(page1.body.items[0].player.login).toBe('player2');
+    expect(page2.body.items[0].player.login).toBe('player1');
+  });
+
+  it('GET users/top: excludes users without Finished games', async () => {
+    await finishDrawGame(token1, token2);
+    await connect(token3).expect(constants.HTTP_STATUS_OK);
+
+    const top = await getTopUsers().expect(constants.HTTP_STATUS_OK);
+
+    expect(top.body.totalCount).toBe(2);
+    expect(
+      top.body.items.map((item: { player: { login: string } }) => item.player.login).sort(),
+    ).toEqual(['player1', 'player2']);
   });
 });

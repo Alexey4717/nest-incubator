@@ -50,6 +50,10 @@ export type UserStatisticViewModel = {
   drawsCount: number;
 };
 
+export type TopUserStatisticViewModel = UserStatisticViewModel & {
+  player: PlayerInGameView;
+};
+
 export function calculateFinalScores(
   firstCorrectCount: number,
   secondCorrectCount: number,

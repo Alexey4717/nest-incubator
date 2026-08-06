@@ -40,4 +40,30 @@ describe('normalizeQueryMiddleware', () => {
       publishedStatus: 'all',
     });
   });
+
+  it('preserves sort query array after trim and empty filtering', () => {
+    const req = createRequest({
+      sort: [' avgScores desc ', '', 'sumScore desc', 'null', '  '],
+      pageNumber: ['1', '2'],
+    });
+
+    normalizeQueryMiddleware(req, {} as never, () => undefined);
+
+    expect(req.query).toEqual({
+      sort: ['avgScores desc', 'sumScore desc'],
+      pageNumber: '1',
+    });
+  });
+
+  it('keeps a single sort value as a trimmed string', () => {
+    const req = createRequest({
+      sort: ' winsCount desc ',
+    });
+
+    normalizeQueryMiddleware(req, {} as never, () => undefined);
+
+    expect(req.query).toEqual({
+      sort: 'winsCount desc',
+    });
+  });
 });

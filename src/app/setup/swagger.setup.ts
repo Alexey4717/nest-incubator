@@ -12,7 +12,9 @@ import {
 import {
   AnswerResultViewDto,
   PaginatedPairGamesViewDto,
+  PaginatedTopUsersViewDto,
   PairGameViewDto,
+  TopUserStatisticViewDto,
   UserStatisticViewDto,
 } from '@/core/swagger/pair-game-view.dto';
 import { PaginatedPostsViewDto, PostViewDto } from '@/core/swagger/post-view.dto';
@@ -55,6 +57,8 @@ export function swaggerSetup(app: INestApplication): void {
       PaginatedPairGamesViewDto,
       AnswerResultViewDto,
       UserStatisticViewDto,
+      TopUserStatisticViewDto,
+      PaginatedTopUsersViewDto,
     ],
   });
 

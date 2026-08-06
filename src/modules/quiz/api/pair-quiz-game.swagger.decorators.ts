@@ -13,6 +13,7 @@ import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.dec
 import {
   AnswerResultViewDto,
   PaginatedPairGamesViewDto,
+  PaginatedTopUsersViewDto,
   PairGameViewDto,
   UserStatisticViewDto,
 } from '@/core/swagger/pair-game-view.dto';
@@ -73,5 +74,13 @@ export function ApiGetMyStatistic() {
     ApiOperation({ summary: 'Get current user statistic' }),
     ApiOkResponse({ type: UserStatisticViewDto }),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
+  );
+}
+
+export function ApiGetTopUsers() {
+  return applyDecorators(
+    ApiOperation({ summary: 'Get users top by statistic' }),
+    ApiOkResponse({ type: PaginatedTopUsersViewDto }),
+    ApiValidationError(),
   );
 }

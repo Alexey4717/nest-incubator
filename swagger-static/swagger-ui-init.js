@@ -2107,6 +2107,84 @@ window.onload = function() {
           ]
         }
       },
+      "/pair-game-quiz/pairs/my": {
+        "get": {
+          "operationId": "PairQuizGameController_getMy",
+          "summary": "Returns all my pair games with pagination",
+          "parameters": [
+            {
+              "name": "pageNumber",
+              "required": true,
+              "in": "query",
+              "example": 1,
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": true,
+              "in": "query",
+              "example": 10,
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "sortDirection",
+              "required": true,
+              "in": "query",
+              "example": "desc",
+              "schema": {
+                "default": "desc",
+                "enum": [
+                  "asc",
+                  "desc"
+                ],
+                "type": "string"
+              }
+            },
+            {
+              "name": "sortBy",
+              "required": false,
+              "in": "query",
+              "example": "pairCreatedDate",
+              "schema": {
+                "default": "pairCreatedDate",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedPairGamesViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
       "/pair-game-quiz/pairs/{id}": {
         "get": {
           "operationId": "PairQuizGameController_getById",
@@ -2194,6 +2272,115 @@ window.onload = function() {
             },
             "403": {
               "description": "Not in Active pair or all questions answered"
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ],
+          "security": [
+            {
+              "bearer": []
+            }
+          ]
+        }
+      },
+      "/pair-game-quiz/users/top": {
+        "get": {
+          "operationId": "PairQuizGameUsersController_getTop",
+          "summary": "Get users top by statistic",
+          "parameters": [
+            {
+              "name": "pageNumber",
+              "required": true,
+              "in": "query",
+              "example": 1,
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": true,
+              "in": "query",
+              "example": 10,
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "sort",
+              "required": false,
+              "in": "query",
+              "example": [
+                "avgScores desc",
+                "sumScore desc"
+              ],
+              "description": "Multi-criteria sort: \"field direction\". Allowed fields: avgScores, sumScore, winsCount, lossesCount",
+              "schema": {
+                "default": [
+                  "avgScores desc",
+                  "sumScore desc"
+                ],
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "a"
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedTopUsersViewDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ValidationErrorResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "tags": [
+            "PairQuizGame"
+          ]
+        }
+      },
+      "/pair-game-quiz/users/my-statistic": {
+        "get": {
+          "operationId": "PairQuizGameUsersController_getMyStatistic",
+          "summary": "Get current user statistic",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserStatisticViewDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
             }
           },
           "tags": [
@@ -3350,6 +3537,40 @@ window.onload = function() {
             "finishGameDate"
           ]
         },
+        "PaginatedPairGamesViewDto": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "object",
+              "example": 1
+            },
+            "pageSize": {
+              "type": "object",
+              "example": 10
+            },
+            "pagesCount": {
+              "type": "object",
+              "example": 1
+            },
+            "totalCount": {
+              "type": "object",
+              "example": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/PairGameViewDto"
+              }
+            }
+          },
+          "required": [
+            "page",
+            "pageSize",
+            "pagesCount",
+            "totalCount",
+            "items"
+          ]
+        },
         "SubmitPairGameAnswerDto": {
           "type": "object",
           "properties": {
@@ -3386,6 +3607,118 @@ window.onload = function() {
             "questionId",
             "answerStatus",
             "addedAt"
+          ]
+        },
+        "TopUserStatisticViewDto": {
+          "type": "object",
+          "properties": {
+            "sumScore": {
+              "type": "object",
+              "example": 0
+            },
+            "avgScores": {
+              "type": "object",
+              "example": 0
+            },
+            "gamesCount": {
+              "type": "object",
+              "example": 0
+            },
+            "winsCount": {
+              "type": "object",
+              "example": 0
+            },
+            "lossesCount": {
+              "type": "object",
+              "example": 0
+            },
+            "drawsCount": {
+              "type": "object",
+              "example": 0
+            },
+            "player": {
+              "$ref": "#/components/schemas/PlayerInGameViewDto"
+            }
+          },
+          "required": [
+            "sumScore",
+            "avgScores",
+            "gamesCount",
+            "winsCount",
+            "lossesCount",
+            "drawsCount",
+            "player"
+          ]
+        },
+        "PaginatedTopUsersViewDto": {
+          "type": "object",
+          "properties": {
+            "page": {
+              "type": "object",
+              "example": 1
+            },
+            "pageSize": {
+              "type": "object",
+              "example": 10
+            },
+            "pagesCount": {
+              "type": "object",
+              "example": 1
+            },
+            "totalCount": {
+              "type": "object",
+              "example": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/TopUserStatisticViewDto"
+              }
+            }
+          },
+          "required": [
+            "page",
+            "pageSize",
+            "pagesCount",
+            "totalCount",
+            "items"
+          ]
+        },
+        "UserStatisticViewDto": {
+          "type": "object",
+          "properties": {
+            "sumScore": {
+              "type": "object",
+              "example": 0
+            },
+            "avgScores": {
+              "type": "object",
+              "example": 0
+            },
+            "gamesCount": {
+              "type": "object",
+              "example": 0
+            },
+            "winsCount": {
+              "type": "object",
+              "example": 0
+            },
+            "lossesCount": {
+              "type": "object",
+              "example": 0
+            },
+            "drawsCount": {
+              "type": "object",
+              "example": 0
+            }
+          },
+          "required": [
+            "sumScore",
+            "avgScores",
+            "gamesCount",
+            "winsCount",
+            "lossesCount",
+            "drawsCount"
           ]
         },
         "SecurityDeviceViewDto": {

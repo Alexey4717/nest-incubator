@@ -3,19 +3,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
-import { Paginator } from '@/core/types/common';
+import { Paginator, SortDirections } from '@/core/types/common';
 import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
 
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 
 import { AnswerStatus, PairGameStatus } from '../domain/pair-game-status.enum';
-import { GetMyPairGamesQueryParamsDto } from '../dto/pair-game.dto';
+import { GetMyPairGamesQueryParamsDto, GetTopUsersQueryParamsDto } from '../dto/pair-game.dto';
+import {
+  parseTopUsersSort,
+  TopUsersSortField,
+  TopUsersSortItem,
+} from '../dto/parse-top-users-sort';
 import {
   AnswerInProgressView,
   PairGameViewModel,
   PlayerProgressView,
   QuestionInGameView,
   roundAvgScores,
+  TopUserStatisticViewModel,
   UserStatisticViewModel,
 } from '../models/pair-game.model';
 import { QuizPairOrmEntity } from './quiz-pair.orm-entity';
@@ -38,12 +44,24 @@ type StatisticAggRow = {
   draws_count: string;
 };
 
+type TopUserAggRow = StatisticAggRow & {
+  public_id: string;
+  login: string;
+};
+
 const SORT_COLUMN_MAP: Record<string, keyof QuizPairOrmEntity> = {
   pairCreatedDate: 'createdAt',
   createdAt: 'createdAt',
   status: 'status',
   startGameDate: 'startGameDate',
   finishGameDate: 'finishGameDate',
+};
+
+const TOP_USERS_ORDER_BY_EXPRESSIONS: Record<TopUsersSortField, string> = {
+  avgScores: 'ROUND(s.sum_score::numeric / NULLIF(s.games_count, 0), 2)',
+  sumScore: 's.sum_score',
+  winsCount: 's.wins_count',
+  lossesCount: 's.losses_count',
 };
 
 @Injectable()
@@ -178,6 +196,102 @@ export class PairGameQueryRepository {
     };
   }
 
+  async getTopUsers(
+    query: GetTopUsersQueryParamsDto,
+  ): Promise<Paginator<TopUserStatisticViewModel[]>> {
+    const { pageNumber, pageSize } = query;
+    const sortItems = parseTopUsersSort(query.sort);
+    const orderBySql = this.buildTopUsersOrderBy(sortItems);
+
+    const countRows: { total: string }[] = await this.pairsRepository.manager.query(
+      `
+        SELECT COUNT(*)::text AS total
+        FROM (
+          SELECT p."first_player_user_id" AS user_id
+          FROM "quiz_pairs" p
+          WHERE p."status" = $1
+          UNION
+          SELECT p."second_player_user_id" AS user_id
+          FROM "quiz_pairs" p
+          WHERE p."status" = $1
+            AND p."second_player_user_id" IS NOT NULL
+        ) t
+      `,
+      [PairGameStatus.Finished],
+    );
+    const totalCount = Number(countRows[0]?.total ?? 0);
+
+    const rows: TopUserAggRow[] = await this.pairsRepository.manager.query(
+      `
+        WITH player_games AS (
+          SELECT
+            p."first_player_user_id" AS user_id,
+            p."first_player_score" AS score,
+            p."second_player_score" AS opponent_score
+          FROM "quiz_pairs" p
+          WHERE p."status" = $1
+          UNION ALL
+          SELECT
+            p."second_player_user_id" AS user_id,
+            p."second_player_score" AS score,
+            p."first_player_score" AS opponent_score
+          FROM "quiz_pairs" p
+          WHERE p."status" = $1
+            AND p."second_player_user_id" IS NOT NULL
+        ),
+        stats AS (
+          SELECT
+            pg.user_id,
+            COALESCE(SUM(pg.score), 0) AS sum_score,
+            COUNT(*) AS games_count,
+            COUNT(*) FILTER (WHERE pg.score > pg.opponent_score) AS wins_count,
+            COUNT(*) FILTER (WHERE pg.score < pg.opponent_score) AS losses_count,
+            COUNT(*) FILTER (WHERE pg.score = pg.opponent_score) AS draws_count
+          FROM player_games pg
+          GROUP BY pg.user_id
+        )
+        SELECT
+          u."public_id"::text AS public_id,
+          u."login" AS login,
+          s.sum_score::text AS sum_score,
+          s.games_count::text AS games_count,
+          s.wins_count::text AS wins_count,
+          s.losses_count::text AS losses_count,
+          s.draws_count::text AS draws_count
+        FROM stats s
+        INNER JOIN "users" u ON u."id" = s.user_id
+        ORDER BY ${orderBySql}
+        LIMIT $2 OFFSET $3
+      `,
+      [PairGameStatus.Finished, pageSize, query.calculateSkip()],
+    );
+
+    const items: TopUserStatisticViewModel[] = rows.map((row) => {
+      const sumScore = Number(row.sum_score ?? 0);
+      const gamesCount = Number(row.games_count ?? 0);
+
+      return {
+        sumScore,
+        avgScores: roundAvgScores(sumScore, gamesCount),
+        gamesCount,
+        winsCount: Number(row.wins_count ?? 0),
+        lossesCount: Number(row.losses_count ?? 0),
+        drawsCount: Number(row.draws_count ?? 0),
+        player: {
+          id: row.public_id,
+          login: row.login,
+        },
+      };
+    });
+
+    return PaginatedViewDto.mapToView({
+      items,
+      page: pageNumber,
+      size: pageSize,
+      totalCount,
+    });
+  }
+
   async isUserParticipant(pairPublicId: string, userPublicId: string): Promise<boolean> {
     const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId);
     const pair = await this.pairsRepository.findOne({ where: { publicId: pairPublicId } });
@@ -224,6 +338,16 @@ export class PairGameQueryRepository {
       startGameDate: pair.startGameDate?.toISOString() ?? null,
       finishGameDate: pair.finishGameDate?.toISOString() ?? null,
     };
+  }
+
+  private buildTopUsersOrderBy(sortItems: TopUsersSortItem[]): string {
+    const parts = sortItems.map((item) => {
+      const expression = TOP_USERS_ORDER_BY_EXPRESSIONS[item.field];
+      const direction = item.direction === SortDirections.asc ? 'ASC' : 'DESC';
+      return `${expression} ${direction}`;
+    });
+    parts.push('u.public_id ASC');
+    return parts.join(', ');
   }
 
   private async loadUser(userInternalId: string): Promise<UserRow | null> {
