@@ -23,8 +23,6 @@ export enum PublishedStatusFilter {
   notPublished = 'notPublished',
 }
 
-export type SortQuizQuestionsBy = 'createdAt';
-
 export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
   @ApiPropertyOptional({ example: 'capital' })
   @Transform(emptyToUndefined)
@@ -38,11 +36,11 @@ export class GetQuizQuestionsQueryParamsDto extends BaseQueryParamsDto {
   @IsIn(['all', 'published', 'notPublished'])
   publishedStatus: PublishedStatusFilter = PublishedStatusFilter.all;
 
-  @ApiProperty({ enum: ['createdAt'], default: 'createdAt' })
+  @ApiProperty({ type: String, default: 'createdAt', example: 'createdAt' })
   @Transform(queryParamToStringWithDefault('createdAt'))
   @IsOptional()
-  @IsIn(['createdAt'])
-  sortBy: SortQuizQuestionsBy = 'createdAt';
+  @IsString()
+  sortBy: string = 'createdAt';
 }
 
 export class CreateQuizQuestionDto {

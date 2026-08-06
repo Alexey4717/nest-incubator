@@ -101,6 +101,38 @@ describe('Quiz SA API (e2e)', () => {
 
       expectPaginatorItemsCount(res.body, 1);
     });
+
+    it('should accept unknown sortBy like homework checker — 200', async () => {
+      await quiz.createQuestion('question body04', ['correct4']);
+
+      const res = await request(ctx.httpServer)
+        .get('/sa/quiz/questions')
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .query({ sortBy: '111' })
+        .expect(constants.HTTP_STATUS_OK);
+
+      expectPaginatorItemsCount(res.body, 1);
+    });
+
+    it('should accept response-field sortBy values — 200', async () => {
+      await quiz.createQuestion('question body05', ['correct5']);
+
+      const byUpdatedAt = await request(ctx.httpServer)
+        .get('/sa/quiz/questions')
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .query({ sortBy: 'updatedAt' })
+        .expect(constants.HTTP_STATUS_OK);
+
+      expectPaginatorItemsCount(byUpdatedAt.body, 1);
+
+      const byBody = await request(ctx.httpServer)
+        .get('/sa/quiz/questions')
+        .set('Authorization', ADMIN_BASIC_AUTH_HEADER)
+        .query({ sortBy: 'body' })
+        .expect(constants.HTTP_STATUS_OK);
+
+      expectPaginatorItemsCount(byBody.body, 1);
+    });
   });
 
   describe('POST /sa/quiz/questions', () => {

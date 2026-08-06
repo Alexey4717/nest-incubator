@@ -6,17 +6,18 @@ import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
 import { Paginator } from '@/core/types/common';
 import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
 
-import {
-  GetQuizQuestionsQueryParamsDto,
-  PublishedStatusFilter,
-  SortQuizQuestionsBy,
-} from '../dto/quiz-question.dto';
+import { GetQuizQuestionsQueryParamsDto, PublishedStatusFilter } from '../dto/quiz-question.dto';
 import { QuizQuestionModel } from '../models/quiz-question.model';
 import { toDomain } from './quiz-question.mapper';
 import { QuizQuestionOrmEntity } from './quiz-question.orm-entity';
 
-const SORT_COLUMN_MAP: Record<SortQuizQuestionsBy, keyof QuizQuestionOrmEntity> = {
+const SORT_COLUMN_MAP: Record<string, keyof QuizQuestionOrmEntity> = {
+  id: 'publicId',
+  body: 'body',
+  correctAnswers: 'correctAnswers',
+  published: 'published',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
 };
 
 @Injectable()

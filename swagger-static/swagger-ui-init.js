@@ -1821,11 +1821,9 @@ window.onload = function() {
               "name": "sortBy",
               "required": true,
               "in": "query",
+              "example": "createdAt",
               "schema": {
                 "default": "createdAt",
-                "enum": [
-                  "createdAt"
-                ],
                 "type": "string"
               }
             }
@@ -3102,8 +3100,9 @@ window.onload = function() {
               "example": "2024-01-01T00:00:00.000Z"
             },
             "updatedAt": {
-              "type": "object",
-              "example": "2024-01-01T00:00:00.000Z"
+              "type": "string",
+              "example": "2024-01-01T00:00:00.000Z",
+              "nullable": true
             }
           },
           "required": [
@@ -3154,6 +3153,7 @@ window.onload = function() {
           "properties": {
             "body": {
               "type": "object",
+              "minLength": 10,
               "maxLength": 1000,
               "example": "What is the capital of France?"
             },
@@ -3177,6 +3177,7 @@ window.onload = function() {
           "properties": {
             "body": {
               "type": "object",
+              "minLength": 10,
               "maxLength": 1000,
               "example": "What is the capital of France?"
             },
@@ -3323,6 +3324,10 @@ window.onload = function() {
                 "$ref": "#/components/schemas/QuestionInGameViewDto"
               }
             },
+            "pairCreatedDate": {
+              "type": "object",
+              "example": "2024-01-01T00:00:00.000Z"
+            },
             "startGameDate": {
               "type": "object",
               "example": null,
@@ -3340,6 +3345,7 @@ window.onload = function() {
             "firstPlayerProgress",
             "secondPlayerProgress",
             "questions",
+            "pairCreatedDate",
             "startGameDate",
             "finishGameDate"
           ]

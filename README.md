@@ -723,7 +723,7 @@ yarn start:dev
 | `PUT`    | `/:id/publish` | 204 | Публикация / снятие с публикации    |
 | `DELETE` | `/:id`         | 204 | Удаление вопроса                    |
 
-Query-параметры GET: `bodySearchTerm`, `publishedStatus` (`all` \| `published` \| `notPublished`), `sortBy` (`createdAt`), `sortDirection`, `pageNumber`, `pageSize`.
+Query-параметры GET: `bodySearchTerm`, `publishedStatus` (`all` \| `published` \| `notPublished`), `sortBy` (string, default `createdAt`; известные поля ответа или fallback на `createdAt`), `sortDirection`, `pageNumber`, `pageSize`.
 
 Нельзя опубликовать вопрос без непустого массива `correctAnswers`. Обновление опубликованного вопроса без `correctAnswers` → 400.
 
