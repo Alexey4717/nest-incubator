@@ -446,4 +446,121 @@ describe('Quiz Pair Game API (e2e)', () => {
       top.body.items.map((item: { player: { login: string } }) => item.player.login).sort(),
     ).toEqual(['player1', 'player2']);
   });
+
+  function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  it('finish timeout via GET: auto-finishes with Incorrect for unanswered', async () => {
+    await connect(token1);
+    const gameRes = await connect(token2);
+    const game = gameRes.body as PairGameView;
+    const questions = game.questions!;
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(token1, correctAnswerFor(questions[i])).expect(constants.HTTP_STATUS_OK);
+    }
+
+    await submitAnswer(token2, correctAnswerFor(questions[0])).expect(constants.HTTP_STATUS_OK);
+
+    await sleep(10_500);
+
+    // Access token TTL in testing is ~10s; refresh after waiting for game timeout.
+    const freshToken1 = await loginAndGetToken(ctx.app, 'player1', 'Password1!');
+
+    await getMyCurrent(freshToken1).expect(constants.HTTP_STATUS_NOT_FOUND);
+
+    const finished = await getById(freshToken1, game.id).expect(constants.HTTP_STATUS_OK);
+    const body = finished.body as PairGameView;
+
+    expect(body.status).toBe('Finished');
+    expect(body.finishGameDate).toEqual(expect.any(String));
+    expect(body.firstPlayerProgress.answers).toHaveLength(5);
+    expect(body.secondPlayerProgress!.answers).toHaveLength(5);
+    expect(body.secondPlayerProgress!.answers[0].answerStatus).toBe('Correct');
+    expect(
+      body.secondPlayerProgress!.answers.slice(1).every((a) => a.answerStatus === 'Incorrect'),
+    ).toBe(true);
+    expect(body.firstPlayerProgress.score).toBe(6);
+    expect(body.secondPlayerProgress!.score).toBe(1);
+  }, 30000);
+
+  it('finish timeout blocks POST answers with 403', async () => {
+    await connect(token1);
+    const gameRes = await connect(token2);
+    const game = gameRes.body as PairGameView;
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(token1, correctAnswerFor(game.questions![i])).expect(
+        constants.HTTP_STATUS_OK,
+      );
+    }
+
+    await sleep(10_500);
+
+    const freshToken2 = await loginAndGetToken(ctx.app, 'player2', 'Password1!');
+
+    await submitAnswer(freshToken2, 'too-late').expect(constants.HTTP_STATUS_FORBIDDEN);
+
+    const finished = await getById(freshToken2, game.id).expect(constants.HTTP_STATUS_OK);
+    expect(finished.body.status).toBe('Finished');
+    expect(finished.body.secondPlayerProgress.answers).toHaveLength(5);
+    expect(
+      finished.body.secondPlayerProgress.answers.every(
+        (a: { answerStatus: string }) => a.answerStatus === 'Incorrect',
+      ),
+    ).toBe(true);
+  }, 30000);
+
+  it('second player finishes within 10s window — normal Finished', async () => {
+    await connect(token1);
+    const gameRes = await connect(token2);
+    const game = gameRes.body as PairGameView;
+    const questions = game.questions!;
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(token1, correctAnswerFor(questions[i])).expect(constants.HTTP_STATUS_OK);
+    }
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(token2, correctAnswerFor(questions[i])).expect(constants.HTTP_STATUS_OK);
+    }
+
+    const finished = await getById(token1, game.id).expect(constants.HTTP_STATUS_OK);
+    const body = finished.body as PairGameView;
+
+    expect(body.status).toBe('Finished');
+    expect(body.firstPlayerProgress.answers).toHaveLength(5);
+    expect(body.secondPlayerProgress!.answers).toHaveLength(5);
+    expect(body.secondPlayerProgress!.answers.every((a) => a.answerStatus === 'Correct')).toBe(
+      true,
+    );
+    expect(body.firstPlayerProgress.score).toBe(6);
+    expect(body.secondPlayerProgress!.score).toBe(5);
+  });
+
+  it('after finish timeout both players can connect again', async () => {
+    await connect(token1);
+    const gameRes = await connect(token2);
+    const game = gameRes.body as PairGameView;
+
+    for (let i = 0; i < 5; i++) {
+      await submitAnswer(token1, correctAnswerFor(game.questions![i])).expect(
+        constants.HTTP_STATUS_OK,
+      );
+    }
+
+    await sleep(10_500);
+
+    const freshToken1 = await loginAndGetToken(ctx.app, 'player1', 'Password1!');
+    const freshToken2 = await loginAndGetToken(ctx.app, 'player2', 'Password1!');
+
+    const reconnect1 = await connect(freshToken1).expect(constants.HTTP_STATUS_OK);
+    expect(reconnect1.body.status).toBe('PendingSecondPlayer');
+    expect(reconnect1.body.id).not.toBe(game.id);
+
+    const reconnect2 = await connect(freshToken2).expect(constants.HTTP_STATUS_OK);
+    expect(reconnect2.body.status).toBe('Active');
+    expect(reconnect2.body.id).toBe(reconnect1.body.id);
+  }, 30000);
 });

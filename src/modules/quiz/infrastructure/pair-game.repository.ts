@@ -13,7 +13,9 @@ import { AnswerStatus, PairGameStatus } from '../domain/pair-game-status.enum';
 import {
   AnswerResultViewModel,
   calculateFinalScores,
+  getPairFinishDeadline,
   isAnswerCorrect,
+  isPairFinishTimeoutExpired,
   PAIR_GAME_QUESTIONS_COUNT,
 } from '../models/pair-game.model';
 import { QuizPairAnswerOrmEntity } from './quiz-pair-answer.orm-entity';
@@ -33,6 +35,21 @@ export class PairGameRepository {
     return runWithTransactionRetry(() =>
       this.dataSource.transaction(async (manager) => {
         const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
+
+        const activePair = await manager
+          .getRepository(QuizPairOrmEntity)
+          .createQueryBuilder('pair')
+          .setLock('pessimistic_write')
+          .where('pair.status = :status', { status: PairGameStatus.Active })
+          .andWhere(
+            '(pair.first_player_user_id = :userId OR pair.second_player_user_id = :userId)',
+            { userId: userInternalId },
+          )
+          .getOne();
+
+        if (activePair) {
+          await this.finalizePairIfTimeoutExpired(manager, activePair);
+        }
 
         const currentPair = await manager
           .getRepository(QuizPairOrmEntity)
@@ -131,6 +148,11 @@ export class PairGameRepository {
           throw new DomainException(DomainExceptionCode.Forbidden);
         }
 
+        const finalized = await this.finalizePairIfTimeoutExpired(manager, pair);
+        if (finalized) {
+          throw new DomainException(DomainExceptionCode.Forbidden);
+        }
+
         const answeredCount = await manager.getRepository(QuizPairAnswerOrmEntity).count({
           where: { pairId: pair.id, userId: userInternalId },
         });
@@ -188,6 +210,122 @@ export class PairGameRepository {
           addedAt: now.toISOString(),
         };
       }),
+    );
+  }
+
+  async finalizeExpiredActivePairForUser(userPublicId: string): Promise<void> {
+    await runWithTransactionRetry(() =>
+      this.dataSource.transaction(async (manager) => {
+        const userInternalId = await this.internalIdResolver.resolveUserId(userPublicId, manager);
+
+        const pair = await manager
+          .getRepository(QuizPairOrmEntity)
+          .createQueryBuilder('pair')
+          .setLock('pessimistic_write')
+          .where('pair.status = :status', { status: PairGameStatus.Active })
+          .andWhere(
+            '(pair.first_player_user_id = :userId OR pair.second_player_user_id = :userId)',
+            { userId: userInternalId },
+          )
+          .getOne();
+
+        if (!pair) {
+          return;
+        }
+
+        await this.finalizePairIfTimeoutExpired(manager, pair);
+      }),
+    );
+  }
+
+  async finalizeExpiredActivePairByPublicId(pairPublicId: string): Promise<void> {
+    await runWithTransactionRetry(() =>
+      this.dataSource.transaction(async (manager) => {
+        const pair = await manager
+          .getRepository(QuizPairOrmEntity)
+          .createQueryBuilder('pair')
+          .setLock('pessimistic_write')
+          .where('pair.public_id = :publicId', { publicId: pairPublicId })
+          .andWhere('pair.status = :status', { status: PairGameStatus.Active })
+          .getOne();
+
+        if (!pair) {
+          return;
+        }
+
+        await this.finalizePairIfTimeoutExpired(manager, pair);
+      }),
+    );
+  }
+
+  private async finalizePairIfTimeoutExpired(
+    manager: EntityManager,
+    pair: QuizPairOrmEntity,
+    now = new Date(),
+  ): Promise<boolean> {
+    if (pair.status !== PairGameStatus.Active) {
+      return false;
+    }
+
+    const firstFinished = pair.firstPlayerFinishedAt !== null;
+    const secondFinished = pair.secondPlayerFinishedAt !== null;
+
+    if (firstFinished === secondFinished) {
+      return false;
+    }
+
+    const finishedAt = firstFinished ? pair.firstPlayerFinishedAt! : pair.secondPlayerFinishedAt!;
+    if (!isPairFinishTimeoutExpired(finishedAt, now)) {
+      return false;
+    }
+
+    const deadline = getPairFinishDeadline(finishedAt);
+    const slowPlayerUserId = firstFinished ? pair.secondPlayerUserId! : pair.firstPlayerUserId;
+
+    await this.fillUnansweredAsIncorrect(manager, pair, slowPlayerUserId, deadline);
+
+    if (firstFinished) {
+      pair.secondPlayerFinishedAt = deadline;
+    } else {
+      pair.firstPlayerFinishedAt = deadline;
+    }
+    await manager.getRepository(QuizPairOrmEntity).save(pair);
+    await this.finishGame(manager, pair);
+
+    return true;
+  }
+
+  private async fillUnansweredAsIncorrect(
+    manager: EntityManager,
+    pair: QuizPairOrmEntity,
+    userId: string,
+    answeredAt: Date,
+  ): Promise<void> {
+    const pairQuestions = await manager.getRepository(QuizPairQuestionOrmEntity).find({
+      where: { pairId: pair.id },
+      order: { order: 'ASC' },
+    });
+
+    const answeredQuestionIds = (
+      await manager.getRepository(QuizPairAnswerOrmEntity).find({
+        where: { pairId: pair.id, userId },
+      })
+    ).map((a) => a.questionId);
+
+    const unanswered = pairQuestions.filter((pq) => !answeredQuestionIds.includes(pq.questionId));
+    if (unanswered.length === 0) {
+      return;
+    }
+
+    await manager.getRepository(QuizPairAnswerOrmEntity).save(
+      unanswered.map((pq) => ({
+        pairId: pair.id,
+        userId,
+        questionId: pq.questionId,
+        answer: '',
+        isCorrect: false,
+        answeredAt,
+      })),
     );
   }
 

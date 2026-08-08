@@ -40,6 +40,15 @@ export type AnswerResultViewModel = {
 };
 
 export const PAIR_GAME_QUESTIONS_COUNT = 5;
+export const PAIR_GAME_FINISH_TIMEOUT_MS = 10_000;
+
+export function getPairFinishDeadline(finishedAt: Date): Date {
+  return new Date(finishedAt.getTime() + PAIR_GAME_FINISH_TIMEOUT_MS);
+}
+
+export function isPairFinishTimeoutExpired(finishedAt: Date, now: Date): boolean {
+  return now.getTime() >= getPairFinishDeadline(finishedAt).getTime();
+}
 
 export type UserStatisticViewModel = {
   sumScore: number;

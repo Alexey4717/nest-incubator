@@ -1,4 +1,10 @@
-import { calculateFinalScores, roundAvgScores } from './pair-game.model';
+import {
+  calculateFinalScores,
+  getPairFinishDeadline,
+  isPairFinishTimeoutExpired,
+  PAIR_GAME_FINISH_TIMEOUT_MS,
+  roundAvgScores,
+} from './pair-game.model';
 
 describe('Quiz scoring', () => {
   const t1 = new Date('2024-01-01T00:00:00.000Z');
@@ -17,6 +23,27 @@ describe('Quiz scoring', () => {
   it('no speed bonus when first finisher has zero correct', () => {
     const result = calculateFinalScores(0, 1, t1, t2);
     expect(result.firstScore).toBe(0);
+  });
+
+  describe('pair finish timeout helpers', () => {
+    const finishedAt = new Date('2024-01-01T00:00:00.000Z');
+
+    it('getPairFinishDeadline adds 10 seconds', () => {
+      expect(getPairFinishDeadline(finishedAt).toISOString()).toBe('2024-01-01T00:00:10.000Z');
+      expect(PAIR_GAME_FINISH_TIMEOUT_MS).toBe(10_000);
+    });
+
+    it('isPairFinishTimeoutExpired is false before deadline', () => {
+      const now = new Date(finishedAt.getTime() + PAIR_GAME_FINISH_TIMEOUT_MS - 1);
+      expect(isPairFinishTimeoutExpired(finishedAt, now)).toBe(false);
+    });
+
+    it('isPairFinishTimeoutExpired is true at and after deadline', () => {
+      const atDeadline = new Date(finishedAt.getTime() + PAIR_GAME_FINISH_TIMEOUT_MS);
+      const afterDeadline = new Date(finishedAt.getTime() + PAIR_GAME_FINISH_TIMEOUT_MS + 1);
+      expect(isPairFinishTimeoutExpired(finishedAt, atDeadline)).toBe(true);
+      expect(isPairFinishTimeoutExpired(finishedAt, afterDeadline)).toBe(true);
+    });
   });
 
   describe('roundAvgScores', () => {
