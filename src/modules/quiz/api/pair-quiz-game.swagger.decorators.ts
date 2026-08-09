@@ -10,14 +10,14 @@ import {
 } from '@nestjs/swagger';
 
 import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
+
 import {
   AnswerResultViewDto,
   PaginatedPairGamesViewDto,
   PaginatedTopUsersViewDto,
   PairGameViewDto,
   UserStatisticViewDto,
-} from '@/core/swagger/pair-game-view.dto';
-
+} from '../dto/pair-game-view.swagger.dto';
 import { SubmitPairGameAnswerDto } from '../dto/pair-game.dto';
 
 export function ApiConnectPairGame() {

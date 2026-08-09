@@ -51,6 +51,10 @@ core/
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
 ├── dto/                    # BaseQueryParamsDto, PaginatedViewDto
+├── swagger/                # общие OpenAPI-модели и декораторы (без доменных view-DTO)
+│   ├── validation-error.dto.ts
+│   ├── paginated-meta.dto.ts
+│   └── decorators/common.swagger.decorators.ts
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
 ├── validators/             # class-validator constraints + Injectable-валидаторы
 ├── utils/                  # утилиты (helpers, error-formatter, throw-if-not-found, typeorm-pagination)
@@ -66,7 +70,7 @@ core/
 
 ```
 modules/<feature>/
-├── api/                    # controllers, HTTP-слой (CommandBus / QueryBus)
+├── api/                    # controllers, *.swagger.decorators.ts, HTTP-слой (CommandBus / QueryBus)
 ├── application/
 │   ├── commands/           # CQRS command + thin @CommandHandler
 │   ├── queries/            # CQRS query + thin @QueryHandler
@@ -76,7 +80,7 @@ modules/<feature>/
 │   ├── entities/           # rich domain entities (create, reconstitute, toDb, business methods)
 │   └── mappers/            # *PersistenceMapper — OrmEntity ↔ Entity
 ├── infrastructure/         # TypeORM OrmEntity, repositories, read mappers
-├── dto/                    # class-validator DTO для HTTP (body и query params list-эндпоинтов)
+├── dto/                    # HTTP DTO: input (`*.dto.ts`) и OpenAPI response schemas (`*.swagger.dto.ts`)
 ├── models/                 # read-модели (Model) для query-репозиториев и view mappers
 ├── guards/ / strategies/   # при необходимости (auth)
 ├── decorators/             # декораторы, специфичные для модуля
@@ -170,13 +174,17 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 | **PersistenceMapper** | `domain/mappers/*.persistence-mapper.ts`   | `toDomain(OrmEntity)` / `toPersistence(Entity)` — тонкая обёртка над entity                                                                     |
 | **OrmEntity**         | `infrastructure/*.orm-entity.ts`           | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                |
 | **Model**             | `models/*.model.ts`                        | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                         |
-| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts` | Контракт HTTP-ответа (Swagger), маппинг из Model                                                                                                |
+| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts` | Runtime-маппинг HTTP-ответа из Model                                                                                                            |
+| **Swagger ViewDto**   | `dto/*-view.swagger.dto.ts`                | OpenAPI-схема ответа (`@ApiProperty`); регистрация в `app/setup/swagger.setup.ts`                                                               |
 
 #### Куда что помещать
 
 | Что                                 | Куда                                                                | Эталон                                                                 |
 | ----------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | HTTP body / query                   | `dto/` + ValidationPipe в controller                                | `CreateBlogDTO`                                                        |
+| Swagger response schema             | `dto/*-view.swagger.dto.ts` в модуле-владельце домена               | `post-view.swagger.dto.ts` в `post/dto/`                               |
+| Swagger endpoint decorators         | `api/*.swagger.decorators.ts`                                       | `post.swagger.decorators.ts`                                           |
+| Общие Swagger-модели / декораторы   | `core/swagger/` (без доменных view-DTO)                             | `ValidationErrorResponseDto`, `PaginatedMetaDto`, `ApiValidationError` |
 | Бизнес-инварианты                   | `domain/entities/*.entity.ts` → `throw DomainException`             | `UserEntity.confirmEmail()`                                            |
 | Оркестрация сценария                | `application/use-cases/*UseCase.execute()`                          | `UpdateCommentUseCase`                                                 |
 | OrmEntity ↔ Entity                  | `domain/mappers/*PersistenceMapper`                                 | `blog.persistence-mapper.ts`                                           |
@@ -207,6 +215,26 @@ QueryHandler → QueryRepository → OrmEntity → infrastructure mapper → Mod
 ```
 
 CUD-репозитории работают с **domain Entity**; query-репозитории — с **Model** (CQRS-lite внутри модуля). Хелпер `fromEntity()` в infrastructure mappers конвертирует Entity → Model, когда use case должен вернуть прежний контракт.
+
+### Swagger (OpenAPI)
+
+Swagger UI доступен по `/api` (настройка — `src/app/setup/swagger.setup.ts`).
+
+| Слой                    | Расположение                                    | Назначение                                                                   |
+| ----------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Request DTO**         | `modules/<feature>/dto/`                        | Вход HTTP: body, query; валидация через `class-validator`                    |
+| **Response ViewDto**    | `modules/<feature>/dto/*.swagger.dto.ts`        | Схемы ответов для OpenAPI (`@ApiProperty`)                                   |
+| **Endpoint decorators** | `modules/<feature>/api/*.swagger.decorators.ts` | `@ApiOkResponse`, `@ApiBody`, guards в Swagger                               |
+| **Общие модели**        | `core/swagger/`                                 | `ValidationErrorResponseDto`, `PaginatedMetaDto`, `ApiValidationError` и др. |
+| **Runtime view**        | `types/view-models.ts`, `*.view-mapper.ts`      | Фактический JSON ответа (не путать с ViewDto)                                |
+
+**Правила:**
+
+- Доменные view-DTO живут в **модуле-владельце** (`PostViewDto` → `post/dto/post-view.swagger.dto.ts`, `LikesInfoViewDto` → `like/dto/like-view.swagger.dto.ts`).
+- `core/swagger/` **не импортирует** из `modules/*` и не содержит доменных view-DTO.
+- Cross-module: потребитель импортирует view-DTO у владельца (`post`/`comment` → `@/modules/like/dto/like-view.swagger.dto`).
+- Paginated view-DTO наследуют `PaginatedMetaDto` из `core/swagger/paginated-meta.dto.ts`.
+- Все ViewDto из `@ApiOkResponse({ type: ... })` регистрируются в `extraModels` в `swagger.setup.ts`.
 
 #### Command repository vs Query repository
 

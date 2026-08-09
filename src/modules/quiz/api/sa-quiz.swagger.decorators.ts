@@ -11,13 +11,13 @@ import {
 } from '@nestjs/swagger';
 
 import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
-import { PaginatedQuizQuestionsViewDto, QuizQuestionViewDto } from '@/core/swagger/quiz-view.dto';
 
 import {
   CreateQuizQuestionDto,
   PublishQuizQuestionDto,
   UpdateQuizQuestionDto,
 } from '../dto/quiz-question.dto';
+import { PaginatedQuizQuestionsViewDto, QuizQuestionViewDto } from '../dto/quiz-view.swagger.dto';
 
 const UNAUTHORIZED_DESCRIPTION = 'Invalid basic auth credentials';
 

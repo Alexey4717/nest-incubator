@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { ExtendedLikesInfoViewDto } from './like-view.dto';
-import { PaginatedMetaDto } from './paginated-meta.dto';
+import { PaginatedMetaDto } from '@/core/swagger/paginated-meta.dto';
+
+import { ExtendedLikesInfoViewDto } from '@/modules/like/dto/like-view.swagger.dto';
 
 export class PostViewDto {
   @ApiProperty({ example: 'uuid' })

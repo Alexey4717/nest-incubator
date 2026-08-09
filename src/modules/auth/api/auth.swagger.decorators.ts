@@ -8,7 +8,6 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { AccessTokenViewDto, MeViewDto } from '@/core/swagger/auth-view.dto';
 import {
   ApiBearerProtected,
   ApiCookieProtected,
@@ -16,6 +15,7 @@ import {
   ApiValidationError,
 } from '@/core/swagger/decorators/common.swagger.decorators';
 
+import { AccessTokenViewDto, MeViewDto } from '../dto/auth-view.swagger.dto';
 import { LoginDto } from '../dto/login.dto';
 import { NewPasswordDto } from '../dto/new-password.dto';
 import { RecoveryPasswordDto } from '../dto/recovery-password.dto';

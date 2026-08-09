@@ -7,7 +7,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { ValidationErrorResponseDto } from '@/core/swagger/validation-error.dto';
+import { ValidationErrorResponseDto } from '../validation-error.dto';
 
 export function ApiValidationError() {
   return applyDecorators(ApiBadRequestResponse({ type: ValidationErrorResponseDto }));

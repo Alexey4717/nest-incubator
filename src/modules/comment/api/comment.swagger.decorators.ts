@@ -9,7 +9,6 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CommentViewDto } from '@/core/swagger/comment-view.dto';
 import {
   ApiBearerProtected,
   ApiValidationError,
@@ -17,6 +16,7 @@ import {
 
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 
+import { CommentViewDto } from '../dto/comment-view.swagger.dto';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
 
 export function ApiGetComment() {

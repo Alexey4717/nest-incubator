@@ -1,7 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { LikesInfoViewDto } from './like-view.dto';
-import { PaginatedMetaDto } from './paginated-meta.dto';
+import { PaginatedMetaDto } from '@/core/swagger/paginated-meta.dto';
+
+import { LikesInfoViewDto } from '@/modules/like/dto/like-view.swagger.dto';
 
 export class CommentatorInfoViewDto {
   @ApiProperty({ example: 'uuid' })

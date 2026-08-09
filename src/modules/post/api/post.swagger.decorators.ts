@@ -9,18 +9,21 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { CommentViewDto, PaginatedCommentsViewDto } from '@/core/swagger/comment-view.dto';
 import {
   ApiBasicAdmin,
   ApiBearerProtected,
   ApiValidationError,
 } from '@/core/swagger/decorators/common.swagger.decorators';
-import { PaginatedPostsViewDto, PostViewDto } from '@/core/swagger/post-view.dto';
 
+import {
+  CommentViewDto,
+  PaginatedCommentsViewDto,
+} from '@/modules/comment/dto/comment-view.swagger.dto';
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
 
 import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { CreatePostDto } from '../dto/create-post.dto';
+import { PaginatedPostsViewDto, PostViewDto } from '../dto/post-view.swagger.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
 
 export function ApiGetPosts() {

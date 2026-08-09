@@ -11,9 +11,9 @@ import {
 } from '@nestjs/swagger';
 
 import { ApiValidationError } from '@/core/swagger/decorators/common.swagger.decorators';
-import { PaginatedUsersViewDto, UserViewDto } from '@/core/swagger/user-view.dto';
 
 import { CreateUserDTO } from '../dto/create-user.dto';
+import { PaginatedUsersViewDto, UserViewDto } from '../dto/user-view.swagger.dto';
 
 const UNAUTHORIZED_DESCRIPTION = 'Invalid basic auth credentials';
 

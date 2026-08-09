@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { PaginatedMetaDto } from './paginated-meta.dto';
+import { PaginatedMetaDto } from '@/core/swagger/paginated-meta.dto';
 
 export class PlayerInGameViewDto {
   @ApiProperty({ example: 'uuid' })
