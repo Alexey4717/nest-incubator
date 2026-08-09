@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { Result } from '@/core/result/result.factory';
 import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
-import { validateOrRejectModel } from '@/core/utils/helpers';
+import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
 import { BlogQueryRepository } from '@/modules/blog/infrastructure/blog-query.repository';
 

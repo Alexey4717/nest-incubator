@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { BcryptService } from '@/core/application/bcrypt.service';
-import { DomainException } from '@/core/exceptions/domain.exception';
+import { DomainException } from '@/core/errors/domain.exception';
 import { Result } from '@/core/result/result.factory';
 import { Result as ResultType } from '@/core/result/result.types';
+import { BcryptService } from '@/core/services/bcrypt.service';
 import { IUseCase } from '@/core/types/use-case';
 
 import { UserEntity } from '../../domain/entities/user.entity';

@@ -1,6 +1,6 @@
 import { ValidationError } from 'class-validator';
 
-import { Extension } from '@/core/exceptions/extension.type';
+import { Extension } from './extension.type';
 
 export function errorFormatter(errors: ValidationError[], parentField = ''): Extension[] {
   const result: Extension[] = [];

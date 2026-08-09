@@ -1,10 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 
-import { BcryptService } from './application/bcrypt.service';
 import { CoreConfig } from './core.config';
-import { AllHttpExceptionsFilter } from './filters/all-http-exceptions.filter';
-import { DomainHttpExceptionsFilter } from './filters/domain-http-exceptions.filter';
+import { AllHttpExceptionsFilter } from './errors/all-http-exceptions.filter';
+import { DomainHttpExceptionsFilter } from './errors/domain-http-exceptions.filter';
+import { BcryptService } from './services/bcrypt.service';
 import { TrimValidator } from './validators/trim.validator';
 
 @Global()

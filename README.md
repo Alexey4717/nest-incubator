@@ -23,7 +23,9 @@ src/
 | Файл                                   | Назначение                                                                                                             |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                          |
-| `app.settings.ts`                      | `configApp` — глобальные pipes (через `core/pipes/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
+| `app.settings.ts`                      | `configApp` — глобальные pipes (через `app/setup/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
+| `setup/pipes.setup.ts`                 | `setupValidationPipe` — глобальный ValidationPipe с `DomainException`                                                  |
+| `setup/swagger.setup.ts`               | Swagger UI и регистрация OpenAPI-моделей                                                                               |
 | `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                         |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
@@ -43,11 +45,10 @@ src/
 
 ```
 core/
-├── application/            # BcryptService
-├── exceptions/             # DomainException, коды ошибок, Extension
-├── filters/                # DomainHttpExceptionsFilter, AllHttpExceptionsFilter
+├── services/               # BcryptService (cross-domain infrastructure services)
+├── errors/                 # DomainException, коды, filters, error-formatter, throwIfNotFound, normalize-http-exception-errors
 ├── result/                 # Result Object (ok/fail, resultToDomainException)
-├── pipes/                  # setupValidationPipe (глобальный ValidationPipe)
+├── typeorm/                # applyPagination/applySort, runWithTransactionRetry, isRetryableDbError
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
 ├── dto/                    # BaseQueryParamsDto, PaginatedViewDto
@@ -57,7 +58,8 @@ core/
 │   └── decorators/common.swagger.decorators.ts
 ├── types/                  # общие типы и enum'ы (Paginator, SortDirections, LikeStatus)
 ├── validators/             # class-validator constraints + Injectable-валидаторы
-├── utils/                  # утилиты (helpers, error-formatter, throw-if-not-found, typeorm-pagination)
+├── utils/                  # validate-or-reject-model, sleep, generatePublicId (UUIDv7)
+├── middleware/             # normalize-query.middleware
 ├── core.config.ts          # CoreConfig
 └── core.module.ts          # CoreModule (@Global)
 ```
@@ -298,7 +300,7 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 | Слой                                  | Выбрасывать?                               | Как                                                                          | Примеры кодов             |
 | ------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
-| **`core/pipes` (ValidationPipe)**     | Да                                         | `exceptionFactory` → `ValidationError`                                       | 400 + `errorsMessages`    |
+| **`app/setup/pipes.setup` (ValidationPipe)** | Да                                         | `exceptionFactory` → `ValidationError`                                       | 400 + `errorsMessages`    |
 | **`domain/entities/*`**               | **Да — основное место правил**             | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
 | **`infrastructure/*Repository`**      | Только infra-перевод                       | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
 | **`infrastructure/*QueryRepository`** | **Нет**                                    | `null` / пустой результат                                                    | —                         |
@@ -376,11 +378,11 @@ flowchart TD
 | `500` (dev)           | `{ error, stack }`                         |
 | `500` (prod)          | `'Internal Error'`                         |
 
-**ValidationPipe** (`src/core/pipes/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
+**ValidationPipe** (`src/app/setup/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
 
 ### Хранение паролей
 
-Хеширование и сравнение инкапсулированы в `BcryptService` (`core/application/bcrypt.service.ts`), зарегистрированном в `CoreModule`.
+Хеширование и сравнение инкапсулированы в `BcryptService` (`core/services/bcrypt.service.ts`), зарегистрированном в `CoreModule`.
 
 **Точки входа:**
 
@@ -393,7 +395,7 @@ flowchart TD
 
 **Отдельная колонка `salt` не нужна:** bcrypt сохраняет соль внутри строки `passwordHash` (формат `$2b$10$...`). При `compare()` соль извлекается из хеша автоматически — достаточно одного поля в таблице `users`.
 
-Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`core/utils/typeorm-pagination.ts`).
+Общие утилиты пагинации: class-based query DTO (`BaseQueryParamsDto`, `Get*QueryParamsDto`) с глобальным `ValidationPipe`, `calculateSkip()` и `PaginatedViewDto.mapToView()`; TypeORM-хелперы — `applySort` / `applyPagination` (`core/typeorm/typeorm-pagination.ts`).
 
 ### Subdomain-модули (подробнее)
 

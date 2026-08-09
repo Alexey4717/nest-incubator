@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, LessThan, Not, Repository } from 'typeorm';
 
-import { runWithTransactionRetry } from '@/core/database/run-with-transaction-retry';
+import { runWithTransactionRetry } from '@/core/typeorm/run-with-transaction-retry';
 
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 

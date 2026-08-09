@@ -1,8 +1,8 @@
 import { validateOrReject, ValidationError } from 'class-validator';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
-import { errorFormatter } from '@/core/utils/error-formatter';
+import { DomainExceptionCode } from '../errors/domain-exception-code.enum';
+import { DomainException } from '../errors/domain.exception';
+import { errorFormatter } from '../errors/error-formatter';
 
 export const validateOrRejectModel = async (
   model: object,

@@ -2,10 +2,10 @@ import { ArgumentsHost, Catch, ExceptionFilter, Injectable } from '@nestjs/commo
 import { Request, Response } from 'express';
 import { constants } from 'http2';
 
-import { CoreConfig } from '@/core/core.config';
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
-import { normalizeDomainFieldError } from '@/core/utils/normalize-http-exception-errors';
+import { CoreConfig } from '../core.config';
+import { DomainExceptionCode } from './domain-exception-code.enum';
+import { DomainException } from './domain.exception';
+import { normalizeDomainFieldError } from './normalize-http-exception-errors';
 
 function getHttpStatus(code: DomainExceptionCode): number {
   switch (code) {

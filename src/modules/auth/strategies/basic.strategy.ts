@@ -3,8 +3,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { BasicStrategy as Strategy } from 'passport-http';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
 
 import { AuthConfig } from '../auth.config';
 

@@ -1,5 +1,5 @@
-import { DomainExceptionCode } from '../exceptions/domain-exception-code.enum';
-import { Extension } from '../exceptions/extension.type';
+import { DomainExceptionCode } from '../errors/domain-exception-code.enum';
+import { Extension } from '../errors/extension.type';
 
 export enum ResultStatus {
   Success = 'Success',

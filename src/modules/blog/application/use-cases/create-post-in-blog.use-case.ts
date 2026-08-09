@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
-import { validateOrRejectModel } from '@/core/utils/helpers';
+import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
 import { CreatePostUseCase } from '@/modules/post/application/use-cases/create-post.use-case';
 import { PostModel } from '@/modules/post/models/post.model';

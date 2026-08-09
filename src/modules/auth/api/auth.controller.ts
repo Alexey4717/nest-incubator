@@ -8,10 +8,10 @@ import { CoreConfig } from '@/core/core.config';
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
 import { RefreshToken } from '@/core/decorators/param/refresh-token.decorator';
 import { UserAgent } from '@/core/decorators/param/user-agent.decorator';
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
+import { throwIfNotFound } from '@/core/errors/throw-if-not-found';
 import { resultToDomainException } from '@/core/result/result-to-domain';
-import { throwIfNotFound } from '@/core/utils/throw-if-not-found';
 
 import { LoginCommand } from '../application/commands/login.command';
 import { LogoutCommand } from '../application/commands/logout.command';

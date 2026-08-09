@@ -5,7 +5,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
-import { validateOrRejectModel } from '@/core/utils/helpers';
+import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 

@@ -1,5 +1,4 @@
-import { sleep } from '@/core/utils/sleep';
-
+import { sleep } from '../utils/sleep';
 import { isRetryableDbError } from './is-retryable-db-error';
 
 export type RunWithTransactionRetryOptions = {

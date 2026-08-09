@@ -1,8 +1,8 @@
 import { HttpException } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 
-import { FieldError } from '@/core/types/view-models';
-import { errorFormatter } from '@/core/utils/error-formatter';
+import { FieldError } from '../types/view-models';
+import { errorFormatter } from './error-formatter';
 
 export const UNKNOWN_FIELD = 'unknown';
 

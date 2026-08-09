@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { PaginatedViewDto } from '@/core/dto/paginated-view.dto';
+import { applyPagination, applySort } from '@/core/typeorm/typeorm-pagination';
 import { Paginator } from '@/core/types/common';
-import { applyPagination, applySort } from '@/core/utils/typeorm-pagination';
 
 import { GetPostsQueryParamsDto } from '@/modules/post/dto/get-posts-query-params.dto';
 import { PostQueryRepository } from '@/modules/post/infrastructure/post-query.repository';

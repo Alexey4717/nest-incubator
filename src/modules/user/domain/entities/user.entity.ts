@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
-import { generatePublicId } from '@/core/id/public-id.generator';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
+import { generatePublicId } from '@/core/utils/public-id.generator';
 
 import { UserOrmEntity } from '../../infrastructure/user.orm-entity';
 

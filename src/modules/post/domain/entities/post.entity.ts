@@ -1,4 +1,4 @@
-import { generatePublicId } from '@/core/id/public-id.generator';
+import { generatePublicId } from '@/core/utils/public-id.generator';
 
 import { PostOrmEntity } from '../../infrastructure/post.orm-entity';
 

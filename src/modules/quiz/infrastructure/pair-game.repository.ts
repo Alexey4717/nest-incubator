@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 
-import { runWithTransactionRetry } from '@/core/database/run-with-transaction-retry';
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
-import { generatePublicId } from '@/core/id/public-id.generator';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
+import { runWithTransactionRetry } from '@/core/typeorm/run-with-transaction-retry';
+import { generatePublicId } from '@/core/utils/public-id.generator';
 
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 

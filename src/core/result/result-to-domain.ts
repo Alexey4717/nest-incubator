@@ -1,4 +1,4 @@
-import { DomainException } from '../exceptions/domain.exception';
+import { DomainException } from '../errors/domain.exception';
 import { Result, ResultStatus } from './result.types';
 
 export function resultToDomainException<T>(result: Result<T>): T {

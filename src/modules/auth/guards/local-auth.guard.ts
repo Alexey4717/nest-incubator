@@ -3,9 +3,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
-import { errorFormatter } from '@/core/utils/error-formatter';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
+import { errorFormatter } from '@/core/errors/error-formatter';
 
 import { LoginDto } from '../dto/login.dto';
 

@@ -1,6 +1,5 @@
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { Extension } from '@/core/exceptions/extension.type';
-
+import { DomainExceptionCode } from '../errors/domain-exception-code.enum';
+import { Extension } from '../errors/extension.type';
 import { ResultStatus, Result as ResultType } from './result.types';
 
 export const Result = {

@@ -2,8 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Injectable } from
 import { Request, Response } from 'express';
 import { constants } from 'http2';
 
-import { CoreConfig } from '@/core/core.config';
-import { normalizeHttpExceptionErrors } from '@/core/utils/normalize-http-exception-errors';
+import { CoreConfig } from '../core.config';
+import { normalizeHttpExceptionErrors } from './normalize-http-exception-errors';
 
 function sendHttpExceptionResponse(exception: HttpException, host: ArgumentsHost): void {
   const context = host.switchToHttp();

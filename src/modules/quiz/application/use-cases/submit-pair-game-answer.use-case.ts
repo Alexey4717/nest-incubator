@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { IUseCase } from '@/core/types/use-case';
-import { validateOrRejectModel } from '@/core/utils/helpers';
+import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
 import { SubmitPairGameAnswerDto } from '../../dto/pair-game.dto';
 import { PairGameRepository } from '../../infrastructure/pair-game.repository';

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
+import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainException } from '@/core/errors/domain.exception';
 import { IUseCase } from '@/core/types/use-case';
 
 import { PairGameQueryRepository } from '../../infrastructure/pair-game-query.repository';

@@ -1,5 +1,5 @@
-import { DomainExceptionCode } from '@/core/exceptions/domain-exception-code.enum';
-import { DomainException } from '@/core/exceptions/domain.exception';
+import { DomainExceptionCode } from './domain-exception-code.enum';
+import { DomainException } from './domain.exception';
 
 export function throwIfNotFound<T>(value: T | null | undefined): T {
   if (value == null) {

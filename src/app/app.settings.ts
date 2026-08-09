@@ -4,7 +4,8 @@ import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
 import { normalizeQueryMiddleware } from '@/core/middleware/normalize-query.middleware';
-import { setupValidationPipe } from '@/core/pipes/pipes.setup';
+
+import { setupValidationPipe } from '@/app/setup/pipes.setup';
 
 import { swaggerSetup } from './setup/swagger.setup';
 
