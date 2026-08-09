@@ -2,7 +2,7 @@ import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
-import { CommentReactionEntity } from './comment-reaction.entity';
+import { CommentReactionOrmEntity } from './comment-reaction.orm-entity';
 
 @Entity('comments')
 @Index('IDX_comments_post_id_created_at', ['postId', 'createdAt'])
@@ -19,6 +19,6 @@ export class CommentOrmEntity extends BaseOrmEntity {
   @Column({ name: 'user_login', type: 'varchar' })
   userLogin: string;
 
-  @OneToMany(() => CommentReactionEntity, (reaction) => reaction.comment)
-  reactions?: CommentReactionEntity[];
+  @OneToMany(() => CommentReactionOrmEntity, (reaction) => reaction.comment)
+  reactions?: CommentReactionOrmEntity[];
 }

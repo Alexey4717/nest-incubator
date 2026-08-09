@@ -18,7 +18,7 @@ import { UpdateCommentLikeStatusUseCase } from './application/use-cases/update-c
 import { UpdateCommentUseCase } from './application/use-cases/update-comment.use-case';
 import { CommentViewMapper } from './comment.view-mapper';
 import { CommentQueryRepository } from './infrastructure/comment-query.repository';
-import { CommentReactionEntity } from './infrastructure/comment-reaction.entity';
+import { CommentReactionOrmEntity } from './infrastructure/comment-reaction.orm-entity';
 import { CommentOrmEntity } from './infrastructure/comment.orm-entity';
 import { CommentRepository } from './infrastructure/comment.repository';
 
@@ -45,7 +45,7 @@ const commentQueryHandlers = [GetCommentByIdHandler];
     CqrsModule,
     AuthModule,
     LikeModule,
-    TypeOrmModule.forFeature([CommentOrmEntity, CommentReactionEntity]),
+    TypeOrmModule.forFeature([CommentOrmEntity, CommentReactionOrmEntity]),
   ],
   controllers: [CommentController],
   providers: [

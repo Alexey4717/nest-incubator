@@ -1,7 +1,5 @@
 import { generatePublicId } from '@/core/utils/public-id.generator';
 
-import { PostOrmEntity } from '../../infrastructure/post.orm-entity';
-
 export type PostCreateProps = {
   title: string;
   shortDescription: string;
@@ -50,17 +48,17 @@ export class PostEntity {
     });
   }
 
-  static reconstitute(raw: PostOrmEntity | PostDb): PostEntity {
+  static reconstitute(raw: PostDb): PostEntity {
     return new PostEntity({
-      id: 'publicId' in raw ? raw.publicId : raw.id,
+      id: raw.id,
       title: raw.title,
       shortDescription: raw.shortDescription,
       content: raw.content,
       blogId: raw.blogId,
       blogName: raw.blogName,
       createdAt: raw.createdAt instanceof Date ? raw.createdAt : new Date(raw.createdAt),
-      likesCount: 'likesCount' in raw ? raw.likesCount : 0,
-      dislikesCount: 'dislikesCount' in raw ? raw.dislikesCount : 0,
+      likesCount: raw.likesCount,
+      dislikesCount: raw.dislikesCount,
     });
   }
 

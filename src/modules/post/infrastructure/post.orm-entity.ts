@@ -2,7 +2,7 @@ import { Column, Entity, Index, OneToMany } from 'typeorm';
 
 import { BaseOrmEntity } from '@/modules/database/base.orm-entity';
 
-import { PostReactionEntity } from './post-reaction.entity';
+import { PostReactionOrmEntity } from './post-reaction.orm-entity';
 
 @Entity('posts')
 @Index('IDX_posts_blog_id_created_at', ['blogId', 'createdAt'])
@@ -22,6 +22,6 @@ export class PostOrmEntity extends BaseOrmEntity {
   @Column({ name: 'blog_name', type: 'varchar' })
   blogName: string;
 
-  @OneToMany(() => PostReactionEntity, (reaction) => reaction.post)
-  reactions?: PostReactionEntity[];
+  @OneToMany(() => PostReactionOrmEntity, (reaction) => reaction.post)
+  reactions?: PostReactionOrmEntity[];
 }

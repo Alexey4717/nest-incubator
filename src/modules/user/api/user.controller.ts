@@ -23,8 +23,8 @@ import { CreateUserCommand } from '../application/commands/create-user.command';
 import { DeleteUserCommand } from '../application/commands/delete-user.command';
 import { GetUsersQuery } from '../application/queries/get-users.query';
 import { CreateUserDTO } from '../dto/create-user.dto';
+import { DeleteUserParamsDto } from '../dto/delete-user-params.dto';
 import { GetUsersQueryParamsDto } from '../dto/get-users-query-params.dto';
-import { DeleteUserInputModel } from '../models/DeleteUserInputModel';
 import { UserViewModel } from '../types/view-models';
 import { toUserViewModel } from '../user.view-mapper';
 import { ApiCreateUser, ApiDeleteUser, ApiGetUsers } from './user.swagger.decorators';
@@ -65,7 +65,7 @@ export class UserController {
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeleteUser()
-  async deleteUser(@Param() params: DeleteUserInputModel) {
+  async deleteUser(@Param() params: DeleteUserParamsDto) {
     const result = await this.commandBus.execute(new DeleteUserCommand(params.id));
     resultToDomainException(result);
   }

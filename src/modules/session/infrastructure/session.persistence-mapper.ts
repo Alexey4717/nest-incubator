@@ -1,5 +1,5 @@
-import { SessionOrmEntity } from '../../infrastructure/session.orm-entity';
-import { SessionEntity } from '../entities/session.entity';
+import { SessionEntity } from '../domain/entities/session.entity';
+import { SessionOrmEntity } from './session.orm-entity';
 
 export const SessionPersistenceMapper = {
   toDomain(raw: SessionOrmEntity, userPublicId: string): SessionEntity {

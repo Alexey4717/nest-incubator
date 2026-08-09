@@ -6,8 +6,8 @@ import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 
 import { UserEntity } from '../domain/entities/user.entity';
-import { UserPersistenceMapper } from '../domain/mappers/user.persistence-mapper';
 import { UserOrmEntity } from './user.orm-entity';
+import { UserPersistenceMapper } from './user.persistence-mapper';
 
 @Injectable()
 export class UserRepository {

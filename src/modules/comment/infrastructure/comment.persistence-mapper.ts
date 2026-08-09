@@ -1,5 +1,5 @@
-import { CommentOrmEntity } from '../../infrastructure/comment.orm-entity';
-import { CommentEntity } from '../entities/comment.entity';
+import { CommentEntity } from '../domain/entities/comment.entity';
+import { CommentOrmEntity } from './comment.orm-entity';
 
 export type CommentFkPublicIds = {
   postId: string;

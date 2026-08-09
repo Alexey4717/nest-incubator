@@ -2,15 +2,18 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
-import { CommentOrmEntity } from './comment.orm-entity';
+import { PostOrmEntity } from './post.orm-entity';
 
-@Entity('comment_reactions')
-export class CommentReactionEntity {
-  @PrimaryColumn({ name: 'comment_id', type: 'bigint' })
-  commentId: string;
+@Entity('post_reactions')
+export class PostReactionOrmEntity {
+  @PrimaryColumn({ name: 'post_id', type: 'bigint' })
+  postId: string;
 
   @PrimaryColumn({ name: 'user_id', type: 'bigint' })
   userId: string;
+
+  @Column({ name: 'user_login', type: 'varchar' })
+  userLogin: string;
 
   @Column({ name: 'like_status', type: 'varchar' })
   likeStatus: LikeStatus;
@@ -18,10 +21,10 @@ export class CommentReactionEntity {
   @Column({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
-  @ManyToOne(() => CommentOrmEntity, (comment) => comment.reactions, {
+  @ManyToOne(() => PostOrmEntity, (post) => post.reactions, {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'comment_id' })
-  comment: CommentOrmEntity;
+  @JoinColumn({ name: 'post_id' })
+  post: PostOrmEntity;
 }

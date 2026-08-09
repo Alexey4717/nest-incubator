@@ -5,8 +5,6 @@ import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { generatePublicId } from '@/core/utils/public-id.generator';
 
-import { UserOrmEntity } from '../../infrastructure/user.orm-entity';
-
 export type UserCreateProps = {
   login: string;
   email: string;
@@ -50,9 +48,9 @@ export class UserEntity {
     });
   }
 
-  static reconstitute(raw: UserOrmEntity | UserDb): UserEntity {
+  static reconstitute(raw: UserDb): UserEntity {
     return new UserEntity({
-      id: 'publicId' in raw ? raw.publicId : raw.id,
+      id: raw.id,
       login: raw.login,
       email: raw.email,
       passwordHash: raw.passwordHash,

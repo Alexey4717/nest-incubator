@@ -1,9 +1,16 @@
-import { BlogOrmEntity } from '../../infrastructure/blog.orm-entity';
-import { BlogEntity } from '../entities/blog.entity';
+import { BlogEntity } from '../domain/entities/blog.entity';
+import { BlogOrmEntity } from './blog.orm-entity';
 
 export const BlogPersistenceMapper = {
   toDomain(raw: BlogOrmEntity): BlogEntity {
-    return BlogEntity.reconstitute(raw);
+    return BlogEntity.reconstitute({
+      id: raw.publicId,
+      name: raw.name,
+      websiteUrl: raw.websiteUrl,
+      description: raw.description,
+      isMembership: raw.isMembership,
+      createdAt: raw.createdAt,
+    });
   },
 
   toPersistence(entity: BlogEntity): BlogOrmEntity {

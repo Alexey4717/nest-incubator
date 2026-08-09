@@ -1,9 +1,20 @@
-import { UserOrmEntity } from '../../infrastructure/user.orm-entity';
-import { UserEntity } from '../entities/user.entity';
+import { UserEntity } from '../domain/entities/user.entity';
+import { UserOrmEntity } from './user.orm-entity';
 
 export const UserPersistenceMapper = {
   toDomain(raw: UserOrmEntity): UserEntity {
-    return UserEntity.reconstitute(raw);
+    return UserEntity.reconstitute({
+      id: raw.publicId,
+      login: raw.login,
+      email: raw.email,
+      passwordHash: raw.passwordHash,
+      createdAt: raw.createdAt,
+      confirmationCode: raw.confirmationCode,
+      confirmationExpiration: raw.confirmationExpiration,
+      isConfirmed: raw.isConfirmed,
+      recoveryCode: raw.recoveryCode,
+      recoveryExpiration: raw.recoveryExpiration,
+    });
   },
 
   toPersistence(entity: UserEntity): UserOrmEntity {

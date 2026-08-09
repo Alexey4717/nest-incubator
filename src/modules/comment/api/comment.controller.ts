@@ -17,8 +17,8 @@ import { UpdateCommentLikeStatusCommand } from '../application/commands/update-c
 import { UpdateCommentCommand } from '../application/commands/update-comment.command';
 import { GetCommentByIdQuery } from '../application/queries/get-comment-by-id.query';
 import { CommentViewMapper } from '../comment.view-mapper';
+import { GetCommentParamsDto } from '../dto/get-comment-params.dto';
 import { UpdateCommentDTO } from '../dto/update-comment.dto';
-import { GetCommentInputModel } from '../models/GetCommentInputModel';
 import {
   ApiDeleteComment,
   ApiGetComment,
@@ -53,7 +53,7 @@ export class CommentController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiUpdateCommentLikeStatus()
   async changeLikeStatus(
-    @Param() params: GetCommentInputModel,
+    @Param() params: GetCommentParamsDto,
     @Body() body: LikeInputDto,
     @CurrentUserId() userId: string,
   ) {
@@ -69,7 +69,7 @@ export class CommentController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiUpdateComment()
   async updateComment(
-    @Param() params: GetCommentInputModel,
+    @Param() params: GetCommentParamsDto,
     @Body() body: UpdateCommentDTO,
     @CurrentUserId() userId: string,
   ) {
@@ -84,7 +84,7 @@ export class CommentController {
   @Delete(':commentId')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeleteComment()
-  async deleteComment(@Param() params: GetCommentInputModel, @CurrentUserId() userId: string) {
+  async deleteComment(@Param() params: GetCommentParamsDto, @CurrentUserId() userId: string) {
     const result = await this.commandBus.execute(
       new DeleteCommentCommand(params.commentId, userId),
     );

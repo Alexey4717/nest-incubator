@@ -22,7 +22,7 @@ import { GetPostsUseCase } from './application/use-cases/get-posts.use-case';
 import { UpdatePostLikeStatusUseCase } from './application/use-cases/update-post-like-status.use-case';
 import { UpdatePostUseCase } from './application/use-cases/update-post.use-case';
 import { PostQueryRepository } from './infrastructure/post-query.repository';
-import { PostReactionEntity } from './infrastructure/post-reaction.entity';
+import { PostReactionOrmEntity } from './infrastructure/post-reaction.orm-entity';
 import { PostOrmEntity } from './infrastructure/post.orm-entity';
 import { PostRepository } from './infrastructure/post.repository';
 import { PostViewMapper } from './post.view-mapper';
@@ -53,7 +53,7 @@ const postQueryHandlers = [GetPostsHandler, GetPostByIdHandler, GetPostCommentsH
     AuthModule,
     LikeModule,
     UserModule,
-    TypeOrmModule.forFeature([PostOrmEntity, PostReactionEntity]),
+    TypeOrmModule.forFeature([PostOrmEntity, PostReactionOrmEntity]),
   ],
   controllers: [PostController],
   providers: [

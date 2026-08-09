@@ -10,10 +10,10 @@ import { LikeStatus } from '@/modules/like/types/like-status';
 import { UserOrmEntity } from '@/modules/user/infrastructure/user.orm-entity';
 
 import { PostEntity } from '../domain/entities/post.entity';
-import { PostPersistenceMapper } from '../domain/mappers/post.persistence-mapper';
-import { PostReactionEntity } from './post-reaction.entity';
+import { PostReactionOrmEntity } from './post-reaction.orm-entity';
 import { reactionToDomain } from './post.mapper';
 import { PostOrmEntity } from './post.orm-entity';
+import { PostPersistenceMapper } from './post.persistence-mapper';
 
 export interface UpdateLikeStatusPostArgs {
   postId: string;
@@ -26,8 +26,8 @@ export class PostRepository {
   constructor(
     @InjectRepository(PostOrmEntity)
     private readonly postsRepository: Repository<PostOrmEntity>,
-    @InjectRepository(PostReactionEntity)
-    private readonly postReactionsRepository: Repository<PostReactionEntity>,
+    @InjectRepository(PostReactionOrmEntity)
+    private readonly postReactionsRepository: Repository<PostReactionOrmEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly reactionUpdateService: ReactionUpdateService,
@@ -80,7 +80,7 @@ export class PostRepository {
       return await runWithTransactionRetry(() =>
         this.dataSource.transaction(async (manager) => {
           const postsRepository = manager.getRepository(PostOrmEntity);
-          const postReactionsRepository = manager.getRepository(PostReactionEntity);
+          const postReactionsRepository = manager.getRepository(PostReactionOrmEntity);
 
           const postInternalId = await this.internalIdResolver.resolvePostId(postId, manager);
           const userInternalId = await this.internalIdResolver.resolveUserId(userId, manager);
@@ -129,7 +129,7 @@ export class PostRepository {
           if (plan.action === 'noop') return true;
 
           if (plan.action === 'push') {
-            const reaction = new PostReactionEntity();
+            const reaction = new PostReactionOrmEntity();
             reaction.postId = postInternalId;
             reaction.userId = userInternalId;
             reaction.userLogin = plan.reaction.userLogin ?? userLogin ?? '';

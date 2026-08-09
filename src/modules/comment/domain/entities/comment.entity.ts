@@ -2,8 +2,6 @@ import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { generatePublicId } from '@/core/utils/public-id.generator';
 
-import { CommentOrmEntity } from '../../infrastructure/comment.orm-entity';
-
 export type CommentCreateProps = {
   postId: string;
   userId: string;
@@ -43,16 +41,16 @@ export class CommentEntity {
     });
   }
 
-  static reconstitute(raw: CommentOrmEntity | CommentDb): CommentEntity {
+  static reconstitute(raw: CommentDb): CommentEntity {
     return new CommentEntity({
-      id: 'publicId' in raw ? raw.publicId : raw.id,
+      id: raw.id,
       postId: raw.postId,
       content: raw.content,
       userId: raw.userId,
       userLogin: raw.userLogin,
       createdAt: raw.createdAt instanceof Date ? raw.createdAt : new Date(raw.createdAt),
-      likesCount: 'likesCount' in raw ? raw.likesCount : 0,
-      dislikesCount: 'dislikesCount' in raw ? raw.dislikesCount : 0,
+      likesCount: raw.likesCount,
+      dislikesCount: raw.dislikesCount,
     });
   }
 

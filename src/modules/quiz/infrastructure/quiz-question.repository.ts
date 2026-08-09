@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { QuizQuestionEntity } from '../domain/entities/quiz-question.entity';
-import { QuizQuestionPersistenceMapper } from '../domain/mappers/quiz-question.persistence-mapper';
 import { QuizQuestionOrmEntity } from './quiz-question.orm-entity';
+import { QuizQuestionPersistenceMapper } from './quiz-question.persistence-mapper';
 
 @Injectable()
 export class QuizQuestionRepository {

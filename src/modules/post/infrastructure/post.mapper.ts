@@ -1,10 +1,10 @@
 import { PostEntity } from '../domain/entities/post.entity';
 import { PostModel, PostReactionModel } from '../models/post.model';
-import { PostReactionEntity } from './post-reaction.entity';
+import { PostReactionOrmEntity } from './post-reaction.orm-entity';
 import { PostOrmEntity } from './post.orm-entity';
 
 export function reactionToDomain(
-  reaction: PostReactionEntity,
+  reaction: PostReactionOrmEntity,
   userPublicId: string,
 ): PostReactionModel {
   return {
@@ -15,7 +15,10 @@ export function reactionToDomain(
   };
 }
 
-export function toDomain(entity: PostOrmEntity, reactions: PostReactionEntity[] = []): PostModel {
+export function toDomain(
+  entity: PostOrmEntity,
+  reactions: PostReactionOrmEntity[] = [],
+): PostModel {
   return {
     id: entity.publicId,
     title: entity.title,

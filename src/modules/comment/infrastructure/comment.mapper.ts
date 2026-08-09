@@ -1,10 +1,10 @@
 import { CommentEntity } from '../domain/entities/comment.entity';
 import { CommentModel, CommentReactionModel } from '../models/comment.model';
-import { CommentReactionEntity } from './comment-reaction.entity';
+import { CommentReactionOrmEntity } from './comment-reaction.orm-entity';
 import { CommentOrmEntity } from './comment.orm-entity';
 
 export function reactionToDomain(
-  reaction: CommentReactionEntity,
+  reaction: CommentReactionOrmEntity,
   userPublicId: string,
 ): CommentReactionModel {
   return {
@@ -17,8 +17,8 @@ export function reactionToDomain(
 export function reactionToOrm(
   commentId: string,
   reaction: CommentReactionModel,
-): CommentReactionEntity {
-  const entity = new CommentReactionEntity();
+): CommentReactionOrmEntity {
+  const entity = new CommentReactionOrmEntity();
   entity.commentId = commentId;
   entity.userId = reaction.userId;
   entity.likeStatus = reaction.likeStatus;
@@ -28,7 +28,7 @@ export function reactionToOrm(
 
 export function toDomain(
   entity: CommentOrmEntity,
-  reactions: CommentReactionEntity[] = [],
+  reactions: CommentReactionOrmEntity[] = [],
   fkPublicIds?: { postId: string; userId: string },
 ): CommentModel {
   return {

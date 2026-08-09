@@ -1,9 +1,16 @@
-import { QuizQuestionOrmEntity } from '../../infrastructure/quiz-question.orm-entity';
-import { QuizQuestionEntity } from '../entities/quiz-question.entity';
+import { QuizQuestionEntity } from '../domain/entities/quiz-question.entity';
+import { QuizQuestionOrmEntity } from './quiz-question.orm-entity';
 
 export const QuizQuestionPersistenceMapper = {
   toDomain(raw: QuizQuestionOrmEntity): QuizQuestionEntity {
-    return QuizQuestionEntity.reconstitute(raw);
+    return QuizQuestionEntity.reconstitute({
+      id: raw.publicId,
+      body: raw.body,
+      correctAnswers: raw.correctAnswers,
+      published: raw.published,
+      createdAt: raw.createdAt,
+      updatedAt: raw.updatedAt,
+    });
   },
 
   toPersistence(entity: QuizQuestionEntity): QuizQuestionOrmEntity {

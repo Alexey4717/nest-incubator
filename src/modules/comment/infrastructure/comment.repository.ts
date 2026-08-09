@@ -9,10 +9,10 @@ import { ReactionUpdateService } from '@/modules/like/application/services/react
 import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { CommentEntity } from '../domain/entities/comment.entity';
-import { CommentPersistenceMapper } from '../domain/mappers/comment.persistence-mapper';
-import { CommentReactionEntity } from './comment-reaction.entity';
+import { CommentReactionOrmEntity } from './comment-reaction.orm-entity';
 import { reactionToDomain } from './comment.mapper';
 import { CommentOrmEntity } from './comment.orm-entity';
+import { CommentPersistenceMapper } from './comment.persistence-mapper';
 
 export interface UpdateCommentLikeStatusArgs {
   commentId: string;
@@ -25,8 +25,8 @@ export class CommentRepository {
   constructor(
     @InjectRepository(CommentOrmEntity)
     private readonly commentsRepository: Repository<CommentOrmEntity>,
-    @InjectRepository(CommentReactionEntity)
-    private readonly commentReactionsRepository: Repository<CommentReactionEntity>,
+    @InjectRepository(CommentReactionOrmEntity)
+    private readonly commentReactionsRepository: Repository<CommentReactionOrmEntity>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly reactionUpdateService: ReactionUpdateService,
@@ -79,7 +79,7 @@ export class CommentRepository {
       return await runWithTransactionRetry(() =>
         this.dataSource.transaction(async (manager) => {
           const commentsRepository = manager.getRepository(CommentOrmEntity);
-          const commentReactionsRepository = manager.getRepository(CommentReactionEntity);
+          const commentReactionsRepository = manager.getRepository(CommentReactionOrmEntity);
 
           const commentEntity = await commentsRepository
             .createQueryBuilder('comment')
@@ -110,7 +110,7 @@ export class CommentRepository {
           if (plan.action === 'noop') return true;
 
           if (plan.action === 'push') {
-            const reaction = new CommentReactionEntity();
+            const reaction = new CommentReactionOrmEntity();
             reaction.commentId = resolvedCommentId;
             reaction.userId = userInternalId;
             reaction.likeStatus = plan.reaction.likeStatus;

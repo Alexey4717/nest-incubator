@@ -6,8 +6,8 @@ import { PostEntity } from '@/modules/post/domain/entities/post.entity';
 import { PostRepository } from '@/modules/post/infrastructure/post.repository';
 
 import { BlogEntity } from '../domain/entities/blog.entity';
-import { BlogPersistenceMapper } from '../domain/mappers/blog.persistence-mapper';
 import { BlogOrmEntity } from './blog.orm-entity';
+import { BlogPersistenceMapper } from './blog.persistence-mapper';
 
 @Injectable()
 export class BlogRepository {

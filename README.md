@@ -20,13 +20,13 @@ src/
 
 Содержит `AppModule` и всё, что относится к **запуску и склейке** приложения:
 
-| Файл                                   | Назначение                                                                                                             |
-| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                          |
+| Файл                                   | Назначение                                                                                                            |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `app.module.ts`                        | Регистрация feature-модулей, глобальных провайдеров (Config, TypeORM, Mailer)                                         |
 | `app.settings.ts`                      | `configApp` — глобальные pipes (через `app/setup/pipes.setup.ts`), CORS, Swagger, init; вызывается из `main.ts` и e2e |
-| `setup/pipes.setup.ts`                 | `setupValidationPipe` — глобальный ValidationPipe с `DomainException`                                                  |
-| `setup/swagger.setup.ts`               | Swagger UI и регистрация OpenAPI-моделей                                                                               |
-| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                         |
+| `setup/pipes.setup.ts`                 | `setupValidationPipe` — глобальный ValidationPipe с `DomainException`                                                 |
+| `setup/swagger.setup.ts`               | Swagger UI и регистрация OpenAPI-моделей                                                                              |
+| `app.controller.ts` / `app.service.ts` | Корневой health-check эндпоинт                                                                                        |
 
 **Состав `AppModule`** (глобальная инфраструктура помимо feature-модулей):
 
@@ -68,49 +68,54 @@ core/
 
 ### `modules/` — feature-модули
 
-Каждый модуль — изолированный домен с собственным `@Module`, контрактом через `exports` и типичной внутренней структурой:
+Каждый модуль — изолированный домен с собственным `@Module` и контрактом через `exports`. **Одинаковая структура означает единообразие внутри типа модуля**, а не идентичное дерево папок у всех `modules/*`.
+
+Канон для **HTTP feature с собственной persistence** (`user`, `blog`, `post`, `comment`, `quiz`):
 
 ```
 modules/<feature>/
 ├── api/                    # controllers, *.swagger.decorators.ts, HTTP-слой (CommandBus / QueryBus)
 ├── application/
-│   ├── commands/           # CQRS command + thin @CommandHandler
+│   ├── commands/           # CQRS command + thin @CommandHandler (адаптер к bus)
 │   ├── queries/            # CQRS query + thin @QueryHandler
-│   ├── use-cases/          # *UseCase с методом execute()
+│   ├── use-cases/          # *UseCase с методом execute() — переиспользуемая оркестрация
 │   └── services/           # application services (JWT, hashing и т.п.)
 ├── domain/
-│   ├── entities/           # rich domain entities (create, reconstitute, toDb, business methods)
-│   └── mappers/            # *PersistenceMapper — OrmEntity ↔ Entity
-├── infrastructure/         # TypeORM OrmEntity, repositories, read mappers
-├── dto/                    # HTTP DTO: input (`*.dto.ts`) и OpenAPI response schemas (`*.swagger.dto.ts`)
-├── models/                 # read-модели (Model) для query-репозиториев и view mappers
-├── guards/ / strategies/   # при необходимости (auth)
-├── decorators/             # декораторы, специфичные для модуля
+│   └── entities/           # rich domain entities (create, reconstitute(*Db), toDb, business methods)
+├── infrastructure/         # TypeORM OrmEntity, repositories, PersistenceMapper, read mappers
+├── dto/                    # HTTP-контракт модуля (корень модуля, не api/dto): input + OpenAPI schemas
+├── models/                 # read-модели (*.model.ts) для query-репозиториев и view mappers
+├── types/                  # ViewModel-типы (при необходимости)
+├── <feature>.view-mapper.ts
 └── <feature>.module.ts
 ```
 
+`dto/` остаётся в корне модуля: это presentation-контракт. Application может использовать DTO/types; **domain не импортирует dto**.
+
 Инфраструктурные модули (`database`, `email`) также располагаются в `modules/` — они регистрируют провайдеры и экспортируют их другим feature-модулям.
 
-| Модуль                      | Домен                                                                  |
-| --------------------------- | ---------------------------------------------------------------------- |
-| `auth`                      | Аутентификация, JWT, Passport strategies                               |
-| `security`                  | Управление устройствами и сессиями текущего пользователя               |
-| `user`                      | Пользователи                                                           |
-| `blog` / `post` / `comment` | Контент                                                                |
-| `like`                      | Reactions (subdomain, без HTTP)                                        |
-| `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`) |
-| `email`                     | Отправка писем (SMTP, шаблоны)                                         |
-| `database`                  | TypeORM, миграции, seed для локальной разработки                       |
-| `testing`                   | Служебные эндпoинты для e2e                                            |
+| Модуль                      | Домен                                                                   |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `auth`                      | Аутентификация, JWT, Passport strategies (orchestrator без persistence) |
+| `security`                  | Управление устройствами/сессиями (HTTP facade над `session`)            |
+| `user`                      | Пользователи                                                            |
+| `blog` / `post` / `comment` | Контент                                                                 |
+| `quiz`                      | Вопросы и pair-game                                                     |
+| `like`                      | Reactions (subdomain, без HTTP)                                         |
+| `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`)  |
+| `email`                     | Отправка писем (SMTP, шаблоны)                                          |
+| `database`                  | TypeORM, миграции, seed для локальной разработки                        |
+| `testing`                   | Служебные эндпoинты для e2e                                             |
 
 ### Типы модулей
 
-| Тип                            | Модули                                                | Обязательные папки                                                                   | HTTP / CQRS                                      |
-| ------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| **HTTP feature** (полный CQRS) | `user`, `blog`, `post`, `comment`, `auth`, `security` | `api/`, `application/`, `dto/`, `models/`, `infrastructure/`; при domain — `domain/` | Controller → CommandBus / QueryBus               |
-| **Subdomain** (без `api/`)     | `session`, `like`                                     | `application/` (use-cases или services)                                              | Use cases вызываются из feature-модулей напрямую |
-| **Infra**                      | `database`, `email`                                   | config, провайдеры; у `database` — migrations/seeds                                  | Нет domain layer и HTTP                          |
-| **Utility**                    | `testing`                                             | минимальный модуль под одну задачу                                                   | CQRS только для служебного cleanup               |
+| Тип                            | Модули                                                   | Обязательные папки                                                                                            | HTTP / CQRS                                                                      |
+| ------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **HTTP + own persistence**     | `user`, `blog`, `post`, `comment`, `quiz`                | `api/`, `application/`, `dto/`, `models/`, `domain/`, `infrastructure/`                                       | Controller → CommandBus / QueryBus                                               |
+| **HTTP orchestrator / facade** | `auth` (orchestrator), `security` (facade над `session`) | `api/`, `application/`, `dto/` (+ guards/strategies у `auth`); без собственного `domain/` / `infrastructure/` | Controller → CommandBus / QueryBus; persistence у владельца (`user` / `session`) |
+| **Subdomain** (без `api/`)     | `session`, `like`                                        | `application/` (use-cases или services); у `session` — ещё `domain/` + `infrastructure/`                      | Use cases / services вызываются из feature-модулей напрямую                      |
+| **Infra**                      | `database`, `email`                                      | config, провайдеры; у `database` — migrations/seeds                                                           | Нет domain layer и HTTP                                                          |
+| **Utility**                    | `testing`                                                | минимальный модуль под одну задачу                                                                            | CQRS только для служебного cleanup                                               |
 
 Subdomain-модули (`like`, `session`) экспортируют services / use cases через `@Module({ exports })`; эндпoинты и обработка HTTP-ошибок — у потребителей (`post`, `comment`, `auth`, `security`).
 
@@ -130,13 +135,13 @@ main.ts → app/ → modules/ → core/
 
 ### CQRS и Use Cases
 
-Бизнес-логика доменов построена на **@nestjs/cqrs** и паттерне **Use Case**:
+Бизнес-логика доменов построена на **@nestjs/cqrs** и паттерне **Use Case**. Handler и Use Case — **разные слои**, их не сливают:
 
 | Слой                | Роль                                                                                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **Controller**      | HTTP: валидация DTO, guards, вызов `commandBus.execute()` / `queryBus.execute()`                                       |
-| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler`, делегирующий в use case                                 |
-| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — одна операция, одна ответственность                              |
+| **Command / Query** | Объект намерения + тонкий `@CommandHandler` / `@QueryHandler` — **адаптер к CQRS bus**, делегирует в use case          |
+| **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — **переиспользуемая оркестрация** (в т.ч. в subdomain без HTTP)   |
 | **Domain service**  | Переиспользуемая application/инфраструктурная логика без привязки к HTTP (например `JwtTokenService`, `BcryptService`) |
 | **Domain Entity**   | Rich-модель в `domain/entities/` — инварианты и бизнес-методы (`confirmEmail`, `canBeModifiedBy`, …)                   |
 | **Repository**      | CUD-доступ через domain entities; query-репозитории возвращают `*Model` для read side                                  |
@@ -168,28 +173,28 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 
 ### Domain layer (DDD)
 
-Модули `user`, `blog`, `post`, `comment`, `session` используют **rich domain layer** по образцу [express-incubator](https://github.com/Alexey4717/express-incubator):
+Модули `user`, `blog`, `post`, `comment`, `quiz`, `session` используют **rich domain layer** по образцу [express-incubator](https://github.com/Alexey4717/express-incubator):
 
-| Артефакт              | Расположение                               | Назначение                                                                                                                                      |
-| --------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entity**            | `domain/entities/*.entity.ts`              | Aggregate root: `private constructor`, `static create()`, `static reconstitute()`, `toDb()`, getters, бизнес-методы. Бросает `DomainException`. |
-| **PersistenceMapper** | `domain/mappers/*.persistence-mapper.ts`   | `toDomain(OrmEntity)` / `toPersistence(Entity)` — тонкая обёртка над entity                                                                     |
-| **OrmEntity**         | `infrastructure/*.orm-entity.ts`           | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                |
-| **Model**             | `models/*.model.ts`                        | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                         |
-| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts` | Runtime-маппинг HTTP-ответа из Model                                                                                                            |
-| **Swagger ViewDto**   | `dto/*-view.swagger.dto.ts`                | OpenAPI-схема ответа (`@ApiProperty`); регистрация в `app/setup/swagger.setup.ts`                                                               |
+| Артефакт              | Расположение                                                            | Назначение                                                                                                                                                           |
+| --------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Entity**            | `domain/entities/*.entity.ts`                                           | Aggregate root: `private constructor`, `static create()`, `static reconstitute(*Db)`, `toDb()`, getters, бизнес-методы. Бросает `DomainException`. Без `*OrmEntity`. |
+| **PersistenceMapper** | `infrastructure/*persistence-mapper.ts` (или `infrastructure/mappers/`) | `toDomain(OrmEntity)` / `toPersistence(Entity)` — единственное место, где domain встречается с TypeORM shape                                                         |
+| **OrmEntity**         | `infrastructure/*.orm-entity.ts`                                        | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                                     |
+| **Model**             | `models/*.model.ts`                                                     | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                                              |
+| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts`                              | Runtime-маппинг HTTP-ответа из Model. **Исключение:** у `quiz` view ≡ model 1:1 — отдельный view-mapper не вводится                                                  |
+| **Swagger ViewDto**   | `dto/*-view.swagger.dto.ts`                                             | OpenAPI-схема ответа (`@ApiProperty`); регистрация в `app/setup/swagger.setup.ts`                                                                                    |
 
 #### Куда что помещать
 
 | Что                                 | Куда                                                                | Эталон                                                                 |
 | ----------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| HTTP body / query                   | `dto/` + ValidationPipe в controller                                | `CreateBlogDTO`                                                        |
+| HTTP body / query / params          | `dto/` в **корне модуля** + ValidationPipe в controller             | `CreateBlogDto`, `GetPostParamsDto`                                    |
 | Swagger response schema             | `dto/*-view.swagger.dto.ts` в модуле-владельце домена               | `post-view.swagger.dto.ts` в `post/dto/`                               |
 | Swagger endpoint decorators         | `api/*.swagger.decorators.ts`                                       | `post.swagger.decorators.ts`                                           |
 | Общие Swagger-модели / декораторы   | `core/swagger/` (без доменных view-DTO)                             | `ValidationErrorResponseDto`, `PaginatedMetaDto`, `ApiValidationError` |
 | Бизнес-инварианты                   | `domain/entities/*.entity.ts` → `throw DomainException`             | `UserEntity.confirmEmail()`                                            |
 | Оркестрация сценария                | `application/use-cases/*UseCase.execute()`                          | `UpdateCommentUseCase`                                                 |
-| OrmEntity ↔ Entity                  | `domain/mappers/*PersistenceMapper`                                 | `blog.persistence-mapper.ts`                                           |
+| OrmEntity ↔ Entity                  | `infrastructure/*PersistenceMapper`                                 | `blog.persistence-mapper.ts`                                           |
 | OrmEntity → Model (read)            | `infrastructure/*mapper`                                            | `blog.mapper.ts`                                                       |
 | Entity → Model (после write)        | `fromEntity()` в infrastructure mapper                              | create/update use cases                                                |
 | Model → HTTP view                   | `<feature>.view-mapper.ts` в **корне модуля**                       | `post.view-mapper.ts`, `comment.view-mapper.ts`, `user.view-mapper.ts` |
@@ -198,7 +203,7 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 | Read API / фильтры                  | `infrastructure/*QueryRepository` → Model, без NotFound throw       | `PostQueryRepository.findPostById`                                     |
 | Cross-module shared DTO             | в модуле-владельце ресурса; потребители импортируют `@/modules/...` | `GetPostsQueryParamsDto` в `post`                                      |
 | Декоратор / validator одного модуля | `modules/<feature>/decorators/`, `validators/`                      | `@BlogExists()`                                                        |
-| Переиспользуемая логика без HTTP    | subdomain `application/services/`                                   | `ReactionUpdateService` в `like`                                       |
+| Переиспользуемая логика без HTTP    | subdomain `application/services/` или `use-cases/`                  | `ReactionUpdateService` в `like`, session use-cases                    |
 
 **Поток command (write):**
 
@@ -298,21 +303,21 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 #### DomainException — где выбрасывать
 
-| Слой                                  | Выбрасывать?                               | Как                                                                          | Примеры кодов             |
-| ------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
+| Слой                                         | Выбрасывать?                               | Как                                                                          | Примеры кодов             |
+| -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
 | **`app/setup/pipes.setup` (ValidationPipe)** | Да                                         | `exceptionFactory` → `ValidationError`                                       | 400 + `errorsMessages`    |
-| **`domain/entities/*`**               | **Да — основное место правил**             | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
-| **`infrastructure/*Repository`**      | Только infra-перевод                       | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
-| **`infrastructure/*QueryRepository`** | **Нет**                                    | `null` / пустой результат                                                    | —                         |
-| **`infrastructure/*Mapper`**          | **Нет**                                    | чистое преобразование                                                        | —                         |
-| **mutation use case**                 | Через **`Result`**, не throw (кроме infra) | `Result.fail(code)`; entity catch → `Result.fail`                            | `NotFound`, `Forbidden`   |
-| **query use case**                    | **Нет**                                    | возвращает данные или `null`                                                 | —                         |
-| **`application/services`**            | Да, если сервис — источник ошибки          | аналогично entity                                                            | JWT validation            |
-| **`api/*Controller` (mutation)**      | Через хелпер                               | `resultToDomainException(...)`                                               | —                         |
-| **`api/*Controller` (query)**         | Через хелпер                               | `throwIfNotFound(...)`                                                       | —                         |
-| **`api/*Controller`**                 | **Нет inline throw бизнес-ошибок**         | не `throw new DomainException(...)` в controller                             | —                         |
-| **`guards` / `strategies` (auth)**    | Да                                         | `DomainException(Unauthorized)`                                              | 401                       |
-| **`dto/`**                            | **Нет**                                    | только class-validator                                                       | —                         |
+| **`domain/entities/*`**                      | **Да — основное место правил**             | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
+| **`infrastructure/*Repository`**             | Только infra-перевод                       | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
+| **`infrastructure/*QueryRepository`**        | **Нет**                                    | `null` / пустой результат                                                    | —                         |
+| **`infrastructure/*Mapper`**                 | **Нет**                                    | чистое преобразование                                                        | —                         |
+| **mutation use case**                        | Через **`Result`**, не throw (кроме infra) | `Result.fail(code)`; entity catch → `Result.fail`                            | `NotFound`, `Forbidden`   |
+| **query use case**                           | **Нет**                                    | возвращает данные или `null`                                                 | —                         |
+| **`application/services`**                   | Да, если сервис — источник ошибки          | аналогично entity                                                            | JWT validation            |
+| **`api/*Controller` (mutation)**             | Через хелпер                               | `resultToDomainException(...)`                                               | —                         |
+| **`api/*Controller` (query)**                | Через хелпер                               | `throwIfNotFound(...)`                                                       | —                         |
+| **`api/*Controller`**                        | **Нет inline throw бизнес-ошибок**         | не `throw new DomainException(...)` в controller                             | —                         |
+| **`guards` / `strategies` (auth)**           | Да                                         | `DomainException(Unauthorized)`                                              | 401                       |
+| **`dto/`**                                   | **Нет**                                    | только class-validator                                                       | —                         |
 
 #### HttpException и AllHttpExceptionsFilter
 
@@ -586,52 +591,52 @@ yarn build && yarn start:prod
 
 ## Скрипты
 
-| Скрипт                      | Описание                                                                                             |
-| --------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `build`                     | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                               |
-| `format`                    | Форматирование `src/**/*.ts` через Prettier                                                          |
-| `start`                     | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                        |
-| `start:dev`                 | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                     |
-| `start:debug`               | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                          |
-| `start:staging`             | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                    |
-| `start:prod`                | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                      |
-| `lint`                      | ESLint с автоисправлением для `src/**/*.ts`                                                            |
-| `test`                      | Unit-тесты (Jest)                                                                                    |
-| `test:watch`                | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                       |
-| `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                   |
-| `test:debug`                | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                 |
+| Скрипт                      | Описание                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `build`                     | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                                       |
+| `format`                    | Форматирование `src/**/*.ts` через Prettier                                                                  |
+| `start`                     | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                                |
+| `start:dev`                 | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                             |
+| `start:debug`               | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                                  |
+| `start:staging`             | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                            |
+| `start:prod`                | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                              |
+| `lint`                      | ESLint с автоисправлением для `src/**/*.ts`                                                                  |
+| `test`                      | Unit-тесты (Jest)                                                                                            |
+| `test:watch`                | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                               |
+| `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                           |
+| `test:debug`                | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                         |
 | `test:e2e`                  | E2e-тесты (`src/__test__/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** PostgreSQL (см. `yarn db:setup`) |
-| `typeorm`                   | CLI TypeORM с `data-source.ts`                                                                       |
-| `migration:run`             | Применить миграции                                                                                   |
-| `migration:revert`          | Откатить последнюю миграцию                                                                          |
-| `migration:generate <Name>` | Сгенерировать миграцию по diff entities и БД                                                         |
-| `db:up`                     | Запустить PostgreSQL в Docker                                                                        |
-| `db:down`                   | Остановить PostgreSQL в Docker                                                                       |
-| `db:reset`                  | Пересоздать Docker volume (чистая БД)                                                                |
-| `db:migrate`                | Миграции для dev-БД                                                                                  |
-| `db:migrate:test`           | Миграции для test-БД                                                                                 |
-| `db:setup`                  | `db:up` + `db:migrate` + `db:migrate:test`                                                           |
-| `db:seed`                   | Seed dev-БД дефолтными данными                                                                       |
-| `db:seed:bulk`              | Bulk-данные для бенчмарка индексов (`--scale=`, `--scenario=`)                                       |
-| `db:seed:bulk:clean`        | Удалить benchmark-данные (`bench_user_*`, `bench_device_*`)                                          |
-| `db:explain`                | EXPLAIN ANALYZE одного SQL из `scripts/sql/explain/` (флаг `--no-index`)                             |
-| `db:index-audit`            | Каталоговый аудит индексов (неиспользуемые, дубликаты, FK без индекса; флаг `--json`)                |
-| `db:benchmark`              | Полный бенчмарк индексов (100k/200k/400k), exit 1 при провале assertions                             |
-| `db:benchmark:quick`        | Быстрый бенчмарк (2k/4k/8k) — проверка после добавления индекса                                      |
+| `typeorm`                   | CLI TypeORM с `data-source.ts`                                                                               |
+| `migration:run`             | Применить миграции                                                                                           |
+| `migration:revert`          | Откатить последнюю миграцию                                                                                  |
+| `migration:generate <Name>` | Сгенерировать миграцию по diff entities и БД                                                                 |
+| `db:up`                     | Запустить PostgreSQL в Docker                                                                                |
+| `db:down`                   | Остановить PostgreSQL в Docker                                                                               |
+| `db:reset`                  | Пересоздать Docker volume (чистая БД)                                                                        |
+| `db:migrate`                | Миграции для dev-БД                                                                                          |
+| `db:migrate:test`           | Миграции для test-БД                                                                                         |
+| `db:setup`                  | `db:up` + `db:migrate` + `db:migrate:test`                                                                   |
+| `db:seed`                   | Seed dev-БД дефолтными данными                                                                               |
+| `db:seed:bulk`              | Bulk-данные для бенчмарка индексов (`--scale=`, `--scenario=`)                                               |
+| `db:seed:bulk:clean`        | Удалить benchmark-данные (`bench_user_*`, `bench_device_*`)                                                  |
+| `db:explain`                | EXPLAIN ANALYZE одного SQL из `scripts/sql/explain/` (флаг `--no-index`)                                     |
+| `db:index-audit`            | Каталоговый аудит индексов (неиспользуемые, дубликаты, FK без индекса; флаг `--json`)                        |
+| `db:benchmark`              | Полный бенчмарк индексов (100k/200k/400k), exit 1 при провале assertions                                     |
+| `db:benchmark:quick`        | Быстрый бенчмарк (2k/4k/8k) — проверка после добавления индекса                                              |
 
 ## Структура тестов
 
-| Тип | Расположение | Пример |
-| --- | ------------ | ------ |
-| Unit-тесты (`*.spec.ts`) | Рядом с исходным кодом | `src/core/errors/error-formatter.spec.ts` |
-| E2e-тесты (`*.e2e-spec.ts`) | `src/__test__/` или `src/modules/<feature>/__test__/` | `src/modules/auth/__test__/auth.api.e2e-spec.ts` |
-| Общая e2e-инфраструктура | `src/__test__/` | см. подпапки ниже |
-| Bootstrap e2e-приложения | `src/__test__/setup/` | `init-settings.ts` |
-| Тестовые фикстуры | `src/__test__/fixtures/` | `invalid-input-data.ts` |
-| Assert-хелперы | `src/__test__/assertions/` | `response.helpers.ts` |
-| E2e-утилиты | `src/__test__/utils/` | `db.helper.ts`, `email-mock.helper.ts`, … |
-| Общие e2e-моки | `src/__test__/mocks/` | `email-service.mock.ts` (`EmailServiceMock`, `createEmailServiceMock`) |
-| Модульные e2e-хелперы | `src/modules/<feature>/__test__/` | `auth-test-manager.ts`, `comment-setup.helper.ts` |
+| Тип                         | Расположение                                          | Пример                                                                 |
+| --------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| Unit-тесты (`*.spec.ts`)    | Рядом с исходным кодом                                | `src/core/errors/error-formatter.spec.ts`                              |
+| E2e-тесты (`*.e2e-spec.ts`) | `src/__test__/` или `src/modules/<feature>/__test__/` | `src/modules/auth/__test__/auth.api.e2e-spec.ts`                       |
+| Общая e2e-инфраструктура    | `src/__test__/`                                       | см. подпапки ниже                                                      |
+| Bootstrap e2e-приложения    | `src/__test__/setup/`                                 | `init-settings.ts`                                                     |
+| Тестовые фикстуры           | `src/__test__/fixtures/`                              | `invalid-input-data.ts`                                                |
+| Assert-хелперы              | `src/__test__/assertions/`                            | `response.helpers.ts`                                                  |
+| E2e-утилиты                 | `src/__test__/utils/`                                 | `db.helper.ts`, `email-mock.helper.ts`, …                              |
+| Общие e2e-моки              | `src/__test__/mocks/`                                 | `email-service.mock.ts` (`EmailServiceMock`, `createEmailServiceMock`) |
+| Модульные e2e-хелперы       | `src/modules/<feature>/__test__/`                     | `auth-test-manager.ts`, `comment-setup.helper.ts`                      |
 
 **Правила:**
 
@@ -852,7 +857,7 @@ yarn test:e2e
 | Компонент                  | Файл                                              | Назначение                                                                                                              |
 | -------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `configApp`                | `src/app/app.settings.ts`                         | Единая настройка HTTP-приложения (pipes, CORS, Swagger, `app.init()`, class-validator) — используется в `main.ts` и e2e |
-| `initSettings`             | `src/__test__/setup/init-settings.ts`             | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком из `../mocks/email-service.mock` |
+| `initSettings`             | `src/__test__/setup/init-settings.ts`             | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком из `../mocks/email-service.mock`         |
 | `UsersTestManager`         | `src/modules/user/__test__/users-test-manager.ts` | SA-создание пользователей, CRUD `/sa/users`                                                                             |
 | `AuthTestManager`          | `src/modules/auth/__test__/auth-test-manager.ts`  | Регистрация, login, confirm, password recovery                                                                          |
 | `QuizTestManager`          | `src/modules/quiz/__test__/quiz-test-manager.ts`  | SA CRUD `/sa/quiz/questions`                                                                                            |
@@ -876,21 +881,21 @@ Shared infra разложена по подпапкам: `setup/` (bootstrap), `
 
 Файлы e2e:
 
-| Файл                                                           | Покрытие                        |
-| -------------------------------------------------------------- | ------------------------------- |
-| `src/__test__/app.e2e-spec.ts`                                 | Корневой health-check           |
-| `src/modules/auth/__test__/auth.api.e2e-spec.ts`               | Регистрация, login, password    |
-| `src/modules/user/__test__/user.api.e2e-spec.ts`               | Эндпoинты `/users`              |
-| `src/modules/post/__test__/post.api.e2e-spec.ts`                 | Эндпoинты `/posts`              |
-| `src/modules/blog/__test__/blog.api.e2e-spec.ts`               | Эндпoинты `/blogs`              |
-| `src/modules/comment/__test__/comment.api.e2e-spec.ts`         | Эндпoинты `/comments`           |
-| `src/modules/auth/__test__/auth-refresh.e2e-spec.ts`           | Refresh-токены и ротация сессий |
-| `src/modules/auth/__test__/auth-throttle.e2e-spec.ts`          | Rate limiting на auth POST      |
+| Файл                                                         | Покрытие                        |
+| ------------------------------------------------------------ | ------------------------------- |
+| `src/__test__/app.e2e-spec.ts`                               | Корневой health-check           |
+| `src/modules/auth/__test__/auth.api.e2e-spec.ts`             | Регистрация, login, password    |
+| `src/modules/user/__test__/user.api.e2e-spec.ts`             | Эндпoинты `/users`              |
+| `src/modules/post/__test__/post.api.e2e-spec.ts`             | Эндпoинты `/posts`              |
+| `src/modules/blog/__test__/blog.api.e2e-spec.ts`             | Эндпoинты `/blogs`              |
+| `src/modules/comment/__test__/comment.api.e2e-spec.ts`       | Эндпoинты `/comments`           |
+| `src/modules/auth/__test__/auth-refresh.e2e-spec.ts`         | Refresh-токены и ротация сессий |
+| `src/modules/auth/__test__/auth-throttle.e2e-spec.ts`        | Rate limiting на auth POST      |
 | `src/modules/auth/__test__/concurrency-refresh.e2e-spec.ts`  | Конкурентный refresh токенов    |
-| `src/modules/security/__test__/security-devices.e2e-spec.ts`   | Эндпoинты `/security/devices`   |
-| `src/modules/quiz/__test__/quiz.sa.api.e2e-spec.ts`            | SA CRUD `/sa/quiz/questions`    |
-| `src/modules/quiz/__test__/quiz.pair-game.api.e2e-spec.ts`     | Public API парной игры          |
-| `src/modules/like/__test__/concurrency-likes.e2e-spec.ts`      | Конкурентные лайки              |
+| `src/modules/security/__test__/security-devices.e2e-spec.ts` | Эндпoинты `/security/devices`   |
+| `src/modules/quiz/__test__/quiz.sa.api.e2e-spec.ts`          | SA CRUD `/sa/quiz/questions`    |
+| `src/modules/quiz/__test__/quiz.pair-game.api.e2e-spec.ts`   | Public API парной игры          |
+| `src/modules/like/__test__/concurrency-likes.e2e-spec.ts`    | Конкурентные лайки              |
 
 ## Authentication
 

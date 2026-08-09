@@ -1,8 +1,6 @@
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 
-import { SessionOrmEntity } from '../../infrastructure/session.orm-entity';
-
 export type SessionCreateProps = {
   deviceId: string;
   userId: string;
@@ -35,7 +33,7 @@ export class SessionEntity {
     });
   }
 
-  static reconstitute(raw: SessionOrmEntity | SessionDb): SessionEntity {
+  static reconstitute(raw: SessionDb): SessionEntity {
     return new SessionEntity({
       deviceId: raw.deviceId,
       userId: raw.userId,

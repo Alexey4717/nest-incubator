@@ -2,8 +2,6 @@ import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { generatePublicId } from '@/core/utils/public-id.generator';
 
-import { QuizQuestionOrmEntity } from '../../infrastructure/quiz-question.orm-entity';
-
 export type QuizQuestionCreateProps = {
   body: string;
   correctAnswers: string[];
@@ -37,9 +35,9 @@ export class QuizQuestionEntity {
     });
   }
 
-  static reconstitute(raw: QuizQuestionOrmEntity | QuizQuestionDb): QuizQuestionEntity {
+  static reconstitute(raw: QuizQuestionDb): QuizQuestionEntity {
     return new QuizQuestionEntity({
-      id: 'publicId' in raw ? raw.publicId : raw.id,
+      id: raw.id,
       body: raw.body,
       correctAnswers: raw.correctAnswers,
       published: raw.published,

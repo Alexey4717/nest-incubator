@@ -2,8 +2,6 @@ import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { generatePublicId } from '@/core/utils/public-id.generator';
 
-import { BlogOrmEntity } from '../../infrastructure/blog.orm-entity';
-
 export type BlogCreateProps = {
   name: string;
   websiteUrl: string;
@@ -39,9 +37,9 @@ export class BlogEntity {
     });
   }
 
-  static reconstitute(raw: BlogOrmEntity | BlogDb): BlogEntity {
+  static reconstitute(raw: BlogDb): BlogEntity {
     return new BlogEntity({
-      id: 'publicId' in raw ? raw.publicId : raw.id,
+      id: raw.id,
       name: raw.name,
       websiteUrl: raw.websiteUrl,
       description: raw.description,

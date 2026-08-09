@@ -1,7 +1,7 @@
 import { BlogOrmEntity } from '@/modules/blog/infrastructure/blog.orm-entity';
-import { CommentReactionEntity } from '@/modules/comment/infrastructure/comment-reaction.entity';
+import { CommentReactionOrmEntity } from '@/modules/comment/infrastructure/comment-reaction.orm-entity';
 import { CommentOrmEntity } from '@/modules/comment/infrastructure/comment.orm-entity';
-import { PostReactionEntity } from '@/modules/post/infrastructure/post-reaction.entity';
+import { PostReactionOrmEntity } from '@/modules/post/infrastructure/post-reaction.orm-entity';
 import { PostOrmEntity } from '@/modules/post/infrastructure/post.orm-entity';
 import { QuizPairAnswerOrmEntity } from '@/modules/quiz/infrastructure/quiz-pair-answer.orm-entity';
 import { QuizPairQuestionOrmEntity } from '@/modules/quiz/infrastructure/quiz-pair-question.orm-entity';
@@ -16,9 +16,9 @@ export const TYPEORM_ENTITIES = [
   SessionOrmEntity,
   BlogOrmEntity,
   PostOrmEntity,
-  PostReactionEntity,
+  PostReactionOrmEntity,
   CommentOrmEntity,
-  CommentReactionEntity,
+  CommentReactionOrmEntity,
   QuizQuestionOrmEntity,
   QuizPairOrmEntity,
   QuizPairQuestionOrmEntity,

@@ -7,8 +7,8 @@ import { runWithTransactionRetry } from '@/core/typeorm/run-with-transaction-ret
 import { InternalIdResolver } from '@/modules/database/internal-id.resolver';
 
 import { SessionEntity } from '../domain/entities/session.entity';
-import { SessionPersistenceMapper } from '../domain/mappers/session.persistence-mapper';
 import { SessionOrmEntity } from './session.orm-entity';
+import { SessionPersistenceMapper } from './session.persistence-mapper';
 
 @Injectable()
 export class SessionRepository {

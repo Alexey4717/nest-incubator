@@ -37,9 +37,9 @@ import { GetPostCommentsQuery } from '../application/queries/get-post-comments.q
 import { GetPostsQuery } from '../application/queries/get-posts.query';
 import { CreateCommentInPostDto } from '../dto/create-comment-in-post.dto';
 import { CreatePostDto } from '../dto/create-post.dto';
+import { GetPostParamsDto } from '../dto/get-post-params.dto';
 import { GetPostsQueryParamsDto } from '../dto/get-posts-query-params.dto';
 import { UpdatePostDto } from '../dto/update-post.dto';
-import { GetPostInputModel } from '../models/GetPostInputModel';
 import {
   ApiCreateCommentInPost,
   ApiCreatePost,
@@ -77,7 +77,7 @@ export class PostController {
   @Get(':id')
   @HttpCode(constants.HTTP_STATUS_OK)
   @ApiGetPost()
-  async getPost(@Param() params: GetPostInputModel, @CurrentUserId() currentUserId: string | null) {
+  async getPost(@Param() params: GetPostParamsDto, @CurrentUserId() currentUserId: string | null) {
     const resData = await this.queryBus.execute(new GetPostByIdQuery(params.id, currentUserId));
 
     return throwIfNotFound(resData);
@@ -147,7 +147,7 @@ export class PostController {
   @Put(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiUpdatePost()
-  async updatePost(@Param() params: GetPostInputModel, @Body() body: UpdatePostDto) {
+  async updatePost(@Param() params: GetPostParamsDto, @Body() body: UpdatePostDto) {
     const result = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
 
     resultToDomainException(result);
@@ -157,7 +157,7 @@ export class PostController {
   @Delete(':id')
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeletePost()
-  async deletePost(@Param() params: GetPostInputModel) {
+  async deletePost(@Param() params: GetPostParamsDto) {
     const result = await this.commandBus.execute(new DeletePostCommand(params.id));
 
     resultToDomainException(result);

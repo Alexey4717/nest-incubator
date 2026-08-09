@@ -1,5 +1,5 @@
-import { PostOrmEntity } from '../../infrastructure/post.orm-entity';
-import { PostEntity } from '../entities/post.entity';
+import { PostEntity } from '../domain/entities/post.entity';
+import { PostOrmEntity } from './post.orm-entity';
 
 export type PostFkPublicIds = {
   blogId: string;
