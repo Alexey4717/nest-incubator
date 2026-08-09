@@ -1,11 +1,12 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { ADMIN_BASIC_AUTH_HEADER } from './helpers/basic-auth.helper';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
-import { QuizTestManager } from './helpers/quiz-test-manager';
-import { expectPaginatorItemsCount } from './helpers/response.helpers';
+import { expectPaginatorItemsCount } from '@/__test__/assertions/response.helpers';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+import { clearAllData } from '@/__test__/utils/db.helper';
+
+import { QuizTestManager } from '@/modules/quiz/__test__/quiz-test-manager';
 
 describe('Quiz SA API (e2e)', () => {
   let ctx: E2eContext;

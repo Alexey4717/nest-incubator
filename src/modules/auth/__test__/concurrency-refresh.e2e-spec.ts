@@ -1,9 +1,9 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { countStatuses, runParallelRequests } from './helpers/concurrency.helper';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { countStatuses, runParallelRequests } from '@/__test__/utils/concurrency.helper';
+import { clearAllData } from '@/__test__/utils/db.helper';
 
 describe('Refresh token concurrency (e2e)', () => {
   let ctx: E2eContext;

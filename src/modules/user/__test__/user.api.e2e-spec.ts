@@ -1,11 +1,14 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { ADMIN_BASIC_AUTH_HEADER } from './helpers/basic-auth.helper';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
-import { invalidInputData } from './helpers/invalid-input-data';
-import { expectPaginatorItemsCount, expectPaginatorShape } from './helpers/response.helpers';
+import {
+  expectPaginatorItemsCount,
+  expectPaginatorShape,
+} from '@/__test__/assertions/response.helpers';
+import { invalidInputData } from '@/__test__/fixtures/invalid-input-data';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+import { clearAllData } from '@/__test__/utils/db.helper';
 
 describe('User API (e2e)', () => {
   let ctx: E2eContext;

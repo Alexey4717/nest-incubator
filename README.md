@@ -589,18 +589,18 @@ yarn build && yarn start:prod
 | Скрипт                      | Описание                                                                                             |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `build`                     | Сборка проекта (`nest build` + `tsc-alias` для path aliases → `dist/`)                               |
-| `format`                    | Форматирование `src/**/*.ts` и `test/**/*.ts` через Prettier                                         |
+| `format`                    | Форматирование `src/**/*.ts` через Prettier                                                          |
 | `start`                     | Запуск приложения без watch (без явного `NODE_ENV` в скрипте)                                        |
 | `start:dev`                 | Запуск в режиме разработки с hot-reload (`NODE_ENV=development`)                                     |
 | `start:debug`               | Запуск с Node.js inspector и watch (`NODE_ENV=development`)                                          |
 | `start:staging`             | Запуск со settings из `src/env/.env.staging` (`NODE_ENV=staging`)                                    |
 | `start:prod`                | Запуск собранного приложения из `dist/` (`NODE_ENV=production`)                                      |
-| `lint`                      | ESLint с автоисправлением для `src`, `apps`, `libs`, `test`                                          |
+| `lint`                      | ESLint с автоисправлением для `src/**/*.ts`                                                            |
 | `test`                      | Unit-тесты (Jest)                                                                                    |
 | `test:watch`                | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                       |
 | `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                   |
 | `test:debug`                | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                 |
-| `test:e2e`                  | E2e-тесты (`test/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** PostgreSQL (см. `yarn db:setup`) |
+| `test:e2e`                  | E2e-тесты (`src/__test__/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** PostgreSQL (см. `yarn db:setup`) |
 | `typeorm`                   | CLI TypeORM с `data-source.ts`                                                                       |
 | `migration:run`             | Применить миграции                                                                                   |
 | `migration:revert`          | Откатить последнюю миграцию                                                                          |
@@ -618,6 +618,28 @@ yarn build && yarn start:prod
 | `db:index-audit`            | Каталоговый аудит индексов (неиспользуемые, дубликаты, FK без индекса; флаг `--json`)                |
 | `db:benchmark`              | Полный бенчмарк индексов (100k/200k/400k), exit 1 при провале assertions                             |
 | `db:benchmark:quick`        | Быстрый бенчмарк (2k/4k/8k) — проверка после добавления индекса                                      |
+
+## Структура тестов
+
+| Тип | Расположение | Пример |
+| --- | ------------ | ------ |
+| Unit-тесты (`*.spec.ts`) | Рядом с исходным кодом | `src/core/errors/error-formatter.spec.ts` |
+| E2e-тесты (`*.e2e-spec.ts`) | `src/__test__/` или `src/modules/<feature>/__test__/` | `src/modules/auth/__test__/auth.api.e2e-spec.ts` |
+| Общая e2e-инфраструктура | `src/__test__/` | см. подпапки ниже |
+| Bootstrap e2e-приложения | `src/__test__/setup/` | `init-settings.ts` |
+| Тестовые фикстуры | `src/__test__/fixtures/` | `invalid-input-data.ts` |
+| Assert-хелперы | `src/__test__/assertions/` | `response.helpers.ts` |
+| E2e-утилиты | `src/__test__/utils/` | `db.helper.ts`, `email-mock.helper.ts`, … |
+| Общие e2e-моки | `src/__test__/mocks/` | `email-service.mock.ts` (`EmailServiceMock`, `createEmailServiceMock`) |
+| Модульные e2e-хелперы | `src/modules/<feature>/__test__/` | `auth-test-manager.ts`, `comment-setup.helper.ts` |
+
+**Правила:**
+
+- Папки `__test__` только в `src/__test__/` и `src/modules/<feature>/__test__/`
+- Unit-тесты **не** переносятся в `__test__` — остаются co-located
+- Cross-layer импорты в тестах — через алиас `@/` (например `@/__test__/utils/db.helper`, `@/__test__/setup/init-settings` из `modules/*/__test__/`, `@/modules/auth/__test__/auth-test-manager`)
+- Внутри `src/__test__/**` — относительные пути между файлами того же слоя (`../mocks/email-service.mock`, `./email-mock.helper`); cross-layer — `@/`
+- `**/__test__/**` исключены из production-сборки (`tsconfig.build.json`)
 
 ## Конфигурация и settings
 
@@ -827,21 +849,21 @@ yarn test:e2e
 
 #### Структура e2e
 
-| Компонент                  | Файл                                 | Назначение                                                                                                              |
-| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `configApp`                | `src/app/app.settings.ts`            | Единая настройка HTTP-приложения (pipes, CORS, Swagger, `app.init()`, class-validator) — используется в `main.ts` и e2e |
-| `initSettings`             | `test/helpers/init-settings.ts`      | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком                                          |
-| `UsersTestManager`         | `test/helpers/users-test-manager.ts` | SA-создание пользователей, CRUD `/sa/users`                                                                             |
-| `AuthTestManager`          | `test/helpers/auth-test-manager.ts`  | Регистрация, login, confirm, password recovery                                                                          |
-| `QuizTestManager`          | `test/helpers/quiz-test-manager.ts`  | SA CRUD `/sa/quiz/questions`                                                                                            |
-| `configureModule` callback | аргумент `initSettings`              | Переопределение провайдеров на уровне describe (например, `JwtService`)                                                 |
+| Компонент                  | Файл                                              | Назначение                                                                                                              |
+| -------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `configApp`                | `src/app/app.settings.ts`                         | Единая настройка HTTP-приложения (pipes, CORS, Swagger, `app.init()`, class-validator) — используется в `main.ts` и e2e |
+| `initSettings`             | `src/__test__/setup/init-settings.ts`             | Поднимает Nest-приложение для e2e; по умолчанию подменяет `EmailService` моком из `../mocks/email-service.mock` |
+| `UsersTestManager`         | `src/modules/user/__test__/users-test-manager.ts` | SA-создание пользователей, CRUD `/sa/users`                                                                             |
+| `AuthTestManager`          | `src/modules/auth/__test__/auth-test-manager.ts`  | Регистрация, login, confirm, password recovery                                                                          |
+| `QuizTestManager`          | `src/modules/quiz/__test__/quiz-test-manager.ts`  | SA CRUD `/sa/quiz/questions`                                                                                            |
+| `configureModule` callback | аргумент `initSettings`                           | Переопределение провайдеров на уровне describe (например, `JwtService`)                                                 |
 
 Пример инициализации с callback:
 
 ```typescript
 import { JwtService } from '@nestjs/jwt';
 
-import { initSettings } from './helpers/init-settings';
+import { initSettings } from '@/__test__/setup/init-settings';
 
 const ctx = await initSettings((builder) => {
   builder.overrideProvider(JwtService).useValue({ sign: jest.fn() });
@@ -850,23 +872,25 @@ const ctx = await initSettings((builder) => {
 // ctx.app, ctx.httpServer, ctx.emailMock, ctx.users, ctx.auth
 ```
 
-Вспомогательные модули (`db.helper`, `auth.helper`, `invalid-input-data`, …) лежат в `test/helpers/`.
+Shared infra разложена по подпапкам: `setup/` (bootstrap), `fixtures/` (данные), `assertions/` (expect-хелперы), `utils/` (db, email-mock, concurrency, basic-auth), `mocks/` (jest-моки). Модульные хелперы — в `src/modules/<feature>/__test__/`.
 
-Файлы e2e в `test/`:
+Файлы e2e:
 
-| Файл                             | Покрытие                        |
-| -------------------------------- | ------------------------------- |
-| `app.e2e-spec.ts`                | Корневой health-check           |
-| `auth.api.e2e-spec.ts`           | Регистрация, login, password    |
-| `user.api.e2e-spec.ts`           | Эндпoинты `/users`              |
-| `post.api.e2e-spec.ts`           | Эндпoинты `/posts`              |
-| `blog.api.e2e-spec.ts`           | Эндпoинты `/blogs`              |
-| `comment.api.e2e-spec.ts`        | Эндпoинты `/comments`           |
-| `auth-refresh.e2e-spec.ts`       | Refresh-токены и ротация сессий |
-| `auth-throttle.e2e-spec.ts`      | Rate limiting на auth POST      |
-| `security-devices.e2e-spec.ts`   | Эндпoинты `/security/devices`   |
-| `quiz.sa.api.e2e-spec.ts`        | SA CRUD `/sa/quiz/questions`    |
-| `quiz.pair-game.api.e2e-spec.ts` | Public API парной игры          |
+| Файл                                                           | Покрытие                        |
+| -------------------------------------------------------------- | ------------------------------- |
+| `src/__test__/app.e2e-spec.ts`                                 | Корневой health-check           |
+| `src/modules/auth/__test__/auth.api.e2e-spec.ts`               | Регистрация, login, password    |
+| `src/modules/user/__test__/user.api.e2e-spec.ts`               | Эндпoинты `/users`              |
+| `src/modules/post/__test__/post.api.e2e-spec.ts`                 | Эндпoинты `/posts`              |
+| `src/modules/blog/__test__/blog.api.e2e-spec.ts`               | Эндпoинты `/blogs`              |
+| `src/modules/comment/__test__/comment.api.e2e-spec.ts`         | Эндпoинты `/comments`           |
+| `src/modules/auth/__test__/auth-refresh.e2e-spec.ts`           | Refresh-токены и ротация сессий |
+| `src/modules/auth/__test__/auth-throttle.e2e-spec.ts`          | Rate limiting на auth POST      |
+| `src/modules/auth/__test__/concurrency-refresh.e2e-spec.ts`  | Конкурентный refresh токенов    |
+| `src/modules/security/__test__/security-devices.e2e-spec.ts`   | Эндпoинты `/security/devices`   |
+| `src/modules/quiz/__test__/quiz.sa.api.e2e-spec.ts`            | SA CRUD `/sa/quiz/questions`    |
+| `src/modules/quiz/__test__/quiz.pair-game.api.e2e-spec.ts`     | Public API парной игры          |
+| `src/modules/like/__test__/concurrency-likes.e2e-spec.ts`      | Конкурентные лайки              |
 
 ## Authentication
 

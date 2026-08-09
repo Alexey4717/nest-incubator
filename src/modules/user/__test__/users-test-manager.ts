@@ -2,9 +2,10 @@ import { INestApplication } from '@nestjs/common';
 import { constants } from 'http2';
 import request, { Test } from 'supertest';
 
-import { UserViewModel } from '../../src/modules/user/types/view-models';
-import { createSaUser, SaUserInput } from './auth.helper';
-import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+
+import { createSaUser, SaUserInput } from '@/modules/auth/__test__/auth.helper';
+import { UserViewModel } from '@/modules/user/types/view-models';
 
 export class UsersTestManager {
   constructor(private readonly app: INestApplication) {}

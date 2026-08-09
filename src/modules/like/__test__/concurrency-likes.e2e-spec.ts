@@ -1,11 +1,11 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { ADMIN_BASIC_AUTH_HEADER } from './helpers/basic-auth.helper';
-import { runParallelRequests } from './helpers/concurrency.helper';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
-import { validInputData } from './helpers/invalid-input-data';
+import { validInputData } from '@/__test__/fixtures/invalid-input-data';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+import { runParallelRequests } from '@/__test__/utils/concurrency.helper';
+import { clearAllData } from '@/__test__/utils/db.helper';
 
 describe('Likes concurrency (e2e)', () => {
   let ctx: E2eContext;

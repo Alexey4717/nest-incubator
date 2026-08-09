@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
 import { constants } from 'http2';
 
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { clearAllData } from '@/__test__/utils/db.helper';
 
 describe('Security devices (e2e)', () => {
   let ctx: E2eContext;

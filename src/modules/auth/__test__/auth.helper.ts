@@ -2,10 +2,11 @@ import { INestApplication } from '@nestjs/common';
 import { constants } from 'http2';
 import request, { SuperAgentTest } from 'supertest';
 
-import { UserViewModel } from '../../src/modules/user/types/view-models';
-import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
-import { getLastConfirmationCode, getLastRecoveryCode } from './email-mock.helper';
-import { EmailServiceMock } from './init-settings';
+import { EmailServiceMock } from '@/__test__/mocks/email-service.mock';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+import { getLastConfirmationCode, getLastRecoveryCode } from '@/__test__/utils/email-mock.helper';
+
+import { UserViewModel } from '@/modules/user/types/view-models';
 
 export type SaUserInput = {
   login: string;

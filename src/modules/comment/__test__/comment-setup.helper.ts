@@ -2,11 +2,12 @@ import { INestApplication } from '@nestjs/common';
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { AuthTestManager } from './auth-test-manager';
-import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
-import { clearAllData } from './db.helper';
-import { validInputData } from './invalid-input-data';
-import { UsersTestManager } from './users-test-manager';
+import { validInputData } from '@/__test__/fixtures/invalid-input-data';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
+import { clearAllData } from '@/__test__/utils/db.helper';
+
+import { AuthTestManager } from '@/modules/auth/__test__/auth-test-manager';
+import { UsersTestManager } from '@/modules/user/__test__/users-test-manager';
 
 export type CommentE2eSetup = {
   ownerToken: string;

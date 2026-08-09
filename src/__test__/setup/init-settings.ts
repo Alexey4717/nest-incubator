@@ -1,34 +1,14 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 
-import { configApp } from '../../src/app/app.settings';
-import { initAppModule } from '../../src/app/init-app-module';
-import { EmailService } from '../../src/modules/email/email.service';
-import { AuthTestManager } from './auth-test-manager';
-import { UsersTestManager } from './users-test-manager';
+import { AuthTestManager } from '@/modules/auth/__test__/auth-test-manager';
+import { EmailService } from '@/modules/email/email.service';
+import { UsersTestManager } from '@/modules/user/__test__/users-test-manager';
 
-export function createEmailServiceMock(): EmailServiceMock {
-  return {
-    sendRegistrationEmail: jest.fn().mockResolvedValue(undefined),
-    sendEmailWithNewConfirmationCode: jest.fn().mockResolvedValue(undefined),
-    sendPasswordRecoveryCode: jest.fn().mockResolvedValue(undefined),
-  };
-}
+import { configApp } from '@/app/app.settings';
+import { initAppModule } from '@/app/init-app-module';
 
-export type EmailServiceMock = {
-  sendRegistrationEmail: jest.Mock<
-    Promise<void>,
-    [email: string, login: string, confirmationCode: string]
-  >;
-  sendEmailWithNewConfirmationCode: jest.Mock<
-    Promise<void>,
-    [email: string, login: string, confirmationCode: string]
-  >;
-  sendPasswordRecoveryCode: jest.Mock<
-    Promise<void>,
-    [email: string, login: string, recoveryCode: string]
-  >;
-};
+import { createEmailServiceMock, EmailServiceMock } from '../mocks/email-service.mock';
 
 export type E2eContext = {
   app: INestApplication;

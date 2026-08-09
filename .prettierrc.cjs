@@ -12,6 +12,7 @@ module.exports = {
     '^nest$',
     '<THIRD_PARTY_MODULES>',
     '^\\./register-paths$',
+    '^(@/)?__test__/(.*)$',
     '^(@/)?core/(.*)$',
     '^(@/)?modules/(.*)$',
     '^(@/)?app/(.*)$',

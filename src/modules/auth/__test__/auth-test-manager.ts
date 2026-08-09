@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import { SuperAgentTest } from 'supertest';
 
+import { EmailServiceMock } from '@/__test__/mocks/email-service.mock';
+
 import {
   confirmRegistration,
   createSupertestAgent,
@@ -13,7 +15,6 @@ import {
   RegisterUserInput,
   setNewPassword,
 } from './auth.helper';
-import { EmailServiceMock } from './init-settings';
 
 export class AuthTestManager {
   constructor(

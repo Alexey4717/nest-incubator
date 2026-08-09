@@ -1,10 +1,11 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { createSaUser, loginAndGetToken } from './helpers/auth.helper';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
-import { QuizTestManager } from './helpers/quiz-test-manager';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { clearAllData } from '@/__test__/utils/db.helper';
+
+import { createSaUser, loginAndGetToken } from '@/modules/auth/__test__/auth.helper';
+import { QuizTestManager } from '@/modules/quiz/__test__/quiz-test-manager';
 
 type PairGameView = {
   id: string;

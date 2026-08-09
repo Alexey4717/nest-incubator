@@ -1,7 +1,7 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { E2eContext, initSettings } from './helpers/init-settings';
+import { E2eContext, initSettings } from './setup/init-settings';
 
 describe('App (e2e)', () => {
   let ctx: E2eContext;

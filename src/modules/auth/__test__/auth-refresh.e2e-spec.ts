@@ -1,8 +1,8 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { clearAllData } from '@/__test__/utils/db.helper';
 
 describe('Auth refresh token flow (e2e)', () => {
   let ctx: E2eContext;

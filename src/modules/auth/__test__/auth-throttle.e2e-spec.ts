@@ -2,10 +2,11 @@ import { constants } from 'http2';
 import { join } from 'path';
 import request from 'supertest';
 
-import { convertToBoolean } from '../src/core/config-validation.utility';
-import { loadEnvFiles } from '../src/core/env-files.utility';
-import { clearAllData } from './helpers/db.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { clearAllData } from '@/__test__/utils/db.helper';
+
+import { convertToBoolean } from '@/core/config-validation.utility';
+import { loadEnvFiles } from '@/core/env-files.utility';
 
 loadEnvFiles(join(__dirname, '../src/env'), process.env.NODE_ENV || 'testing');
 

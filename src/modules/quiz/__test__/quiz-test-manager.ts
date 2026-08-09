@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { ADMIN_BASIC_AUTH_HEADER } from './basic-auth.helper';
+import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';
 
 export type QuizQuestionResponse = {
   id: string;

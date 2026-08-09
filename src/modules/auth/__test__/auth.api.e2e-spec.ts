@@ -1,10 +1,10 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import { clearAllData } from './helpers/db.helper';
-import { getLastConfirmationCode } from './helpers/email-mock.helper';
-import { E2eContext, initSettings } from './helpers/init-settings';
-import { invalidInputData } from './helpers/invalid-input-data';
+import { invalidInputData } from '@/__test__/fixtures/invalid-input-data';
+import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
+import { clearAllData } from '@/__test__/utils/db.helper';
+import { getLastConfirmationCode } from '@/__test__/utils/email-mock.helper';
 
 describe('Auth API (e2e)', () => {
   let ctx: E2eContext;
