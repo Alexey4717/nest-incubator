@@ -46,6 +46,9 @@ describe('UserEntity', () => {
       });
 
       expect(user.id).toBe('user-1');
+      expect(user.login).toBe('login');
+      expect(user.email).toBe('a@b.c');
+      expect(user.confirmationCode).toBe('code-1');
       expect(user.toDb().createdAt).toEqual(new Date('2021-05-01T12:00:00.000Z'));
     });
   });
@@ -134,7 +137,11 @@ describe('UserEntity', () => {
       expect(db.recoveryCode).toBe('r1');
       expect(db.recoveryExpiration).toEqual(expiration);
       expect(db.confirmationCode).toBe('new-code');
-      expect(db.confirmationExpiration!.getTime()).toBeGreaterThan(Date.now());
+      expect(db.confirmationExpiration).toBeInstanceOf(Date);
+      if (!db.confirmationExpiration) {
+        throw new Error('expected confirmationExpiration');
+      }
+      expect(db.confirmationExpiration.getTime()).toBeGreaterThan(Date.now());
     });
   });
 });

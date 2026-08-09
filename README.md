@@ -603,7 +603,7 @@ yarn build && yarn start:prod
 | `lint`                      | ESLint с автоисправлением для `src/**/*.ts`                                                                  |
 | `test`                      | Unit-тесты (Jest)                                                                                            |
 | `test:watch`                | Unit-тесты в watch-режиме (`NODE_ENV=testing`)                                                               |
-| `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`)                                                           |
+| `test:cov`                  | Unit-тесты с отчётом покрытия (`NODE_ENV=testing`); scope — application/domain/core (см. ниже)               |
 | `test:debug`                | Unit-тесты с отладчиком Node.js (`NODE_ENV=testing`)                                                         |
 | `test:e2e`                  | E2e-тесты (`src/__test__/jest-e2e.json`, `NODE_ENV=testing`). **Требуется** PostgreSQL (см. `yarn db:setup`) |
 | `typeorm`                   | CLI TypeORM с `data-source.ts`                                                                               |
@@ -645,6 +645,26 @@ yarn build && yarn start:prod
 - Cross-layer импорты в тестах — через алиас `@/` (например `@/__test__/utils/db.helper`, `@/__test__/setup/init-settings` из `modules/*/__test__/`, `@/modules/auth/__test__/auth-test-manager`)
 - Внутри `src/__test__/**` — относительные пути между файлами того же слоя (`../mocks/email-service.mock`, `./email-mock.helper`); cross-layer — `@/`
 - `**/__test__/**` исключены из production-сборки (`tsconfig.build.json`)
+
+### Coverage (`yarn test:cov`)
+
+`yarn test:cov` считает покрытие только для слоёв с бизнес-логикой и инфраструктурой аутентификации:
+
+**Включено (`jest.collectCoverageFrom`):**
+
+- `modules/**/application/**` — use-cases, queries, application-сервисы
+- `modules/**/domain/**` — entities, domain-логика
+- `modules/**/guards/**`, `modules/**/strategies/**` — auth guards и Passport strategies
+- `modules/**/models/**` — доменные модели (например, quiz)
+- `core/**` — filters, utils, validators, middleware и т.п.
+
+**Исключено:**
+
+- `*.spec.ts`, `*.module.ts`, `*.d.ts`
+- `**/__test__/**`
+- `core/swagger/**`, `core/dto/**`
+
+Controllers, репозитории и HTTP-контракты покрываются e2e-тестами (`yarn test:e2e`), а не unit coverage.
 
 ## Конфигурация и settings
 

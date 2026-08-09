@@ -1,6 +1,7 @@
 import {
   calculateFinalScores,
   getPairFinishDeadline,
+  isAnswerCorrect,
   isPairFinishTimeoutExpired,
   PAIR_GAME_FINISH_TIMEOUT_MS,
   roundAvgScores,
@@ -23,6 +24,24 @@ describe('Quiz scoring', () => {
   it('no speed bonus when first finisher has zero correct', () => {
     const result = calculateFinalScores(0, 1, t1, t2);
     expect(result.firstScore).toBe(0);
+  });
+
+  it('gives speed bonus to second player when second finishes first', () => {
+    const result = calculateFinalScores(2, 3, t2, t1);
+    expect(result).toEqual({ firstScore: 2, secondScore: 4 });
+  });
+
+  it('does not give speed bonus to second when second finishes first with zero correct', () => {
+    const result = calculateFinalScores(1, 0, t2, t1);
+    expect(result).toEqual({ firstScore: 1, secondScore: 0 });
+  });
+
+  describe('isAnswerCorrect', () => {
+    it('matches trimmed answers case-sensitively', () => {
+      expect(isAnswerCorrect('  yes  ', ['no', 'yes'])).toBe(true);
+      expect(isAnswerCorrect('Yes', ['yes'])).toBe(false);
+      expect(isAnswerCorrect('maybe', [' yes ', 'no '])).toBe(false);
+    });
   });
 
   describe('pair finish timeout helpers', () => {
