@@ -14,7 +14,7 @@ import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 import { Paginator } from '@/core/types/common';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -56,7 +56,7 @@ export class UserController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiCreateUser()
   async createUser(@Body() inputModel: CreateUserDTO) {
-    const createdUser = resultToDomainException(
+    const createdUser = notificationToDomainException(
       await this.commandBus.execute(new CreateUserCommand(inputModel)),
     );
     return toUserViewModel(createdUser);
@@ -67,6 +67,6 @@ export class UserController {
   @ApiDeleteUser()
   async deleteUser(@Param() params: DeleteUserParamsDto) {
     const result = await this.commandBus.execute(new DeleteUserCommand(params.id));
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 }

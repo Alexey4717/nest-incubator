@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { SessionRepository } from '../../infrastructure/session.repository';
@@ -14,20 +13,20 @@ type DeleteSessionInput = {
 };
 
 @Injectable()
-export class DeleteSessionUseCase implements IUseCase<DeleteSessionInput, ResultType<null>> {
+export class DeleteSessionUseCase implements IUseCase<DeleteSessionInput, Notification<null>> {
   constructor(private readonly sessionRepository: SessionRepository) {}
 
-  async execute({ userId, deviceId }: DeleteSessionInput): Promise<ResultType<null>> {
+  async execute({ userId, deviceId }: DeleteSessionInput): Promise<Notification<null>> {
     const session = await this.sessionRepository.findByDeviceId(deviceId);
     if (!session) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     try {
       session.canBeDeletedBy(userId);
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }
@@ -37,9 +36,9 @@ export class DeleteSessionUseCase implements IUseCase<DeleteSessionInput, Result
       deviceId,
     );
     if (!deleted) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

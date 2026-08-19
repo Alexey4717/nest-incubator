@@ -1,13 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
 import { UpdatePostLikeStatusUseCase } from '../use-cases/update-post-like-status.use-case';
 
-export class UpdatePostLikeStatusCommand extends TypedCommand<ResultType<null>> {
+export class UpdatePostLikeStatusCommand extends TypedCommand<Notification<null>> {
   constructor(
     public readonly postId: string,
     public readonly userId: string,
@@ -20,11 +20,11 @@ export class UpdatePostLikeStatusCommand extends TypedCommand<ResultType<null>> 
 @CommandHandler(UpdatePostLikeStatusCommand)
 export class UpdatePostLikeStatusHandler implements ICommandHandler<
   UpdatePostLikeStatusCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly updatePostLikeStatusUseCase: UpdatePostLikeStatusUseCase) {}
 
-  execute(command: UpdatePostLikeStatusCommand): Promise<ResultType<null>> {
+  execute(command: UpdatePostLikeStatusCommand): Promise<Notification<null>> {
     return this.updatePostLikeStatusUseCase.execute({
       postId: command.postId,
       userId: command.userId,

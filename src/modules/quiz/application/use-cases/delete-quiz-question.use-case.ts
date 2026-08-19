@@ -2,20 +2,19 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { QuizQuestionRepository } from '../../infrastructure/quiz-question.repository';
 
 @Injectable()
-export class DeleteQuizQuestionUseCase implements IUseCase<string, ResultType<null>> {
+export class DeleteQuizQuestionUseCase implements IUseCase<string, Notification<null>> {
   constructor(private readonly quizQuestionRepository: QuizQuestionRepository) {}
 
-  async execute(id: string): Promise<ResultType<null>> {
+  async execute(id: string): Promise<Notification<null>> {
     const question = await this.quizQuestionRepository.findById(id);
     if (!question) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     const deleted = await this.quizQuestionRepository.deleteById(id);
@@ -23,6 +22,6 @@ export class DeleteQuizQuestionUseCase implements IUseCase<string, ResultType<nu
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

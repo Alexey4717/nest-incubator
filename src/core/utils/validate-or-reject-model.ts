@@ -3,6 +3,8 @@ import { validateOrReject, ValidationError } from 'class-validator';
 import { DomainExceptionCode } from '../errors/domain-exception-code.enum';
 import { DomainException } from '../errors/domain.exception';
 import { errorFormatter } from '../errors/error-formatter';
+import { Notification } from '../notification/notification';
+import { notificationToDomainException } from '../notification/notification-to-domain';
 
 export const validateOrRejectModel = async (
   model: object,
@@ -22,7 +24,9 @@ export const validateOrRejectModel = async (
     await validateOrReject(model);
   } catch (error: unknown) {
     if (Array.isArray(error) && error.every((item) => item instanceof ValidationError)) {
-      throw new DomainException(DomainExceptionCode.ValidationError, errorFormatter(error));
+      notificationToDomainException(
+        Notification.fail(DomainExceptionCode.ValidationError, errorFormatter(error)),
+      );
     }
 
     throw error instanceof Error ? error : new Error(String(error));

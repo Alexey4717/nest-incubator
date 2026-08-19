@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import { ResultStatus } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
 import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
@@ -42,7 +41,7 @@ export class RefreshTokenUseCase implements IUseCase<string, AuthTokensViewModel
       newJti,
       lastActiveDate,
     });
-    if (updateResult.status === ResultStatus.Failure) return null;
+    if (updateResult.hasError()) return null;
 
     return { accessToken, refreshToken };
   }

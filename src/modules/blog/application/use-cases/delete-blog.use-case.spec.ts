@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { BlogEntity } from '../../domain/entities/blog.entity';
 import { BlogRepository } from '../../infrastructure/blog.repository';
@@ -37,14 +37,14 @@ describe('DeleteBlogUseCase', () => {
     blogRepository = module.get(BlogRepository);
   });
 
-  it('deletes blog and returns Result.ok(null)', async () => {
+  it('deletes blog and returns Notification.ok(null)', async () => {
     blogRepository.findById.mockResolvedValue(existingBlog());
     blogRepository.deleteBlogById.mockResolvedValue(true);
 
     const result = await useCase.execute('blog-1');
 
     expect(blogRepository.deleteBlogById).toHaveBeenCalledWith('blog-1');
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when blog does not exist', async () => {
@@ -52,11 +52,7 @@ describe('DeleteBlogUseCase', () => {
 
     const result = await useCase.execute('missing');
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(blogRepository.deleteBlogById).not.toHaveBeenCalled();
   });
 

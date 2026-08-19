@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { QuizQuestionEntity } from '../../domain/entities/quiz-question.entity';
 import { PublishQuizQuestionDto } from '../../dto/quiz-question.dto';
@@ -41,7 +41,7 @@ describe('PublishQuizQuestionUseCase', () => {
     quizQuestionRepository = module.get(QuizQuestionRepository);
   });
 
-  it('publishes question and returns Result.ok(null)', async () => {
+  it('publishes question and returns Notification.ok(null)', async () => {
     const question = questionWithAnswers();
     quizQuestionRepository.findById.mockResolvedValue(question);
     quizQuestionRepository.save.mockResolvedValue(question);
@@ -50,10 +50,10 @@ describe('PublishQuizQuestionUseCase', () => {
 
     expect(question.published).toBe(true);
     expect(quizQuestionRepository.save).toHaveBeenCalledWith(question);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
-  it('unpublishes question and returns Result.ok(null)', async () => {
+  it('unpublishes question and returns Notification.ok(null)', async () => {
     const question = QuizQuestionEntity.reconstitute({
       id: 'q-1',
       body: 'What is 2+2?',
@@ -68,7 +68,7 @@ describe('PublishQuizQuestionUseCase', () => {
     const result = await useCase.execute({ id: 'q-1', input: dto(false) });
 
     expect(question.published).toBe(false);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when question does not exist', async () => {
@@ -76,11 +76,7 @@ describe('PublishQuizQuestionUseCase', () => {
 
     const result = await useCase.execute({ id: 'missing', input: dto(true) });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(quizQuestionRepository.save).not.toHaveBeenCalled();
   });
 
@@ -98,9 +94,8 @@ describe('PublishQuizQuestionUseCase', () => {
     const result = await useCase.execute({ id: 'q-1', input: dto(true) });
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ field: 'correctAnswers' }],
+      messages: [{ field: 'correctAnswers' }],
     });
     expect(quizQuestionRepository.save).not.toHaveBeenCalled();
   });

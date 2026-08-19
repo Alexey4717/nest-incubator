@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { SessionEntity } from '../../domain/entities/session.entity';
 import { SessionRepository } from '../../infrastructure/session.repository';
@@ -35,11 +35,7 @@ describe('DeleteSessionUseCase', () => {
 
     const result = await useCase.execute({ userId: 'user-1', deviceId: 'device-1' });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(sessionRepository.deleteOneSessionByUserAndDeviceId).not.toHaveBeenCalled();
   });
 
@@ -57,11 +53,7 @@ describe('DeleteSessionUseCase', () => {
 
     const result = await useCase.execute({ userId: 'user-1', deviceId: 'device-1' });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Forbidden,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Forbidden));
     expect(sessionRepository.deleteOneSessionByUserAndDeviceId).not.toHaveBeenCalled();
   });
 
@@ -81,7 +73,6 @@ describe('DeleteSessionUseCase', () => {
     const result = await useCase.execute({ userId: 'user-1', deviceId: 'device-1' });
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.NotFound,
     });
   });
@@ -101,7 +92,7 @@ describe('DeleteSessionUseCase', () => {
 
     const result = await useCase.execute({ userId: 'user-1', deviceId: 'device-1' });
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
     expect(sessionRepository.deleteOneSessionByUserAndDeviceId).toHaveBeenCalledWith(
       'user-1',
       'device-1',

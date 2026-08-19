@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
 
 import { SessionEntity } from '../../domain/entities/session.entity';
 import { SessionRepository } from '../../infrastructure/session.repository';
@@ -35,14 +34,14 @@ describe('CreateSessionUseCase', () => {
     useCase = module.get(CreateSessionUseCase);
   });
 
-  it('creates session and returns Result.ok', async () => {
+  it('creates session and returns Notification.ok', async () => {
     const saved = SessionEntity.create(sessionInput);
     sessionRepository.createNewSession.mockResolvedValue(saved);
 
     const result = await useCase.execute(sessionInput);
 
-    expect(result.status).toBe(ResultStatus.Success);
-    if (result.status === ResultStatus.Success) {
+    expect(result.hasError()).toBe(false);
+    if (!result.hasError()) {
       expect(result.data).toMatchObject({
         userId: 'user-1',
         deviceId: 'device-1',

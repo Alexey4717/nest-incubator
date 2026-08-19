@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
@@ -17,22 +16,22 @@ type UpdateCommentInput = {
 };
 
 @Injectable()
-export class UpdateCommentUseCase implements IUseCase<UpdateCommentInput, ResultType<null>> {
+export class UpdateCommentUseCase implements IUseCase<UpdateCommentInput, Notification<null>> {
   constructor(private readonly commentRepository: CommentRepository) {}
 
-  async execute({ id, userId, input }: UpdateCommentInput): Promise<ResultType<null>> {
+  async execute({ id, userId, input }: UpdateCommentInput): Promise<Notification<null>> {
     await validateOrRejectModel(input, UpdateCommentDTO, 'UpdateCommentUseCase.execute');
 
     const comment = await this.commentRepository.findById(id);
     if (!comment) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     try {
       comment.canBeModifiedBy(userId);
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }
@@ -43,6 +42,6 @@ export class UpdateCommentUseCase implements IUseCase<UpdateCommentInput, Result
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

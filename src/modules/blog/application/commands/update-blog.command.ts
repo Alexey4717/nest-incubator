@@ -1,12 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { UpdateBlogDto } from '../../dto/update-blog.dto';
 import { UpdateBlogUseCase } from '../use-cases/update-blog.use-case';
 
-export class UpdateBlogCommand extends TypedCommand<ResultType<null>> {
+export class UpdateBlogCommand extends TypedCommand<Notification<null>> {
   constructor(
     public readonly id: string,
     public readonly input: UpdateBlogDto,
@@ -16,10 +16,10 @@ export class UpdateBlogCommand extends TypedCommand<ResultType<null>> {
 }
 
 @CommandHandler(UpdateBlogCommand)
-export class UpdateBlogHandler implements ICommandHandler<UpdateBlogCommand, ResultType<null>> {
+export class UpdateBlogHandler implements ICommandHandler<UpdateBlogCommand, Notification<null>> {
   constructor(private readonly updateBlogUseCase: UpdateBlogUseCase) {}
 
-  execute(command: UpdateBlogCommand): Promise<ResultType<null>> {
+  execute(command: UpdateBlogCommand): Promise<Notification<null>> {
     return this.updateBlogUseCase.execute({ id: command.id, input: command.input });
   }
 }

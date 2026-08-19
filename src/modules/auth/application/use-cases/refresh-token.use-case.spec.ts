@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
+import { Notification } from '@/core/notification/notification';
 
 import { UpdateSessionAfterRefreshUseCase } from '@/modules/session/application/use-cases/update-session-after-refresh.use-case';
 import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository';
@@ -89,7 +89,7 @@ describe('RefreshTokenUseCase', () => {
       lastActiveDate: '2024-01-01T00:00:00.000Z',
     });
     updateSessionAfterRefreshUseCase.execute.mockResolvedValue(
-      Result.fail(DomainExceptionCode.Unauthorized),
+      Notification.fail(DomainExceptionCode.Unauthorized),
     );
 
     await expect(useCase.execute('token')).resolves.toBeNull();
@@ -110,7 +110,7 @@ describe('RefreshTokenUseCase', () => {
       jti: 'jti-2',
       lastActiveDate: '2024-01-01T00:00:00.000Z',
     });
-    updateSessionAfterRefreshUseCase.execute.mockResolvedValue(Result.ok(null));
+    updateSessionAfterRefreshUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     await expect(useCase.execute('token')).resolves.toEqual({
       accessToken: 'access',

@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { DeleteSessionUseCase } from '@/modules/session/application/use-cases/delete-session.use-case';
 
@@ -33,35 +32,29 @@ describe('TerminateDeviceUseCase', () => {
   });
 
   it('delegates to DeleteSessionUseCase and returns its result', async () => {
-    deleteSessionUseCase.execute.mockResolvedValue(Result.ok(null));
+    deleteSessionUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     const result = await useCase.execute(input);
 
     expect(deleteSessionUseCase.execute).toHaveBeenCalledWith(input);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('propagates NotFound from DeleteSessionUseCase', async () => {
-    deleteSessionUseCase.execute.mockResolvedValue(Result.fail(DomainExceptionCode.NotFound));
+    deleteSessionUseCase.execute.mockResolvedValue(Notification.fail(DomainExceptionCode.NotFound));
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
   });
 
   it('propagates Forbidden from DeleteSessionUseCase', async () => {
-    deleteSessionUseCase.execute.mockResolvedValue(Result.fail(DomainExceptionCode.Forbidden));
+    deleteSessionUseCase.execute.mockResolvedValue(
+      Notification.fail(DomainExceptionCode.Forbidden),
+    );
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Forbidden,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Forbidden));
   });
 });

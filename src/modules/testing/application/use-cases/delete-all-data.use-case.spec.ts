@@ -3,7 +3,7 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { TestingRepository } from '../../infrastructure/testing.repository';
 import { DeleteAllDataUseCase } from './delete-all-data.use-case';
@@ -36,14 +36,14 @@ describe('DeleteAllDataUseCase', () => {
     useCase = module.get(DeleteAllDataUseCase);
   });
 
-  it('deletes data, resets throttler storage and returns Result.ok', async () => {
+  it('deletes data, resets throttler storage and returns Notification.ok', async () => {
     testingRepository.deleteAllData.mockResolvedValue(true);
     const timeoutId = setTimeout(() => undefined, 10_000);
     throttlerStorage.timeoutIds.push(timeoutId);
 
     const result = await useCase.execute();
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
     expect(throttlerStorage.timeoutIds).toHaveLength(0);
     expect(throttlerStorage.storage.key1.totalHits).toBe(0);
     expect(throttlerStorage.storage.key1.expiresAt).toBeLessThanOrEqual(Date.now());
@@ -66,9 +66,6 @@ describe('DeleteAllDataUseCase', () => {
       },
     });
 
-    await expect(useCase.execute()).resolves.toEqual({
-      status: ResultStatus.Success,
-      data: null,
-    });
+    await expect(useCase.execute()).resolves.toEqual(Notification.ok(null));
   });
 });

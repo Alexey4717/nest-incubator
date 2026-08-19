@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
@@ -27,7 +27,7 @@ describe('UpdatePostLikeStatusUseCase', () => {
     postRepository = module.get(PostRepository);
   });
 
-  it('updates like status and returns Result.ok(null)', async () => {
+  it('updates like status and returns Notification.ok(null)', async () => {
     postRepository.updatePostLikeStatus.mockResolvedValue(true);
 
     const result = await useCase.execute({
@@ -41,7 +41,7 @@ describe('UpdatePostLikeStatusUseCase', () => {
       userId: 'user-1',
       likeStatus: LikeStatus.Like,
     });
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when repository update returns false', async () => {
@@ -53,10 +53,6 @@ describe('UpdatePostLikeStatusUseCase', () => {
       likeStatus: LikeStatus.None,
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
   });
 });

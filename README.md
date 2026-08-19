@@ -48,7 +48,7 @@ core/
 ├── services/               # BcryptService (cross-domain infrastructure services)
 ├── errors/                 # DomainException, коды, filters, error-formatter, throwIfNotFound, normalize-http-exception-errors
 ├── events/                 # DomainEventPublisher, токен DOMAIN_EVENT_HANDLERS (await @EventsHandler; не Nest EventBus.publish)
-├── result/                 # Result Object (ok/fail, resultToDomainException)
+├── notification/           # Notification (ok/fail/addError, notificationToDomainException)
 ├── typeorm/                # applyPagination/applySort, runWithTransactionRetry, isRetryableDbError
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
 ├── decorators/             # param- и validation-декораторы общего назначения
@@ -313,46 +313,46 @@ QueryRepository → Model → Entity.reconstitute() → entity.method() → Repo
 
 Доменный и application-слой **не используют** `HttpException`. Предсказуемые ошибки (400/401/403/404) идут через **`DomainException`** → **`DomainHttpExceptionsFilter`**.
 
-| Компонент                    | Назначение                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------ |
-| `DomainException`            | Базовый класс с `code: DomainExceptionCode` и `extensions: Extension[]`                    |
-| `DomainHttpExceptionsFilter` | `@Catch(DomainException)` — основной путь в HTTP-ответ                                     |
-| `AllHttpExceptionsFilter`    | `@Catch()` — fallback: framework `HttpException` (Throttler) + необработанные ошибки → 500 |
-| `Result` Object              | `Result.ok()` / `Result.fail()` — **единый паттерн для mutations**                         |
-| `resultToDomainException()`  | Controller превращает `Result.fail` в `DomainException`                                    |
-| `throwIfNotFound()`          | Controller для query: `null`/`undefined` → `NotFound`                                      |
+| Компонент                         | Назначение                                                                                    |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `DomainException`                 | Базовый класс с `code: DomainExceptionCode` и `extensions: Extension[]`                       |
+| `DomainHttpExceptionsFilter`      | `@Catch(DomainException)` — основной путь в HTTP-ответ                                        |
+| `AllHttpExceptionsFilter`         | `@Catch()` — fallback: framework `HttpException` (Throttler) + необработанные ошибки → 500    |
+| `Notification`                    | `Notification.ok()` / `Notification.fail()` / `addError()` — **единый паттерн для mutations** |
+| `notificationToDomainException()` | Controller превращает `Notification` с `hasError()` в `DomainException`                       |
+| `throwIfNotFound()`               | Controller для query: `null`/`undefined` → `NotFound`                                         |
 
-#### Result — единый паттерн для mutations
+#### Notification — единый паттерн для mutations
 
-| Операция                                                      | Use case                                               | Controller / потребитель                                                               |
-| ------------------------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| **Write (mutation)**                                          | `Result.ok(data)` или `Result.fail(code, extensions?)` | `resultToDomainException(await commandBus.execute(...))`                               |
-| **Read (query)**                                              | `Model \| ViewModel \| null` — **не бросает** NotFound | `throwIfNotFound(await queryBus.execute(...))`                                         |
-| **Entity-инвариант**                                          | entity `throw DomainException`                         | use case **catch** → `Result.fail(error.code, error.extensions)`                       |
-| **Infra-сбой** (save/delete вернул null не по бизнес-причине) | use case `throw DomainException(InternalServerError)`  | filter → 500                                                                           |
-| **Subdomain без controller** (`session`, `like`)              | `Result` или throw                                     | потребитель (`auth`, `security`, `post`, `comment`) вызывает `resultToDomainException` |
+| Операция                                                      | Use case                                                           | Controller / потребитель                                                                     |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| **Write (mutation)**                                          | `Notification.ok(data)` или `Notification.fail(code, extensions?)` | `notificationToDomainException(await commandBus.execute(...))`                               |
+| **Read (query)**                                              | `Model \| ViewModel \| null` — **не бросает** NotFound             | `throwIfNotFound(await queryBus.execute(...))`                                               |
+| **Entity-инвариант**                                          | entity `throw DomainException`                                     | use case **catch** → `Notification.fail(error.code, error.extensions)`                       |
+| **Infra-сбой** (save/delete вернул null не по бизнес-причине) | use case `throw DomainException(InternalServerError)`              | filter → 500                                                                                 |
+| **Subdomain без controller** (`session`, `like`)              | `Notification` или throw                                           | потребитель (`auth`, `security`, `post`, `comment`) вызывает `notificationToDomainException` |
 
 Эталон mutation: [`UpdateCommentUseCase`](src/modules/comment/application/use-cases/update-comment.use-case.ts) + [`comment.controller.ts`](src/modules/comment/api/comment.controller.ts).
 
-**Исключения (временно без Result):** нет — create-flow и auth-обёртки мигрированы.
+`Notification.addError()` умеет копить несколько `{ message, field }`, но mutation use case по-прежнему делает ранний `return Notification.fail(...)` на первой бизнес-ошибке. **Сбор всех ошибок DTO за один 400 — ответственность ValidationPipe** (`stopAtFirstError: false`), а не use case.
 
 #### DomainException — где выбрасывать
 
-| Слой                                         | Выбрасывать?                               | Как                                                                          | Примеры кодов             |
-| -------------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
-| **`app/setup/pipes.setup` (ValidationPipe)** | Да                                         | `exceptionFactory` → `ValidationError`                                       | 400 + `errorsMessages`    |
-| **`domain/entities/*`**                      | **Да — основное место правил**             | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
-| **`infrastructure/*Repository`**             | Только infra-перевод                       | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
-| **`infrastructure/*QueryRepository`**        | **Нет**                                    | `null` / пустой результат                                                    | —                         |
-| **`infrastructure/*Mapper`**                 | **Нет**                                    | чистое преобразование                                                        | —                         |
-| **mutation use case**                        | Через **`Result`**, не throw (кроме infra) | `Result.fail(code)`; entity catch → `Result.fail`                            | `NotFound`, `Forbidden`   |
-| **query use case**                           | **Нет**                                    | возвращает данные или `null`                                                 | —                         |
-| **`application/services`**                   | Да, если сервис — источник ошибки          | аналогично entity                                                            | JWT validation            |
-| **`api/*Controller` (mutation)**             | Через хелпер                               | `resultToDomainException(...)`                                               | —                         |
-| **`api/*Controller` (query)**                | Через хелпер                               | `throwIfNotFound(...)`                                                       | —                         |
-| **`api/*Controller`**                        | **Нет inline throw бизнес-ошибок**         | не `throw new DomainException(...)` в controller                             | —                         |
-| **`guards` / `strategies` (auth)**           | Да                                         | `DomainException(Unauthorized)`                                              | 401                       |
-| **`dto/`**                                   | **Нет**                                    | только class-validator                                                       | —                         |
+| Слой                                         | Выбрасывать?                                     | Как                                                                          | Примеры кодов             |
+| -------------------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------- | ------------------------- |
+| **`app/setup/pipes.setup` (ValidationPipe)** | Да                                               | `exceptionFactory` → `Notification.fail(ValidationError)` → throw            | 400 + `errorsMessages`    |
+| **`domain/entities/*`**                      | **Да — основное место правил**                   | `throw new DomainException(code, extensions)`                                | `BadRequest`, `Forbidden` |
+| **`infrastructure/*Repository`**             | Только infra-перевод                             | unique violation → `BadRequest`; прочие DB — rethrow / `InternalServerError` | `UserRepository`          |
+| **`infrastructure/*QueryRepository`**        | **Нет**                                          | `null` / пустой результат                                                    | —                         |
+| **`infrastructure/*Mapper`**                 | **Нет**                                          | чистое преобразование                                                        | —                         |
+| **mutation use case**                        | Через **`Notification`**, не throw (кроме infra) | `Notification.fail(code)`; entity catch → `Notification.fail`                | `NotFound`, `Forbidden`   |
+| **query use case**                           | **Нет**                                          | возвращает данные или `null`                                                 | —                         |
+| **`application/services`**                   | Да, если сервис — источник ошибки                | аналогично entity                                                            | JWT validation            |
+| **`api/*Controller` (mutation)**             | Через хелпер                                     | `notificationToDomainException(...)`                                         | —                         |
+| **`api/*Controller` (query)**                | Через хелпер                                     | `throwIfNotFound(...)`                                                       | —                         |
+| **`api/*Controller`**                        | **Нет inline throw бизнес-ошибок**               | не `throw new DomainException(...)` в controller                             | —                         |
+| **`guards` / `strategies` (auth)**           | Да                                               | `DomainException(Unauthorized)`                                              | 401                       |
+| **`dto/`**                                   | **Нет**                                          | только class-validator                                                       | —                         |
 
 #### HttpException и AllHttpExceptionsFilter
 
@@ -397,8 +397,8 @@ flowchart TD
   end
 
   VP --> DE
-  Entity -->|"catch → Result.fail"| UC
-  UC -->|"resultToDomainException"| DE
+  Entity -->|"catch → Notification.fail"| UC
+  UC -->|"notificationToDomainException"| DE
   UC -->|"infra throw"| DE
   Repo --> DE
   Ctrl --> DE
@@ -418,7 +418,7 @@ flowchart TD
 | `500` (dev)           | `{ error, stack }`                         |
 | `500` (prod)          | `'Internal Error'`                         |
 
-**ValidationPipe** (`src/app/setup/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: true`; `exceptionFactory` бросает `DomainException(ValidationError, errorFormatter(errors))`.
+**ValidationPipe** (`src/app/setup/pipes.setup.ts`): `transform: true`, `whitelist: true`, `stopAtFirstError: false` — клиент получает **все невалидные поля DTO** в одном `400`, а не только первое. `exceptionFactory` собирает ошибки через `errorFormatter` → `Notification.fail(ValidationError, extensions)` → `notificationToDomainException`. `errorFormatter` оставляет одно сообщение на поле (`constraints[0]`) — так нужно для IT-incubator. То же `stopAtFirstError: false` в `LocalAuthGuard` для `/auth/login`.
 
 ### Хранение паролей
 
@@ -446,7 +446,7 @@ flowchart TD
 | `like`    | `post`, `comment`  | `ReactionsMapperService`, `ReactionUpdateService`, `LikeInputDto` |
 | `session` | `auth`, `security` | use cases (`CreateSession`, `DeleteSession`, …); `@Global()`      |
 
-**`session`:** HTTP-слоя нет — мутации возвращают `Result`. `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет просроченные сессии.
+**`session`:** HTTP-слоя нет — мутации возвращают `Notification`. `DeleteExpiredSessionsUseCase` по cron каждые 5 минут удаляет просроченные сессии.
 
 **`like`:** `PostModule` / `CommentModule` импортируют `LikeModule` и владеют `PUT .../like-status`; view-mapper потребителей вызывает `ReactionsMapperService`.
 

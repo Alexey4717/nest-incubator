@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
@@ -17,18 +16,18 @@ type UpdateBlogInput = {
 };
 
 @Injectable()
-export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, ResultType<null>> {
+export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, Notification<null>> {
   constructor(
     private readonly blogQueryRepository: BlogQueryRepository,
     private readonly blogRepository: BlogRepository,
   ) {}
 
-  async execute({ id, input }: UpdateBlogInput): Promise<ResultType<null>> {
+  async execute({ id, input }: UpdateBlogInput): Promise<Notification<null>> {
     await validateOrRejectModel(input, UpdateBlogDto, 'UpdateBlogUseCase.execute');
 
     const blog = await this.blogRepository.findById(id);
     if (!blog) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     const blogWithSameName = await this.blogQueryRepository.findBlogByName(input.name);
@@ -37,7 +36,7 @@ export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, ResultType<n
       blog.ensureNameIsUnique(blogWithSameName?.id);
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }
@@ -48,6 +47,6 @@ export class UpdateBlogUseCase implements IUseCase<UpdateBlogInput, ResultType<n
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

@@ -4,7 +4,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { DeleteAllDataCommand } from '../application/commands/delete-all-data.command';
 import { ApiDeleteAllData } from './testing.swagger.decorators';
@@ -19,6 +19,6 @@ export class TestingController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiDeleteAllData()
   async deleteAllData() {
-    resultToDomainException(await this.commandBus.execute(new DeleteAllDataCommand()));
+    notificationToDomainException(await this.commandBus.execute(new DeleteAllDataCommand()));
   }
 }

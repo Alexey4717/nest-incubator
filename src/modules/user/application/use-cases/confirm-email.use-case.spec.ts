@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { add } from 'date-fns';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { UserDb, UserEntity } from '../../domain/entities/user.entity';
 import { UserRepository } from '../../infrastructure/user.repository';
@@ -57,7 +57,7 @@ describe('ConfirmEmailUseCase', () => {
     expect(userRepository.findByConfirmationCode).toHaveBeenCalledWith('valid-code');
     expect(userRepository.save).toHaveBeenCalledWith(user);
     expect(user.isEmailConfirmed()).toBe(true);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns BadRequest when confirmation code is not found', async () => {
@@ -65,24 +65,23 @@ describe('ConfirmEmailUseCase', () => {
 
     const result = await useCase.execute('missing');
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.BadRequest,
-      extensions: [{ message: 'Confirmation code incorrect', field: 'code' }],
-    });
+    expect(result).toEqual(
+      Notification.fail(DomainExceptionCode.BadRequest, [
+        { message: 'Confirmation code incorrect', field: 'code' },
+      ]),
+    );
     expect(userRepository.save).not.toHaveBeenCalled();
   });
 
-  it('returns Result.fail when confirmEmail throws DomainException', async () => {
+  it('returns Notification.fail when confirmEmail throws DomainException', async () => {
     const user = UserEntity.reconstitute(baseDb({ isConfirmed: true }));
     userRepository.findByConfirmationCode.mockResolvedValue(user);
 
     const result = await useCase.execute('code-1');
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ field: 'code' }],
+      messages: [{ field: 'code' }],
     });
     expect(userRepository.save).not.toHaveBeenCalled();
   });

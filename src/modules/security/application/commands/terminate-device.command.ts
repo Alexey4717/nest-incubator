@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { TerminateDeviceUseCase } from '../use-cases/terminate-device.use-case';
@@ -10,7 +10,7 @@ type TerminateDeviceInput = {
   deviceId: string;
 };
 
-export class TerminateDeviceCommand extends TypedCommand<ResultType<null>> {
+export class TerminateDeviceCommand extends TypedCommand<Notification<null>> {
   constructor(public readonly input: TerminateDeviceInput) {
     super();
   }
@@ -19,11 +19,11 @@ export class TerminateDeviceCommand extends TypedCommand<ResultType<null>> {
 @CommandHandler(TerminateDeviceCommand)
 export class TerminateDeviceHandler implements ICommandHandler<
   TerminateDeviceCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly terminateDeviceUseCase: TerminateDeviceUseCase) {}
 
-  execute(command: TerminateDeviceCommand): Promise<ResultType<null>> {
+  execute(command: TerminateDeviceCommand): Promise<Notification<null>> {
     return this.terminateDeviceUseCase.execute(command.input);
   }
 }

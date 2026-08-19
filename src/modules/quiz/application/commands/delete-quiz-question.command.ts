@@ -1,11 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { DeleteQuizQuestionUseCase } from '../use-cases/delete-quiz-question.use-case';
 
-export class DeleteQuizQuestionCommand extends TypedCommand<ResultType<null>> {
+export class DeleteQuizQuestionCommand extends TypedCommand<Notification<null>> {
   constructor(public readonly id: string) {
     super();
   }
@@ -14,11 +14,11 @@ export class DeleteQuizQuestionCommand extends TypedCommand<ResultType<null>> {
 @CommandHandler(DeleteQuizQuestionCommand)
 export class DeleteQuizQuestionHandler implements ICommandHandler<
   DeleteQuizQuestionCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly deleteQuizQuestionUseCase: DeleteQuizQuestionUseCase) {}
 
-  execute(command: DeleteQuizQuestionCommand): Promise<ResultType<null>> {
+  execute(command: DeleteQuizQuestionCommand): Promise<Notification<null>> {
     return this.deleteQuizQuestionUseCase.execute(command.id);
   }
 }

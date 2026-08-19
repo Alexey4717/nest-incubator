@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { BcryptService } from '@/core/services/bcrypt.service';
 
 import { UserEntity } from '../../domain/entities/user.entity';
@@ -55,7 +55,6 @@ describe('RegisterUserUseCase', () => {
     const createdUser = userRepository.createUser.mock.calls[0][0];
     expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledWith(createdUser);
     expect(result).toMatchObject({
-      status: ResultStatus.Success,
       data: {
         login: input.login,
         email: input.email,
@@ -65,7 +64,7 @@ describe('RegisterUserUseCase', () => {
     });
   });
 
-  it('returns Result.fail when repository throws DomainException', async () => {
+  it('returns Notification.fail when repository throws DomainException', async () => {
     bcryptService.generateHash.mockResolvedValue('hashed');
     userRepository.createUser.mockRejectedValue(
       new DomainException(DomainExceptionCode.BadRequest, [
@@ -75,11 +74,11 @@ describe('RegisterUserUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.BadRequest,
-      extensions: [{ message: 'login already exists', field: 'login' }],
-    });
+    expect(result).toEqual(
+      Notification.fail(DomainExceptionCode.BadRequest, [
+        { message: 'login already exists', field: 'login' },
+      ]),
+    );
     expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
 

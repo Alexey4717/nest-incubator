@@ -1,12 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { CommentModel } from '../../models/comment.model';
 import { CreateCommentInPostUseCase } from '../use-cases/create-comment-in-post.use-case';
 
-export class CreateCommentInPostCommand extends TypedCommand<ResultType<CommentModel>> {
+export class CreateCommentInPostCommand extends TypedCommand<Notification<CommentModel>> {
   constructor(
     public readonly postId: string,
     public readonly content: string,
@@ -20,11 +20,11 @@ export class CreateCommentInPostCommand extends TypedCommand<ResultType<CommentM
 @CommandHandler(CreateCommentInPostCommand)
 export class CreateCommentInPostHandler implements ICommandHandler<
   CreateCommentInPostCommand,
-  ResultType<CommentModel>
+  Notification<CommentModel>
 > {
   constructor(private readonly createCommentInPostUseCase: CreateCommentInPostUseCase) {}
 
-  execute(command: CreateCommentInPostCommand): Promise<ResultType<CommentModel>> {
+  execute(command: CreateCommentInPostCommand): Promise<Notification<CommentModel>> {
     return this.createCommentInPostUseCase.execute({
       postId: command.postId,
       content: command.content,

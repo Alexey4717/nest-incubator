@@ -17,7 +17,7 @@ import { constants } from 'http2';
 
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
 import { throwIfNotFound } from '@/core/errors/throw-if-not-found';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
@@ -104,7 +104,9 @@ export class PostController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiCreatePost()
   async createPost(@Body() body: CreatePostDto) {
-    return resultToDomainException(await this.commandBus.execute(new CreatePostCommand(body)));
+    return notificationToDomainException(
+      await this.commandBus.execute(new CreatePostCommand(body)),
+    );
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -118,7 +120,7 @@ export class PostController {
   ) {
     const user = throwIfNotFound(await this.findUserByIdUseCase.execute(userId));
 
-    const createdComment = resultToDomainException(
+    const createdComment = notificationToDomainException(
       await this.commandBus.execute(
         new CreateCommentInPostCommand(params.postId, body.content, userId, user.login),
       ),
@@ -140,7 +142,7 @@ export class PostController {
       new UpdatePostLikeStatusCommand(postId, userId, body.likeStatus),
     );
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -150,7 +152,7 @@ export class PostController {
   async updatePost(@Param() params: GetPostParamsDto, @Body() body: UpdatePostDto) {
     const result = await this.commandBus.execute(new UpdatePostCommand(params.id, body));
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @UseGuards(BasicAuthGuard)
@@ -160,6 +162,6 @@ export class PostController {
   async deletePost(@Param() params: GetPostParamsDto) {
     const result = await this.commandBus.execute(new DeletePostCommand(params.id));
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 }

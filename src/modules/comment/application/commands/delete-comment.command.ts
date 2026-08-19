@@ -1,11 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { DeleteCommentUseCase } from '../use-cases/delete-comment.use-case';
 
-export class DeleteCommentCommand extends TypedCommand<ResultType<null>> {
+export class DeleteCommentCommand extends TypedCommand<Notification<null>> {
   constructor(
     public readonly commentId: string,
     public readonly userId: string,
@@ -17,11 +17,11 @@ export class DeleteCommentCommand extends TypedCommand<ResultType<null>> {
 @CommandHandler(DeleteCommentCommand)
 export class DeleteCommentHandler implements ICommandHandler<
   DeleteCommentCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly deleteCommentUseCase: DeleteCommentUseCase) {}
 
-  execute(command: DeleteCommentCommand): Promise<ResultType<null>> {
+  execute(command: DeleteCommentCommand): Promise<Notification<null>> {
     return this.deleteCommentUseCase.execute({
       commentId: command.commentId,
       userId: command.userId,

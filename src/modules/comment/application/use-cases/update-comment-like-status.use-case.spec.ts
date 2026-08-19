@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
 
@@ -39,7 +39,7 @@ describe('UpdateCommentLikeStatusUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(commentRepository.updateCommentLikeStatusByCommentId).toHaveBeenCalledWith(input);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when comment like status was not updated', async () => {
@@ -47,10 +47,6 @@ describe('UpdateCommentLikeStatusUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
   });
 });

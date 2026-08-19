@@ -11,7 +11,7 @@ import { UserAgent } from '@/core/decorators/param/user-agent.decorator';
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { throwIfNotFound } from '@/core/errors/throw-if-not-found';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { LoginCommand } from '../application/commands/login.command';
 import { LogoutCommand } from '../application/commands/logout.command';
@@ -138,7 +138,7 @@ export class AuthController {
   async registrationEmailResending(
     @Body() registrationEmailResendingDto: RegistrationEmailResendingDto,
   ) {
-    resultToDomainException(
+    notificationToDomainException(
       await this.commandBus.execute(
         new RegistrationEmailResendingCommand(registrationEmailResendingDto.email),
       ),
@@ -164,7 +164,7 @@ export class AuthController {
     @RefreshTokenJwtPayload() refreshTokenJWTPayload: IRefreshTokenJwtPayload,
     @Res({ passthrough: true }) res: Response,
   ) {
-    resultToDomainException(
+    notificationToDomainException(
       await this.commandBus.execute(new LogoutCommand({ userId, refreshTokenJWTPayload })),
     );
     res.clearCookie('refreshToken', this.getRefreshTokenCookieOptions());

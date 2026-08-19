@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
+import { Notification } from '@/core/notification/notification';
 
 import { ChangePasswordUseCase } from '@/modules/user/application/use-cases/change-password.use-case';
 
@@ -31,7 +31,7 @@ describe('NewPasswordUseCase', () => {
   });
 
   it('changes password successfully', async () => {
-    changePasswordUseCase.execute.mockResolvedValue(Result.ok(null));
+    changePasswordUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     await expect(useCase.execute(input)).resolves.toBeUndefined();
     expect(changePasswordUseCase.execute).toHaveBeenCalledWith(input);
@@ -39,7 +39,7 @@ describe('NewPasswordUseCase', () => {
 
   it('throws DomainException when password change fails', async () => {
     changePasswordUseCase.execute.mockResolvedValue(
-      Result.fail(DomainExceptionCode.BadRequest, [
+      Notification.fail(DomainExceptionCode.BadRequest, [
         { message: 'Invalid recovery code', field: 'recoveryCode' },
       ]),
     );

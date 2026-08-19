@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { BlogQueryRepository } from '@/modules/blog/infrastructure/blog-query.repository';
 
@@ -60,7 +60,7 @@ describe('CreatePostUseCase', () => {
   });
 
   describe('execute', () => {
-    it('creates post for existing blog and returns Result.ok', async () => {
+    it('creates post for existing blog and returns Notification.ok', async () => {
       blogQueryRepository.findBlogById.mockResolvedValue(blogModel);
       const saved = PostEntity.create(input, blogModel.name);
       postRepository.createPost.mockResolvedValue(saved);
@@ -69,7 +69,6 @@ describe('CreatePostUseCase', () => {
 
       expect(postRepository.createPost).toHaveBeenCalledWith(expect.any(PostEntity));
       expect(result).toMatchObject({
-        status: ResultStatus.Success,
         data: {
           id: saved.id,
           title: 'Post title',
@@ -85,11 +84,7 @@ describe('CreatePostUseCase', () => {
 
       const result = await useCase.execute(input);
 
-      expect(result).toEqual({
-        status: ResultStatus.Failure,
-        code: DomainExceptionCode.NotFound,
-        extensions: [],
-      });
+      expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
       expect(postRepository.createPost).not.toHaveBeenCalled();
     });
 
@@ -131,7 +126,7 @@ describe('CreatePostUseCase', () => {
       const result = await useCase.executeFromDto(dto());
 
       expect(postViewMapper.toPostViewModel).toHaveBeenCalled();
-      expect(result).toEqual({ status: ResultStatus.Success, data: view });
+      expect(result).toEqual(Notification.ok(view));
     });
 
     it('propagates failure without mapping view', async () => {
@@ -139,11 +134,7 @@ describe('CreatePostUseCase', () => {
 
       const result = await useCase.executeFromDto(dto());
 
-      expect(result).toEqual({
-        status: ResultStatus.Failure,
-        code: DomainExceptionCode.NotFound,
-        extensions: [],
-      });
+      expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
       expect(postViewMapper.toPostViewModel).not.toHaveBeenCalled();
     });
   });

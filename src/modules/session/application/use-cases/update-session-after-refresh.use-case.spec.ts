@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { SessionQueryRepository } from '../../infrastructure/session-query.repository';
 import { SessionRepository } from '../../infrastructure/session.repository';
@@ -53,11 +53,7 @@ describe('UpdateSessionAfterRefreshUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Unauthorized,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Unauthorized));
     expect(sessionRepository.rotateRefreshToken).not.toHaveBeenCalled();
   });
 
@@ -68,11 +64,7 @@ describe('UpdateSessionAfterRefreshUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(sessionRepository.rotateRefreshToken).not.toHaveBeenCalled();
   });
 
@@ -83,7 +75,6 @@ describe('UpdateSessionAfterRefreshUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.Unauthorized,
     });
   });
@@ -94,7 +85,7 @@ describe('UpdateSessionAfterRefreshUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
     expect(sessionRepository.rotateRefreshToken).toHaveBeenCalledWith(
       'user-1',
       'device-1',

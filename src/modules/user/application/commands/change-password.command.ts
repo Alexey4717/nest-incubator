@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { ChangePasswordUseCase } from '../use-cases/change-password.use-case';
 
@@ -16,11 +16,11 @@ export class ChangePasswordCommand {
 @CommandHandler(ChangePasswordCommand)
 export class ChangePasswordHandler implements ICommandHandler<
   ChangePasswordCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly changePasswordUseCase: ChangePasswordUseCase) {}
 
-  execute(command: ChangePasswordCommand): Promise<ResultType<null>> {
+  execute(command: ChangePasswordCommand): Promise<Notification<null>> {
     return this.changePasswordUseCase.execute(command.input);
   }
 }

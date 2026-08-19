@@ -2,8 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { ResultStatus, Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
@@ -25,7 +24,7 @@ export type CreatePostInput = {
 };
 
 @Injectable()
-export class CreatePostUseCase implements IUseCase<CreatePostInput, ResultType<PostModel>> {
+export class CreatePostUseCase implements IUseCase<CreatePostInput, Notification<PostModel>> {
   constructor(
     private readonly postRepository: PostRepository,
     private readonly postViewMapper: PostViewMapper,
@@ -33,12 +32,12 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, ResultType<P
     private readonly blogQueryRepository: BlogQueryRepository,
   ) {}
 
-  async execute(input: CreatePostInput): Promise<ResultType<PostModel>> {
+  async execute(input: CreatePostInput): Promise<Notification<PostModel>> {
     const { blogId, title, shortDescription, content } = input;
 
     const foundBlog = await this.blogQueryRepository.findBlogById(blogId);
     if (!foundBlog) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     const newPost = PostEntity.create({ title, shortDescription, content, blogId }, foundBlog.name);
@@ -48,17 +47,17 @@ export class CreatePostUseCase implements IUseCase<CreatePostInput, ResultType<P
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(fromEntity(saved));
+    return Notification.ok(fromEntity(saved));
   }
 
-  async executeFromDto(input: CreatePostDto): Promise<ResultType<PostViewModel>> {
+  async executeFromDto(input: CreatePostDto): Promise<Notification<PostViewModel>> {
     await validateOrRejectModel(input, CreatePostDto, 'CreatePostUseCase.executeFromDto');
 
     const result = await this.execute(input);
-    if (result.status === ResultStatus.Failure) {
-      return Result.fail(result.code, result.extensions);
+    if (result.hasError()) {
+      return Notification.fail(result.code, result.messages);
     }
 
-    return Result.ok(this.postViewMapper.toPostViewModel(result.data));
+    return Notification.ok(this.postViewMapper.toPostViewModel(result.data as PostModel));
   }
 }

@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
 
 import { QuizQuestionEntity } from '../../domain/entities/quiz-question.entity';
 import { CreateQuizQuestionDto } from '../../dto/quiz-question.dto';
@@ -35,7 +34,7 @@ describe('CreateQuizQuestionUseCase', () => {
     quizQuestionRepository = module.get(QuizQuestionRepository);
   });
 
-  it('creates unpublished question and returns Result.ok', async () => {
+  it('creates unpublished question and returns Notification.ok', async () => {
     const saved = QuizQuestionEntity.create({
       body: 'What is the capital of France?',
       correctAnswers: ['Paris'],
@@ -46,7 +45,6 @@ describe('CreateQuizQuestionUseCase', () => {
 
     expect(quizQuestionRepository.create).toHaveBeenCalledWith(expect.any(QuizQuestionEntity));
     expect(result).toMatchObject({
-      status: ResultStatus.Success,
       data: {
         id: saved.id,
         body: 'What is the capital of France?',

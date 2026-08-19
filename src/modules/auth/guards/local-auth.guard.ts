@@ -4,8 +4,9 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { DomainException } from '@/core/errors/domain.exception';
 import { errorFormatter } from '@/core/errors/error-formatter';
+import { Notification } from '@/core/notification/notification';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { LoginDto } from '../dto/login.dto';
 
@@ -16,11 +17,13 @@ export class LocalAuthGuard extends AuthGuard('local') {
     const loginDto = plainToInstance(LoginDto, request.body);
     const errors = await validate(loginDto, {
       whitelist: true,
-      stopAtFirstError: true,
+      stopAtFirstError: false,
     });
 
     if (errors.length > 0) {
-      throw new DomainException(DomainExceptionCode.ValidationError, errorFormatter(errors));
+      notificationToDomainException(
+        Notification.fail(DomainExceptionCode.ValidationError, errorFormatter(errors)),
+      );
     }
 
     return (await super.canActivate(context)) as boolean;

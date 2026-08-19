@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { DeleteSessionUseCase } from '@/modules/session/application/use-cases/delete-session.use-case';
 import { SessionQueryRepository } from '@/modules/session/infrastructure/session-query.repository';
@@ -44,11 +43,7 @@ describe('LogoutUseCase', () => {
       refreshTokenJWTPayload: payload,
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Unauthorized,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Unauthorized));
     expect(deleteSessionUseCase.execute).not.toHaveBeenCalled();
   });
 
@@ -62,7 +57,7 @@ describe('LogoutUseCase', () => {
       refreshTokenJWTPayload: payload,
     });
 
-    expect(result.status).toBe(ResultStatus.Failure);
+    expect(result.hasError()).toBe(true);
     expect(result).toMatchObject({ code: DomainExceptionCode.Unauthorized });
     expect(deleteSessionUseCase.execute).not.toHaveBeenCalled();
   });
@@ -71,14 +66,14 @@ describe('LogoutUseCase', () => {
     sessionQueryRepository.findOneByDeviceAndUserId.mockResolvedValue({
       currentRefreshTokenJti: 'jti-1',
     });
-    deleteSessionUseCase.execute.mockResolvedValue(Result.ok(null));
+    deleteSessionUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     const result = await useCase.execute({
       userId: 'user-1',
       refreshTokenJWTPayload: payload,
     });
 
-    expect(result).toEqual(Result.ok(null));
+    expect(result).toEqual(Notification.ok(null));
     expect(deleteSessionUseCase.execute).toHaveBeenCalledWith({
       userId: 'user-1',
       deviceId: 'device-1',

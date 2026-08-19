@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { SessionRepository } from '../../infrastructure/session.repository';
 import { DeleteOtherSessionsUseCase } from './delete-other-sessions.use-case';
@@ -30,7 +30,7 @@ describe('DeleteOtherSessionsUseCase', () => {
       currentDeviceId: 'device-1',
     });
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
     expect(sessionRepository.deleteAllSessionExceptCurrent).toHaveBeenCalledWith(
       'user-1',
       'device-1',

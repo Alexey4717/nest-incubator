@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { BlogEntity } from '../../domain/entities/blog.entity';
 import { UpdateBlogDto } from '../../dto/update-blog.dto';
@@ -53,7 +53,7 @@ describe('UpdateBlogUseCase', () => {
     blogQueryRepository = module.get(BlogQueryRepository);
   });
 
-  it('updates blog and returns Result.ok(null)', async () => {
+  it('updates blog and returns Notification.ok(null)', async () => {
     const blog = existingBlog();
     blogRepository.findById.mockResolvedValue(blog);
     blogQueryRepository.findBlogByName.mockResolvedValue(null);
@@ -67,7 +67,7 @@ describe('UpdateBlogUseCase', () => {
       description: 'Updated description',
     });
     expect(blogRepository.save).toHaveBeenCalledWith(blog);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when blog does not exist', async () => {
@@ -75,11 +75,7 @@ describe('UpdateBlogUseCase', () => {
 
     const result = await useCase.execute({ id: 'missing', input: inputDto() });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(blogRepository.save).not.toHaveBeenCalled();
   });
 
@@ -97,9 +93,8 @@ describe('UpdateBlogUseCase', () => {
     const result = await useCase.execute({ id: 'blog-1', input: inputDto() });
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ field: 'name' }],
+      messages: [{ field: 'name' }],
     });
     expect(blogRepository.save).not.toHaveBeenCalled();
   });
@@ -119,7 +114,7 @@ describe('UpdateBlogUseCase', () => {
 
     const result = await useCase.execute({ id: 'blog-1', input: inputDto() });
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('throws InternalServerError when save returns null', async () => {

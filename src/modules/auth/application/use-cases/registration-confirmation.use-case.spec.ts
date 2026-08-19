@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
+import { Notification } from '@/core/notification/notification';
 
 import { ConfirmEmailUseCase } from '@/modules/user/application/use-cases/confirm-email.use-case';
 
@@ -26,7 +26,7 @@ describe('RegistrationConfirmationUseCase', () => {
   });
 
   it('confirms email successfully', async () => {
-    confirmEmailUseCase.execute.mockResolvedValue(Result.ok(null));
+    confirmEmailUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     await expect(useCase.execute('code-1')).resolves.toBeUndefined();
     expect(confirmEmailUseCase.execute).toHaveBeenCalledWith('code-1');
@@ -34,7 +34,7 @@ describe('RegistrationConfirmationUseCase', () => {
 
   it('throws DomainException when confirmation fails', async () => {
     confirmEmailUseCase.execute.mockResolvedValue(
-      Result.fail(DomainExceptionCode.BadRequest, [
+      Notification.fail(DomainExceptionCode.BadRequest, [
         { message: 'Confirmation code incorrect', field: 'code' },
       ]),
     );

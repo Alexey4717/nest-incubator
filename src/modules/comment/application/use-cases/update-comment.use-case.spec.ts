@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { CommentDb, CommentEntity } from '../../domain/entities/comment.entity';
 import { UpdateCommentDTO } from '../../dto/update-comment.dto';
@@ -66,7 +66,7 @@ describe('UpdateCommentUseCase', () => {
     expect(commentRepository.findById).toHaveBeenCalledWith('comment-1');
     expect(comment.toDb().content).toBe(dto.content);
     expect(commentRepository.save).toHaveBeenCalledWith(comment);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when comment does not exist', async () => {
@@ -78,11 +78,7 @@ describe('UpdateCommentUseCase', () => {
       input: makeDto(),
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(commentRepository.save).not.toHaveBeenCalled();
   });
 
@@ -96,11 +92,7 @@ describe('UpdateCommentUseCase', () => {
       input: makeDto(),
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Forbidden,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Forbidden));
     expect(commentRepository.save).not.toHaveBeenCalled();
   });
 

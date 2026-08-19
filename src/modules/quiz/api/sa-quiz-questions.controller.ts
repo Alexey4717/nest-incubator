@@ -15,7 +15,7 @@ import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 
@@ -60,7 +60,7 @@ export class SaQuizQuestionsController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiSaCreateQuizQuestion()
   async createQuestion(@Body() body: CreateQuizQuestionDto) {
-    return resultToDomainException(
+    return notificationToDomainException(
       await this.commandBus.execute(new CreateQuizQuestionCommand(body)),
     );
   }
@@ -69,7 +69,7 @@ export class SaQuizQuestionsController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiSaUpdateQuizQuestion()
   async updateQuestion(@Param() params: { id: string }, @Body() body: UpdateQuizQuestionDto) {
-    resultToDomainException(
+    notificationToDomainException(
       await this.commandBus.execute(new UpdateQuizQuestionCommand(params.id, body)),
     );
   }
@@ -78,7 +78,7 @@ export class SaQuizQuestionsController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiSaPublishQuizQuestion()
   async publishQuestion(@Param() params: { id: string }, @Body() body: PublishQuizQuestionDto) {
-    resultToDomainException(
+    notificationToDomainException(
       await this.commandBus.execute(new PublishQuizQuestionCommand(params.id, body)),
     );
   }
@@ -87,7 +87,7 @@ export class SaQuizQuestionsController {
   @HttpCode(constants.HTTP_STATUS_NO_CONTENT)
   @ApiSaDeleteQuizQuestion()
   async deleteQuestion(@Param() params: { id: string }) {
-    resultToDomainException(
+    notificationToDomainException(
       await this.commandBus.execute(new DeleteQuizQuestionCommand(params.id)),
     );
   }

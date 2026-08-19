@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { RegistrationEmailResendingUseCase } from '../use-cases/registration-email-resending.use-case';
 
@@ -11,13 +11,13 @@ export class RegistrationEmailResendingCommand {
 @CommandHandler(RegistrationEmailResendingCommand)
 export class RegistrationEmailResendingHandler implements ICommandHandler<
   RegistrationEmailResendingCommand,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(
     private readonly registrationEmailResendingUseCase: RegistrationEmailResendingUseCase,
   ) {}
 
-  execute(command: RegistrationEmailResendingCommand): Promise<ResultType<null>> {
+  execute(command: RegistrationEmailResendingCommand): Promise<Notification<null>> {
     return this.registrationEmailResendingUseCase.execute(command.email);
   }
 }

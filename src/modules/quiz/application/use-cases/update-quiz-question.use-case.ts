@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
@@ -18,23 +17,23 @@ type UpdateQuizQuestionInput = {
 @Injectable()
 export class UpdateQuizQuestionUseCase implements IUseCase<
   UpdateQuizQuestionInput,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly quizQuestionRepository: QuizQuestionRepository) {}
 
-  async execute({ id, input }: UpdateQuizQuestionInput): Promise<ResultType<null>> {
+  async execute({ id, input }: UpdateQuizQuestionInput): Promise<Notification<null>> {
     await validateOrRejectModel(input, UpdateQuizQuestionDto, 'UpdateQuizQuestionUseCase.execute');
 
     const question = await this.quizQuestionRepository.findById(id);
     if (!question) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     try {
       question.update({ body: input.body, correctAnswers: input.correctAnswers });
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }
@@ -44,6 +43,6 @@ export class UpdateQuizQuestionUseCase implements IUseCase<
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

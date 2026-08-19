@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { SessionRepository } from '../../infrastructure/session.repository';
 import { SessionConfig } from '../../session.config';
@@ -37,14 +37,11 @@ describe('DeleteExpiredSessionsUseCase', () => {
     expect(sessionRepository.deleteAllExpiredSessions).toHaveBeenCalledWith(
       '2024-01-01T11:00:00.000Z',
     );
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('handleCron delegates to execute', async () => {
-    await expect(useCase.handleCron()).resolves.toEqual({
-      status: ResultStatus.Success,
-      data: null,
-    });
+    await expect(useCase.handleCron()).resolves.toEqual(Notification.ok(null));
     expect(sessionRepository.deleteAllExpiredSessions).toHaveBeenCalled();
   });
 });

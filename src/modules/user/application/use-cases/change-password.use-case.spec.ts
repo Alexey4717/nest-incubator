@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { add } from 'date-fns';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { BcryptService } from '@/core/services/bcrypt.service';
 
 import { UserDb, UserEntity } from '../../domain/entities/user.entity';
@@ -72,7 +72,7 @@ describe('ChangePasswordUseCase', () => {
       recoveryCode: null,
       recoveryExpiration: null,
     });
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns BadRequest when recovery code is not found', async () => {
@@ -80,15 +80,15 @@ describe('ChangePasswordUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.BadRequest,
-      extensions: [{ message: 'Invalid recovery code', field: 'recoveryCode' }],
-    });
+    expect(result).toEqual(
+      Notification.fail(DomainExceptionCode.BadRequest, [
+        { message: 'Invalid recovery code', field: 'recoveryCode' },
+      ]),
+    );
     expect(bcryptService.generateHash).not.toHaveBeenCalled();
   });
 
-  it('returns Result.fail when recovery code is expired', async () => {
+  it('returns Notification.fail when recovery code is expired', async () => {
     const user = UserEntity.reconstitute(
       baseDb({ recoveryExpiration: add(new Date(), { hours: -1 }) }),
     );
@@ -97,9 +97,8 @@ describe('ChangePasswordUseCase', () => {
     const result = await useCase.execute(input);
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ field: 'recoveryCode' }],
+      messages: [{ field: 'recoveryCode' }],
     });
     expect(bcryptService.generateHash).not.toHaveBeenCalled();
     expect(userRepository.save).not.toHaveBeenCalled();

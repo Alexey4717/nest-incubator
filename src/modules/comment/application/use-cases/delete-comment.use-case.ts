@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { CommentRepository } from '../../infrastructure/comment.repository';
@@ -14,20 +13,20 @@ type DeleteCommentInput = {
 };
 
 @Injectable()
-export class DeleteCommentUseCase implements IUseCase<DeleteCommentInput, ResultType<null>> {
+export class DeleteCommentUseCase implements IUseCase<DeleteCommentInput, Notification<null>> {
   constructor(private readonly commentRepository: CommentRepository) {}
 
-  async execute({ commentId, userId }: DeleteCommentInput): Promise<ResultType<null>> {
+  async execute({ commentId, userId }: DeleteCommentInput): Promise<Notification<null>> {
     const comment = await this.commentRepository.findById(commentId);
     if (!comment) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
     try {
       comment.canBeModifiedBy(userId);
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }
@@ -37,6 +36,6 @@ export class DeleteCommentUseCase implements IUseCase<DeleteCommentInput, Result
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { SessionEntity } from '../../domain/entities/session.entity';
@@ -22,7 +21,7 @@ type UpdateSessionAfterRefreshInput = {
 @Injectable()
 export class UpdateSessionAfterRefreshUseCase implements IUseCase<
   UpdateSessionAfterRefreshInput,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(
     private readonly sessionQueryRepository: SessionQueryRepository,
@@ -35,10 +34,10 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
     expectedJti,
     newJti,
     lastActiveDate,
-  }: UpdateSessionAfterRefreshInput): Promise<ResultType<null>> {
+  }: UpdateSessionAfterRefreshInput): Promise<Notification<null>> {
     const found = await this.sessionQueryRepository.findOneByDeviceAndUserId(deviceId, userId);
     if (!found) {
-      return Result.fail(DomainExceptionCode.Unauthorized);
+      return Notification.fail(DomainExceptionCode.Unauthorized);
     }
 
     const session = SessionEntity.reconstitute(modelToDb(found));
@@ -47,9 +46,9 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
       session.rotateRefreshToken(expectedJti, newJti, lastActiveDate);
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
-      return Result.fail(DomainExceptionCode.Unauthorized);
+      return Notification.fail(DomainExceptionCode.Unauthorized);
     }
 
     const updated = await this.sessionRepository.rotateRefreshToken(
@@ -59,9 +58,9 @@ export class UpdateSessionAfterRefreshUseCase implements IUseCase<
       session,
     );
     if (!updated) {
-      return Result.fail(DomainExceptionCode.Unauthorized);
+      return Notification.fail(DomainExceptionCode.Unauthorized);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

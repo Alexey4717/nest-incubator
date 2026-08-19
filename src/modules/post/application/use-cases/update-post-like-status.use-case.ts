@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { LikeStatus } from '@/modules/like/types/like-status';
@@ -18,7 +17,7 @@ type UpdatePostLikeStatusInput = {
 @Injectable()
 export class UpdatePostLikeStatusUseCase implements IUseCase<
   UpdatePostLikeStatusInput,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly postRepository: PostRepository) {}
 
@@ -26,16 +25,16 @@ export class UpdatePostLikeStatusUseCase implements IUseCase<
     postId,
     userId,
     likeStatus,
-  }: UpdatePostLikeStatusInput): Promise<ResultType<null>> {
+  }: UpdatePostLikeStatusInput): Promise<Notification<null>> {
     const updated = await this.postRepository.updatePostLikeStatus({
       postId,
       userId,
       likeStatus,
     });
     if (!updated) {
-      return Result.fail(DomainExceptionCode.NotFound);
+      return Notification.fail(DomainExceptionCode.NotFound);
     }
 
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

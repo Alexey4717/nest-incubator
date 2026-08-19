@@ -16,7 +16,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { constants } from 'http2';
 
 import { throwIfNotFound } from '@/core/errors/throw-if-not-found';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { BasicAuthGuard } from '@/modules/auth/guards/basic-auth.guard';
 import { DeletePostCommand } from '@/modules/post/application/commands/delete-post.command';
@@ -69,7 +69,9 @@ export class SaBlogController {
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiSaCreateBlog()
   async createBlog(@Body() body: CreateBlogDTO) {
-    return resultToDomainException(await this.commandBus.execute(new CreateBlogCommand(body)));
+    return notificationToDomainException(
+      await this.commandBus.execute(new CreateBlogCommand(body)),
+    );
   }
 
   @Put(':id')
@@ -78,7 +80,7 @@ export class SaBlogController {
   async updateBlog(@Param() params: { id: string }, @Body() body: UpdateBlogDto) {
     const result = await this.commandBus.execute(new UpdateBlogCommand(params.id, body));
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @Delete(':id')
@@ -87,14 +89,14 @@ export class SaBlogController {
   async deleteBlog(@Param() params: { id: string }) {
     const result = await this.commandBus.execute(new DeleteBlogCommand(params.id));
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @Post(':blogId/posts')
   @HttpCode(constants.HTTP_STATUS_CREATED)
   @ApiSaCreatePostInBlog()
   async createPostInBlog(@Param() params: { blogId: string }, @Body() body: CreatePostInBlogDTO) {
-    const createdPostInBlog = resultToDomainException(
+    const createdPostInBlog = notificationToDomainException(
       await this.commandBus.execute(new CreatePostInBlogCommand(params.blogId, body)),
     );
 

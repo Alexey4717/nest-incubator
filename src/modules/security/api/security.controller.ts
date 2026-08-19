@@ -5,7 +5,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 
 import { CurrentDeviceId } from '@/core/decorators/param/currentDeviceId.decorator';
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { RefreshJwtAuthGuard } from '@/modules/auth/guards/refresh-jwt-auth.guard';
 
@@ -48,7 +48,7 @@ export class SecurityController {
       new TerminateOtherDevicesCommand({ userId, deviceId }),
     );
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @UseGuards(RefreshJwtAuthGuard)
@@ -58,6 +58,6 @@ export class SecurityController {
   async terminateDevice(@CurrentUserId() userId: string, @Param('deviceId') deviceId: string) {
     const result = await this.commandBus.execute(new TerminateDeviceCommand({ userId, deviceId }));
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 }

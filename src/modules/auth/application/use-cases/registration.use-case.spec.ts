@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
+import { Notification } from '@/core/notification/notification';
 
 import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';
 
@@ -33,7 +33,7 @@ describe('RegistrationUseCase', () => {
 
   it('registers user via RegisterUserUseCase', async () => {
     registerUserUseCase.execute.mockResolvedValue(
-      Result.ok({
+      Notification.ok({
         email: 'user@example.com',
         login: 'login',
         confirmationCode: 'code-1',
@@ -46,7 +46,7 @@ describe('RegistrationUseCase', () => {
 
   it('throws DomainException when registration fails', async () => {
     registerUserUseCase.execute.mockResolvedValue(
-      Result.fail(DomainExceptionCode.BadRequest, [
+      Notification.fail(DomainExceptionCode.BadRequest, [
         { message: 'login already exists', field: 'login' },
       ]),
     );

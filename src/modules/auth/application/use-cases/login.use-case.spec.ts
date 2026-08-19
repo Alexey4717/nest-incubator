@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
+import { Notification } from '@/core/notification/notification';
 
 import { CreateSessionUseCase } from '@/modules/session/application/use-cases/create-session.use-case';
 
@@ -36,7 +36,7 @@ describe('LoginUseCase', () => {
       jti: 'jti-1',
       lastActiveDate: '2024-01-01T00:00:00.000Z',
     });
-    createSessionUseCase.execute.mockResolvedValue(Result.ok({}));
+    createSessionUseCase.execute.mockResolvedValue(Notification.ok({}));
 
     const result = await useCase.execute({
       userId: 'user-1',
@@ -65,7 +65,7 @@ describe('LoginUseCase', () => {
       lastActiveDate: '2024-01-01T00:00:00.000Z',
     });
     createSessionUseCase.execute.mockResolvedValue(
-      Result.fail(DomainExceptionCode.InternalServerError),
+      Notification.fail(DomainExceptionCode.InternalServerError),
     );
 
     await expect(

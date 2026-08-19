@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { UserModel } from '../../models/user.model';
@@ -12,7 +12,7 @@ type RegisterUserCommandInput = {
   password: string;
 };
 
-export class RegisterUserCommand extends TypedCommand<ResultType<UserModel>> {
+export class RegisterUserCommand extends TypedCommand<Notification<UserModel>> {
   constructor(public readonly input: RegisterUserCommandInput) {
     super();
   }
@@ -21,11 +21,11 @@ export class RegisterUserCommand extends TypedCommand<ResultType<UserModel>> {
 @CommandHandler(RegisterUserCommand)
 export class RegisterUserHandler implements ICommandHandler<
   RegisterUserCommand,
-  ResultType<UserModel>
+  Notification<UserModel>
 > {
   constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
 
-  execute(command: RegisterUserCommand): Promise<ResultType<UserModel>> {
+  execute(command: RegisterUserCommand): Promise<Notification<UserModel>> {
     return this.registerUserUseCase.execute(command.input);
   }
 }

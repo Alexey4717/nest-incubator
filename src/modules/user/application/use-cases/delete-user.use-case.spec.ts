@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { UserRepository } from '../../infrastructure/user.repository';
 import { DeleteUserUseCase } from './delete-user.use-case';
@@ -28,7 +28,7 @@ describe('DeleteUserUseCase', () => {
     const result = await useCase.execute('user-1');
 
     expect(userRepository.deleteUserById).toHaveBeenCalledWith('user-1');
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when user was not deleted', async () => {
@@ -36,10 +36,6 @@ describe('DeleteUserUseCase', () => {
 
     const result = await useCase.execute('missing');
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
   });
 });

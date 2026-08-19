@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { IRefreshTokenJwtPayload } from '../../models/refresh-token-jwt-payload.model';
@@ -11,17 +11,17 @@ type LogoutInput = {
   refreshTokenJWTPayload: IRefreshTokenJwtPayload;
 };
 
-export class LogoutCommand extends TypedCommand<ResultType<null>> {
+export class LogoutCommand extends TypedCommand<Notification<null>> {
   constructor(public readonly input: LogoutInput) {
     super();
   }
 }
 
 @CommandHandler(LogoutCommand)
-export class LogoutHandler implements ICommandHandler<LogoutCommand, ResultType<null>> {
+export class LogoutHandler implements ICommandHandler<LogoutCommand, Notification<null>> {
   constructor(private readonly logoutUseCase: LogoutUseCase) {}
 
-  execute(command: LogoutCommand): Promise<ResultType<null>> {
+  execute(command: LogoutCommand): Promise<Notification<null>> {
     return this.logoutUseCase.execute(command.input);
   }
 }

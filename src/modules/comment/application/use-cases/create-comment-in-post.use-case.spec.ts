@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { PostRepository } from '@/modules/post/infrastructure/post.repository';
 
@@ -50,7 +50,6 @@ describe('CreateCommentInPostUseCase', () => {
     expect(postRepository.findById).toHaveBeenCalledWith(input.postId);
     expect(commentRepository.createCommentInPost).toHaveBeenCalledWith(expect.any(CommentEntity));
     expect(result).toMatchObject({
-      status: ResultStatus.Success,
       data: {
         postId: input.postId,
         content: input.content,
@@ -67,11 +66,7 @@ describe('CreateCommentInPostUseCase', () => {
 
     const result = await useCase.execute(input);
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(commentRepository.createCommentInPost).not.toHaveBeenCalled();
   });
 

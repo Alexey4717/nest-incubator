@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { CoreConfig } from '@/core/core.config';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { CreateBlogUseCase } from '@/modules/blog/application/use-cases/create-blog.use-case';
 import { CreateBlogDTO } from '@/modules/blog/dto/create-blog.dto';
@@ -41,23 +41,23 @@ export class SeedService {
     }
 
     this.logger.log('Clearing existing data…');
-    resultToDomainException(await this.deleteAllDataUseCase.execute());
+    notificationToDomainException(await this.deleteAllDataUseCase.execute());
 
     this.logger.log('Creating users…');
-    const devUser = resultToDomainException(
+    const devUser = notificationToDomainException(
       await this.createUserUseCase.execute(this.toCreateUserDto(SEED_USERS.dev)),
     );
-    resultToDomainException(await this.registerUserUseCase.execute(SEED_USERS.pending));
+    notificationToDomainException(await this.registerUserUseCase.execute(SEED_USERS.pending));
 
     this.logger.log('Creating blog…');
-    const blog = resultToDomainException(
+    const blog = notificationToDomainException(
       await this.createBlogUseCase.execute(this.toCreateBlogDto(SEED_BLOGS.main)),
     );
 
     this.logger.log('Creating posts…');
     const posts: PostModel[] = [];
     for (const post of SEED_POSTS) {
-      const created = resultToDomainException(
+      const created = notificationToDomainException(
         await this.createPostUseCase.execute({ ...post, blogId: blog.id }),
       );
       posts.push(created);
@@ -65,7 +65,7 @@ export class SeedService {
 
     this.logger.log('Creating comments…');
     for (const content of SEED_COMMENTS) {
-      resultToDomainException(
+      notificationToDomainException(
         await this.createCommentInPostUseCase.execute({
           postId: posts[0].id,
           userId: devUser.id,

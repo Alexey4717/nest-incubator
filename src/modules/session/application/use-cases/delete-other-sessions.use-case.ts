@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { SessionRepository } from '../../infrastructure/session.repository';
@@ -14,12 +13,15 @@ type DeleteOtherSessionsInput = {
 @Injectable()
 export class DeleteOtherSessionsUseCase implements IUseCase<
   DeleteOtherSessionsInput,
-  ResultType<null>
+  Notification<null>
 > {
   constructor(private readonly sessionRepository: SessionRepository) {}
 
-  async execute({ userId, currentDeviceId }: DeleteOtherSessionsInput): Promise<ResultType<null>> {
+  async execute({
+    userId,
+    currentDeviceId,
+  }: DeleteOtherSessionsInput): Promise<Notification<null>> {
     await this.sessionRepository.deleteAllSessionExceptCurrent(userId, currentDeviceId);
-    return Result.ok(null);
+    return Notification.ok(null);
   }
 }

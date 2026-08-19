@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 
 import { DeleteSessionUseCase } from '@/modules/session/application/use-cases/delete-session.use-case';
@@ -16,19 +15,19 @@ type LogoutInput = {
 };
 
 @Injectable()
-export class LogoutUseCase implements IUseCase<LogoutInput, ResultType<null>> {
+export class LogoutUseCase implements IUseCase<LogoutInput, Notification<null>> {
   constructor(
     private readonly sessionQueryRepository: SessionQueryRepository,
     private readonly deleteSessionUseCase: DeleteSessionUseCase,
   ) {}
 
-  async execute({ userId, refreshTokenJWTPayload }: LogoutInput): Promise<ResultType<null>> {
+  async execute({ userId, refreshTokenJWTPayload }: LogoutInput): Promise<Notification<null>> {
     const found = await this.sessionQueryRepository.findOneByDeviceAndUserId(
       refreshTokenJWTPayload.deviceId,
       userId,
     );
     if (!found || found.currentRefreshTokenJti !== refreshTokenJWTPayload.jti) {
-      return Result.fail(DomainExceptionCode.Unauthorized);
+      return Notification.fail(DomainExceptionCode.Unauthorized);
     }
 
     return this.deleteSessionUseCase.execute({

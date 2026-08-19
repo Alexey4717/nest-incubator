@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Result } from '@/core/result/result.factory';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { DeleteOtherSessionsUseCase } from '@/modules/session/application/use-cases/delete-other-sessions.use-case';
 
@@ -32,7 +31,7 @@ describe('TerminateOtherDevicesUseCase', () => {
   });
 
   it('delegates to DeleteOtherSessionsUseCase with currentDeviceId mapped', async () => {
-    deleteOtherSessionsUseCase.execute.mockResolvedValue(Result.ok(null));
+    deleteOtherSessionsUseCase.execute.mockResolvedValue(Notification.ok(null));
 
     const result = await useCase.execute(input);
 
@@ -40,6 +39,6 @@ describe('TerminateOtherDevicesUseCase', () => {
       userId: input.userId,
       currentDeviceId: input.deviceId,
     });
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 });

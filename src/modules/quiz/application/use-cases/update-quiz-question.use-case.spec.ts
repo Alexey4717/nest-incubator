@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { QuizQuestionEntity } from '../../domain/entities/quiz-question.entity';
 import { UpdateQuizQuestionDto } from '../../dto/quiz-question.dto';
@@ -45,7 +45,7 @@ describe('UpdateQuizQuestionUseCase', () => {
     quizQuestionRepository = module.get(QuizQuestionRepository);
   });
 
-  it('updates question and returns Result.ok(null)', async () => {
+  it('updates question and returns Notification.ok(null)', async () => {
     const question = draftQuestion();
     quizQuestionRepository.findById.mockResolvedValue(question);
     quizQuestionRepository.save.mockResolvedValue(question);
@@ -55,7 +55,7 @@ describe('UpdateQuizQuestionUseCase', () => {
     expect(question.toDb().body).toBe('Updated question body text');
     expect(question.correctAnswers).toEqual(['answer']);
     expect(quizQuestionRepository.save).toHaveBeenCalledWith(question);
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when question does not exist', async () => {
@@ -63,11 +63,7 @@ describe('UpdateQuizQuestionUseCase', () => {
 
     const result = await useCase.execute({ id: 'missing', input: dto() });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(quizQuestionRepository.save).not.toHaveBeenCalled();
   });
 
@@ -83,9 +79,8 @@ describe('UpdateQuizQuestionUseCase', () => {
     const result = await useCase.execute({ id: 'q-1', input: dto() });
 
     expect(result).toMatchObject({
-      status: ResultStatus.Failure,
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ field: 'correctAnswers' }],
+      messages: [{ field: 'correctAnswers' }],
     });
     expect(quizQuestionRepository.save).not.toHaveBeenCalled();
   });

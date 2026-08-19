@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { CommentDb, CommentEntity } from '../../domain/entities/comment.entity';
 import { CommentRepository } from '../../infrastructure/comment.repository';
@@ -56,7 +56,7 @@ describe('DeleteCommentUseCase', () => {
 
     expect(commentRepository.findById).toHaveBeenCalledWith('comment-1');
     expect(commentRepository.deleteCommentById).toHaveBeenCalledWith('comment-1');
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when comment does not exist', async () => {
@@ -67,11 +67,7 @@ describe('DeleteCommentUseCase', () => {
       userId: 'user-1',
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(commentRepository.deleteCommentById).not.toHaveBeenCalled();
   });
 
@@ -84,11 +80,7 @@ describe('DeleteCommentUseCase', () => {
       userId: 'other-user',
     });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.Forbidden,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.Forbidden));
     expect(commentRepository.deleteCommentById).not.toHaveBeenCalled();
   });
 

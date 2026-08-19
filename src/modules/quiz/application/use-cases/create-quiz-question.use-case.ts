@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { IUseCase } from '@/core/types/use-case';
 import { validateOrRejectModel } from '@/core/utils/validate-or-reject-model';
 
@@ -16,11 +15,11 @@ import { QuizQuestionModel } from '../../models/quiz-question.model';
 @Injectable()
 export class CreateQuizQuestionUseCase implements IUseCase<
   CreateQuizQuestionDto,
-  ResultType<QuizQuestionModel>
+  Notification<QuizQuestionModel>
 > {
   constructor(private readonly quizQuestionRepository: QuizQuestionRepository) {}
 
-  async execute(input: CreateQuizQuestionDto): Promise<ResultType<QuizQuestionModel>> {
+  async execute(input: CreateQuizQuestionDto): Promise<Notification<QuizQuestionModel>> {
     await validateOrRejectModel(input, CreateQuizQuestionDto, 'CreateQuizQuestionUseCase.execute');
 
     const question = QuizQuestionEntity.create({
@@ -32,6 +31,6 @@ export class CreateQuizQuestionUseCase implements IUseCase<
       throw new DomainException(DomainExceptionCode.InternalServerError);
     }
 
-    return Result.ok(fromEntity(saved));
+    return Notification.ok(fromEntity(saved));
   }
 }

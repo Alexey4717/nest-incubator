@@ -6,7 +6,7 @@ import { constants } from 'http2';
 
 import { CurrentUserId } from '@/core/decorators/param/currentUserId.decorator';
 import { throwIfNotFound } from '@/core/errors/throw-if-not-found';
-import { resultToDomainException } from '@/core/result/result-to-domain';
+import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 
 import { AccessJwtAuthGuard } from '@/modules/auth/guards/access-jwt-auth.guard';
 import { GetUserIdFromBearerToken } from '@/modules/auth/guards/get-userId-from-bearer-token';
@@ -61,7 +61,7 @@ export class CommentController {
       new UpdateCommentLikeStatusCommand(params.commentId, userId, body.likeStatus),
     );
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -77,7 +77,7 @@ export class CommentController {
       new UpdateCommentCommand(params.commentId, userId, body),
     );
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 
   @UseGuards(AccessJwtAuthGuard)
@@ -89,6 +89,6 @@ export class CommentController {
       new DeleteCommentCommand(params.commentId, userId),
     );
 
-    resultToDomainException(result);
+    notificationToDomainException(result);
   }
 }

@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
-import { Result } from '@/core/result/result.factory';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { CreatePostUseCase } from '@/modules/post/application/use-cases/create-post.use-case';
 
@@ -47,7 +46,7 @@ describe('CreatePostInBlogUseCase', () => {
       createdAt: '2020-01-01T00:00:00.000Z',
       reactions: [],
     };
-    createPostUseCase.execute.mockResolvedValue(Result.ok(postModel));
+    createPostUseCase.execute.mockResolvedValue(Notification.ok(postModel));
 
     const result = await useCase.execute({ blogId: 'blog-1', input: dto() });
 
@@ -57,18 +56,14 @@ describe('CreatePostInBlogUseCase', () => {
       shortDescription: 'Short description',
       content: 'Post content',
     });
-    expect(result).toEqual({ status: ResultStatus.Success, data: postModel });
+    expect(result).toEqual(Notification.ok(postModel));
   });
 
   it('propagates failure from CreatePostUseCase', async () => {
-    createPostUseCase.execute.mockResolvedValue(Result.fail(DomainExceptionCode.NotFound));
+    createPostUseCase.execute.mockResolvedValue(Notification.fail(DomainExceptionCode.NotFound));
 
     const result = await useCase.execute({ blogId: 'missing', input: dto() });
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
   });
 });

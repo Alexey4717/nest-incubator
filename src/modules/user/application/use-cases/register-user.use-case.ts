@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DomainException } from '@/core/errors/domain.exception';
 import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
-import { Result } from '@/core/result/result.factory';
-import { Result as ResultType } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 import { BcryptService } from '@/core/services/bcrypt.service';
 import { IUseCase } from '@/core/types/use-case';
 
@@ -19,14 +18,14 @@ type RegisterUserInput = {
 };
 
 @Injectable()
-export class RegisterUserUseCase implements IUseCase<RegisterUserInput, ResultType<UserModel>> {
+export class RegisterUserUseCase implements IUseCase<RegisterUserInput, Notification<UserModel>> {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly bcryptService: BcryptService,
     private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
-  async execute(input: RegisterUserInput): Promise<ResultType<UserModel>> {
+  async execute(input: RegisterUserInput): Promise<Notification<UserModel>> {
     const { login, email, password } = input;
     const passwordHash = await this.bcryptService.generateHash(password);
     const newUser = UserEntity.create({
@@ -39,10 +38,10 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserInput, ResultTy
     try {
       const saved = await this.userRepository.createUser(newUser);
       await this.domainEventPublisher.publishUncommitted(newUser);
-      return Result.ok(fromEntity(saved));
+      return Notification.ok(fromEntity(saved));
     } catch (error) {
       if (error instanceof DomainException) {
-        return Result.fail(error.code, error.extensions);
+        return Notification.fail(error.code, error.extensions);
       }
       throw error;
     }

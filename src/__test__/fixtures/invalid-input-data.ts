@@ -60,6 +60,11 @@ export const invalidInputData = {
       payload: { ...validUser, password: 'a'.repeat(21) },
       expectedFields: ['password'],
     },
+    {
+      description: 'all fields invalid at once',
+      payload: { login: 'a', email: 'bad', password: '1' },
+      expectedFields: ['login', 'email', 'password'],
+    },
   ] satisfies InvalidInputCase[],
 
   blog: [
@@ -137,6 +142,11 @@ export const invalidInputData = {
         payload: { ...validAuthRegistration, password: '12345' },
         expectedFields: ['password'],
       },
+      {
+        description: 'all fields invalid at once',
+        payload: { login: 'a', email: 'bad', password: '1' },
+        expectedFields: ['login', 'email', 'password'],
+      },
     ] satisfies InvalidInputCase[],
 
     login: [
@@ -149,6 +159,11 @@ export const invalidInputData = {
         description: 'empty password',
         payload: { loginOrEmail: 'user1', password: '' },
         expectedFields: ['password'],
+      },
+      {
+        description: 'all fields invalid at once',
+        payload: { loginOrEmail: '', password: '' },
+        expectedFields: ['loginOrEmail', 'password'],
       },
     ] satisfies InvalidInputCase[],
 

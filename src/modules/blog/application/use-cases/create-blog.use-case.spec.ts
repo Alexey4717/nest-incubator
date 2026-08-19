@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
 
 import { BlogEntity } from '../../domain/entities/blog.entity';
 import { CreateBlogDTO } from '../../dto/create-blog.dto';
@@ -36,7 +35,7 @@ describe('CreateBlogUseCase', () => {
     blogRepository = module.get(BlogRepository);
   });
 
-  it('creates blog and returns Result.ok with mapped model', async () => {
+  it('creates blog and returns Notification.ok with mapped model', async () => {
     const saved = BlogEntity.create({
       name: 'My Blog',
       websiteUrl: 'https://example.com',
@@ -48,7 +47,6 @@ describe('CreateBlogUseCase', () => {
 
     expect(blogRepository.createBlog).toHaveBeenCalledWith(expect.any(BlogEntity));
     expect(result).toMatchObject({
-      status: ResultStatus.Success,
       data: {
         id: saved.id,
         name: 'My Blog',

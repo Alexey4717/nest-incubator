@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { QuizQuestionEntity } from '../../domain/entities/quiz-question.entity';
 import { QuizQuestionRepository } from '../../infrastructure/quiz-question.repository';
@@ -37,14 +37,14 @@ describe('DeleteQuizQuestionUseCase', () => {
     quizQuestionRepository = module.get(QuizQuestionRepository);
   });
 
-  it('deletes question and returns Result.ok(null)', async () => {
+  it('deletes question and returns Notification.ok(null)', async () => {
     quizQuestionRepository.findById.mockResolvedValue(existingQuestion());
     quizQuestionRepository.deleteById.mockResolvedValue(true);
 
     const result = await useCase.execute('q-1');
 
     expect(quizQuestionRepository.deleteById).toHaveBeenCalledWith('q-1');
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
   });
 
   it('returns NotFound when question does not exist', async () => {
@@ -52,11 +52,7 @@ describe('DeleteQuizQuestionUseCase', () => {
 
     const result = await useCase.execute('missing');
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.NotFound,
-      extensions: [],
-    });
+    expect(result).toEqual(Notification.fail(DomainExceptionCode.NotFound));
     expect(quizQuestionRepository.deleteById).not.toHaveBeenCalled();
   });
 

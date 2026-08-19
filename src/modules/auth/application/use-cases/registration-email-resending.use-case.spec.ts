@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
-import { ResultStatus } from '@/core/result/result.types';
+import { Notification } from '@/core/notification/notification';
 
 import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
 import { UserRepository } from '@/modules/user/infrastructure/user.repository';
@@ -54,11 +54,11 @@ describe('RegistrationEmailResendingUseCase', () => {
 
     const result = await useCase.execute('missing@example.com');
 
-    expect(result).toEqual({
-      status: ResultStatus.Failure,
-      code: DomainExceptionCode.BadRequest,
-      extensions: [{ message: 'email not registered', field: 'email' }],
-    });
+    expect(result).toEqual(
+      Notification.fail(DomainExceptionCode.BadRequest, [
+        { message: 'email not registered', field: 'email' },
+      ]),
+    );
     expect(userRepository.save).not.toHaveBeenCalled();
     expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
@@ -68,10 +68,10 @@ describe('RegistrationEmailResendingUseCase', () => {
 
     const result = await useCase.execute('user@example.com');
 
-    expect(result.status).toBe(ResultStatus.Failure);
+    expect(result.hasError()).toBe(true);
     expect(result).toMatchObject({
       code: DomainExceptionCode.BadRequest,
-      extensions: [{ message: 'email already confirmed', field: 'email' }],
+      messages: [{ message: 'email already confirmed', field: 'email' }],
     });
     expect(userRepository.save).not.toHaveBeenCalled();
     expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
@@ -84,7 +84,7 @@ describe('RegistrationEmailResendingUseCase', () => {
 
     const result = await useCase.execute('user@example.com');
 
-    expect(result).toEqual({ status: ResultStatus.Success, data: null });
+    expect(result).toEqual(Notification.ok(null));
     expect(userRepository.save).toHaveBeenCalledTimes(1);
     expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledTimes(1);
     expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledWith(
