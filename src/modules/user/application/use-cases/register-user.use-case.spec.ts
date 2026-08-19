@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
+import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
 import { ResultStatus } from '@/core/result/result.types';
 import { BcryptService } from '@/core/services/bcrypt.service';
 
@@ -13,6 +14,7 @@ describe('RegisterUserUseCase', () => {
   let useCase: RegisterUserUseCase;
   let userRepository: { createUser: jest.Mock };
   let bcryptService: { generateHash: jest.Mock };
+  let domainEventPublisher: { publishUncommitted: jest.Mock };
 
   const input = {
     login: 'login',
@@ -26,12 +28,14 @@ describe('RegisterUserUseCase', () => {
         RegisterUserUseCase,
         { provide: UserRepository, useValue: { createUser: jest.fn() } },
         { provide: BcryptService, useValue: { generateHash: jest.fn() } },
+        { provide: DomainEventPublisher, useValue: { publishUncommitted: jest.fn() } },
       ],
     }).compile();
 
     useCase = module.get(RegisterUserUseCase);
     userRepository = module.get(UserRepository);
     bcryptService = module.get(BcryptService);
+    domainEventPublisher = module.get(DomainEventPublisher);
   });
 
   it('registers user and returns mapped model', async () => {
@@ -48,6 +52,8 @@ describe('RegisterUserUseCase', () => {
 
     expect(bcryptService.generateHash).toHaveBeenCalledWith(input.password);
     expect(userRepository.createUser).toHaveBeenCalledWith(expect.any(UserEntity));
+    const createdUser = userRepository.createUser.mock.calls[0][0];
+    expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledWith(createdUser);
     expect(result).toMatchObject({
       status: ResultStatus.Success,
       data: {
@@ -74,6 +80,7 @@ describe('RegisterUserUseCase', () => {
       code: DomainExceptionCode.BadRequest,
       extensions: [{ message: 'login already exists', field: 'login' }],
     });
+    expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
 
   it('rethrows unexpected errors from repository', async () => {
@@ -81,5 +88,6 @@ describe('RegisterUserUseCase', () => {
     userRepository.createUser.mockRejectedValue(new Error('db down'));
 
     await expect(useCase.execute(input)).rejects.toThrow('db down');
+    expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
 });

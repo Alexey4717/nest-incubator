@@ -3,6 +3,9 @@ import { add } from 'date-fns';
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 
+import { UserConfirmationCodeUpdatedEvent } from '../events/user-confirmation-code-updated.event';
+import { UserPasswordRecoveryRequestedEvent } from '../events/user-password-recovery-requested.event';
+import { UserRegisteredEvent } from '../events/user-registered.event';
 import { UserDb, UserEntity } from './user.entity';
 
 describe('UserEntity', () => {
@@ -142,6 +145,70 @@ describe('UserEntity', () => {
         throw new Error('expected confirmationExpiration');
       }
       expect(db.confirmationExpiration.getTime()).toBeGreaterThan(Date.now());
+    });
+  });
+
+  describe('domain events', () => {
+    it('applies UserRegisteredEvent on unconfirmed create', () => {
+      const user = UserEntity.create({
+        login: 'login',
+        email: 'a@b.c',
+        passwordHash: 'hash',
+        isConfirmed: false,
+      });
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(UserRegisteredEvent);
+      expect(events[0]).toMatchObject({
+        email: 'a@b.c',
+        login: 'login',
+        code: user.confirmationCode,
+      });
+    });
+
+    it('does not apply UserRegisteredEvent on confirmed create', () => {
+      const user = UserEntity.create({
+        login: 'login',
+        email: 'a@b.c',
+        passwordHash: 'hash',
+        isConfirmed: true,
+      });
+
+      expect(user.getUncommittedEvents()).toHaveLength(0);
+    });
+
+    it('does not apply events on reconstitute', () => {
+      const user = UserEntity.reconstitute(baseDb());
+
+      expect(user.getUncommittedEvents()).toHaveLength(0);
+    });
+
+    it('applies UserConfirmationCodeUpdatedEvent on updateConfirmationCode', () => {
+      const user = UserEntity.reconstitute(baseDb());
+
+      user.updateConfirmationCode('new-code');
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(UserConfirmationCodeUpdatedEvent);
+      expect(events[0]).toEqual(
+        expect.objectContaining({ email: 'a@b.c', login: 'login', code: 'new-code' }),
+      );
+    });
+
+    it('applies UserPasswordRecoveryRequestedEvent on setRecoveryData', () => {
+      const user = UserEntity.reconstitute(baseDb());
+      const expiration = add(new Date(), { hours: 2 });
+
+      user.setRecoveryData({ recoveryCode: 'r1', recoveryExpiration: expiration });
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(UserPasswordRecoveryRequestedEvent);
+      expect(events[0]).toEqual(
+        expect.objectContaining({ email: 'a@b.c', login: 'login', code: 'r1' }),
+      );
     });
   });
 });

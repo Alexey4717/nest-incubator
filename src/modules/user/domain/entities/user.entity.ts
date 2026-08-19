@@ -1,9 +1,14 @@
+import { AggregateRoot } from '@nestjs/cqrs';
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { generatePublicId } from '@/core/utils/public-id.generator';
+
+import { UserConfirmationCodeUpdatedEvent } from '../events/user-confirmation-code-updated.event';
+import { UserPasswordRecoveryRequestedEvent } from '../events/user-password-recovery-requested.event';
+import { UserRegisteredEvent } from '../events/user-registered.event';
 
 export type UserCreateProps = {
   login: string;
@@ -30,11 +35,13 @@ export type UserRecoveryData = {
   recoveryExpiration: Date;
 };
 
-export class UserEntity {
-  private constructor(private data: UserDb) {}
+export class UserEntity extends AggregateRoot {
+  private constructor(private data: UserDb) {
+    super();
+  }
 
   static create(props: UserCreateProps): UserEntity {
-    return new UserEntity({
+    const user = new UserEntity({
       id: generatePublicId(),
       login: props.login,
       email: props.email,
@@ -46,6 +53,14 @@ export class UserEntity {
       recoveryCode: null,
       recoveryExpiration: null,
     });
+
+    if (!props.isConfirmed && user.data.confirmationCode) {
+      user.apply(
+        new UserRegisteredEvent(user.data.email, user.data.login, user.data.confirmationCode),
+      );
+    }
+
+    return user;
   }
 
   static reconstitute(raw: UserDb): UserEntity {
@@ -141,6 +156,13 @@ export class UserEntity {
       recoveryCode: recoveryData.recoveryCode,
       recoveryExpiration: recoveryData.recoveryExpiration,
     };
+    this.apply(
+      new UserPasswordRecoveryRequestedEvent(
+        this.data.email,
+        this.data.login,
+        recoveryData.recoveryCode,
+      ),
+    );
   }
 
   updateConfirmationCode(newCode: string): void {
@@ -149,5 +171,6 @@ export class UserEntity {
       confirmationCode: newCode,
       confirmationExpiration: add(new Date(), { hours: 1 }),
     };
+    this.apply(new UserConfirmationCodeUpdatedEvent(this.data.email, this.data.login, newCode));
   }
 }

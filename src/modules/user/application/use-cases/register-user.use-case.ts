@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { DomainException } from '@/core/errors/domain.exception';
+import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
 import { Result } from '@/core/result/result.factory';
 import { Result as ResultType } from '@/core/result/result.types';
 import { BcryptService } from '@/core/services/bcrypt.service';
@@ -22,6 +23,7 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserInput, ResultTy
   constructor(
     private readonly userRepository: UserRepository,
     private readonly bcryptService: BcryptService,
+    private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
   async execute(input: RegisterUserInput): Promise<ResultType<UserModel>> {
@@ -36,6 +38,7 @@ export class RegisterUserUseCase implements IUseCase<RegisterUserInput, ResultTy
 
     try {
       const saved = await this.userRepository.createUser(newUser);
+      await this.domainEventPublisher.publishUncommitted(newUser);
       return Result.ok(fromEntity(saved));
     } catch (error) {
       if (error instanceof DomainException) {

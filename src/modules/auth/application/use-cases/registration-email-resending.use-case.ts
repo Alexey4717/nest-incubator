@@ -3,11 +3,11 @@ import { randomUUID } from 'crypto';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
+import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
 import { Result } from '@/core/result/result.factory';
 import { Result as ResultType } from '@/core/result/result.types';
 import { IUseCase } from '@/core/types/use-case';
 
-import { EmailService } from '@/modules/email/email.service';
 import { UserEntity } from '@/modules/user/domain/entities/user.entity';
 import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
 import { modelToDb } from '@/modules/user/infrastructure/user.mapper';
@@ -18,7 +18,7 @@ export class RegistrationEmailResendingUseCase implements IUseCase<string, Resul
   constructor(
     private readonly userQueryRepository: UserQueryRepository,
     private readonly userRepository: UserRepository,
-    private readonly emailService: EmailService,
+    private readonly domainEventPublisher: DomainEventPublisher,
   ) {}
 
   async execute(email: string): Promise<ResultType<null>> {
@@ -43,13 +43,7 @@ export class RegistrationEmailResendingUseCase implements IUseCase<string, Resul
     const newConfirmationCode = randomUUID();
     user.updateConfirmationCode(newConfirmationCode);
     await this.userRepository.save(user);
-
-    const data = user.toDb();
-    await this.emailService.sendEmailWithNewConfirmationCode(
-      data.email,
-      data.login,
-      newConfirmationCode,
-    );
+    await this.domainEventPublisher.publishUncommitted(user);
 
     return Result.ok(null);
   }

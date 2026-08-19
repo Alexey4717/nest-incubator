@@ -6,7 +6,6 @@ import { PassportModule } from '@nestjs/passport';
 import { CoreModule } from '@/core/core.module';
 
 import { DatabaseModule } from '@/modules/database/database.module';
-import { EmailModule } from '@/modules/email/email.module';
 import { UserModule } from '@/modules/user/user.module';
 
 import { AuthController } from './api/auth.controller';
@@ -74,7 +73,6 @@ const authDomainServices = [JwtTokenService];
     CqrsModule,
     AuthConfigModule,
     DatabaseModule,
-    EmailModule,
     forwardRef(() => UserModule),
     PassportModule.register({ defaultStrategy: 'jwt-access' }),
     JwtModule.registerAsync({

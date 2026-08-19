@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
+import { DomainEventPublisher } from '@/core/events/domain-event-publisher';
 import { ResultStatus } from '@/core/result/result.types';
 
-import { EmailService } from '@/modules/email/email.service';
 import { UserQueryRepository } from '@/modules/user/infrastructure/user-query.repository';
 import { UserRepository } from '@/modules/user/infrastructure/user.repository';
 import { UserModel } from '@/modules/user/models/user.model';
@@ -30,19 +30,19 @@ describe('RegistrationEmailResendingUseCase', () => {
   let useCase: RegistrationEmailResendingUseCase;
   let userQueryRepository: { findUserByEmail: jest.Mock };
   let userRepository: { save: jest.Mock };
-  let emailService: { sendEmailWithNewConfirmationCode: jest.Mock };
+  let domainEventPublisher: { publishUncommitted: jest.Mock };
 
   beforeEach(async () => {
     userQueryRepository = { findUserByEmail: jest.fn() };
     userRepository = { save: jest.fn() };
-    emailService = { sendEmailWithNewConfirmationCode: jest.fn() };
+    domainEventPublisher = { publishUncommitted: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RegistrationEmailResendingUseCase,
         { provide: UserQueryRepository, useValue: userQueryRepository },
         { provide: UserRepository, useValue: userRepository },
-        { provide: EmailService, useValue: emailService },
+        { provide: DomainEventPublisher, useValue: domainEventPublisher },
       ],
     }).compile();
 
@@ -60,6 +60,7 @@ describe('RegistrationEmailResendingUseCase', () => {
       extensions: [{ message: 'email not registered', field: 'email' }],
     });
     expect(userRepository.save).not.toHaveBeenCalled();
+    expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
 
   it('returns BadRequest when email is already confirmed', async () => {
@@ -73,21 +74,21 @@ describe('RegistrationEmailResendingUseCase', () => {
       extensions: [{ message: 'email already confirmed', field: 'email' }],
     });
     expect(userRepository.save).not.toHaveBeenCalled();
+    expect(domainEventPublisher.publishUncommitted).not.toHaveBeenCalled();
   });
 
-  it('updates confirmation code and sends email for unconfirmed user', async () => {
+  it('updates confirmation code and publishes events after persist', async () => {
     userQueryRepository.findUserByEmail.mockResolvedValue(makeUser());
     userRepository.save.mockResolvedValue(undefined);
-    emailService.sendEmailWithNewConfirmationCode.mockResolvedValue(undefined);
+    domainEventPublisher.publishUncommitted.mockResolvedValue(undefined);
 
     const result = await useCase.execute('user@example.com');
 
     expect(result).toEqual({ status: ResultStatus.Success, data: null });
     expect(userRepository.save).toHaveBeenCalledTimes(1);
-    expect(emailService.sendEmailWithNewConfirmationCode).toHaveBeenCalledWith(
-      'user@example.com',
-      'login',
-      expect.any(String),
+    expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledTimes(1);
+    expect(domainEventPublisher.publishUncommitted).toHaveBeenCalledWith(
+      userRepository.save.mock.calls[0][0],
     );
   });
 });

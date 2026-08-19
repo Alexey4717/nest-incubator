@@ -47,6 +47,7 @@ src/
 core/
 ├── services/               # BcryptService (cross-domain infrastructure services)
 ├── errors/                 # DomainException, коды, filters, error-formatter, throwIfNotFound, normalize-http-exception-errors
+├── events/                 # DomainEventPublisher, токен DOMAIN_EVENT_HANDLERS (await @EventsHandler; не Nest EventBus.publish)
 ├── result/                 # Result Object (ok/fail, resultToDomainException)
 ├── typeorm/                # applyPagination/applySort, runWithTransactionRetry, isRetryableDbError
 ├── constants/              # pagination defaults (DEFAULT_PAGE_NUMBER, …)
@@ -81,7 +82,8 @@ modules/<feature>/
 │   ├── use-cases/          # *UseCase с методом execute() — переиспользуемая оркестрация
 │   └── services/           # application services (JWT, hashing и т.п.)
 ├── domain/
-│   └── entities/           # rich domain entities (create, reconstitute(*Db), toDb, business methods)
+│   ├── entities/           # rich domain entities (create, reconstitute(*Db), toDb, business methods)
+│   └── events/             # domain events (plain classes); пока только `user` (`UserEntity.apply`)
 ├── infrastructure/         # TypeORM OrmEntity, repositories, PersistenceMapper, read mappers
 ├── dto/                    # HTTP-контракт модуля (корень модуля, не api/dto): input + OpenAPI schemas
 ├── models/                 # read-модели (*.model.ts) для query-репозиториев и view mappers
@@ -92,20 +94,20 @@ modules/<feature>/
 
 `dto/` остаётся в корне модуля: это presentation-контракт. Application может использовать DTO/types; **domain не импортирует dto**.
 
-Инфраструктурные модули (`database`, `email`) также располагаются в `modules/` — они регистрируют провайдеры и экспортируют их другим feature-модулям.
+Инфраструктурные модули (`database`, `email`) также располагаются в `modules/`. `EmailModule` регистрируется в `AppModule` (SMTP + `@EventsHandler`); `auth` **не** импортирует `EmailModule` и не вызывает `EmailService` напрямую.
 
-| Модуль                      | Домен                                                                   |
-| --------------------------- | ----------------------------------------------------------------------- |
-| `auth`                      | Аутентификация, JWT, Passport strategies (orchestrator без persistence) |
-| `security`                  | Управление устройствами/сессиями (HTTP facade над `session`)            |
-| `user`                      | Пользователи                                                            |
-| `blog` / `post` / `comment` | Контент                                                                 |
-| `quiz`                      | Вопросы и pair-game                                                     |
-| `like`                      | Reactions (subdomain, без HTTP)                                         |
-| `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`)  |
-| `email`                     | Отправка писем (SMTP, шаблоны)                                          |
-| `database`                  | TypeORM, миграции, seed для локальной разработки                        |
-| `testing`                   | Служебные эндпoинты для e2e                                             |
+| Модуль                      | Домен                                                                    |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `auth`                      | Аутентификация, JWT, Passport strategies (orchestrator без persistence)  |
+| `security`                  | Управление устройствами/сессиями (HTTP facade над `session`)             |
+| `user`                      | Пользователи                                                             |
+| `blog` / `post` / `comment` | Контент                                                                  |
+| `quiz`                      | Вопросы и pair-game                                                      |
+| `like`                      | Reactions (subdomain, без HTTP)                                          |
+| `session`                   | Сессии и refresh-токены (use-cases, без HTTP; для `auth` и `security`)   |
+| `email`                     | Отправка писем (SMTP, шаблоны); `@EventsHandler` на domain events `user` |
+| `database`                  | TypeORM, миграции, seed для локальной разработки                         |
+| `testing`                   | Служебные эндпoинты для e2e                                              |
 
 ### Типы модулей
 
@@ -114,7 +116,7 @@ modules/<feature>/
 | **HTTP + own persistence**     | `user`, `blog`, `post`, `comment`, `quiz`                | `api/`, `application/`, `dto/`, `models/`, `domain/`, `infrastructure/`                                       | Controller → CommandBus / QueryBus                                               |
 | **HTTP orchestrator / facade** | `auth` (orchestrator), `security` (facade над `session`) | `api/`, `application/`, `dto/` (+ guards/strategies у `auth`); без собственного `domain/` / `infrastructure/` | Controller → CommandBus / QueryBus; persistence у владельца (`user` / `session`) |
 | **Subdomain** (без `api/`)     | `session`, `like`                                        | `application/` (use-cases или services); у `session` — ещё `domain/` + `infrastructure/`                      | Use cases / services вызываются из feature-модулей напрямую                      |
-| **Infra**                      | `database`, `email`                                      | config, провайдеры; у `database` — migrations/seeds                                                           | Нет domain layer и HTTP                                                          |
+| **Infra**                      | `database`, `email`                                      | config, провайдеры; у `email` — `application/event-handlers/`; у `database` — migrations/seeds                | Нет domain layer и HTTP; email слушает domain events                             |
 | **Utility**                    | `testing`                                                | минимальный модуль под одну задачу                                                                            | CQRS только для служебного cleanup                                               |
 
 Subdomain-модули (`like`, `session`) экспортируют services / use cases через `@Module({ exports })`; эндпoинты и обработка HTTP-ошибок — у потребителей (`post`, `comment`, `auth`, `security`).
@@ -144,6 +146,8 @@ main.ts → app/ → modules/ → core/
 | **Use Case**        | `application/use-cases/*UseCase`, метод `execute()` — **переиспользуемая оркестрация** (в т.ч. в subdomain без HTTP)   |
 | **Domain service**  | Переиспользуемая application/инфраструктурная логика без привязки к HTTP (например `JwtTokenService`, `BcryptService`) |
 | **Domain Entity**   | Rich-модель в `domain/entities/` — инварианты и бизнес-методы (`confirmEmail`, `canBeModifiedBy`, …)                   |
+| **Domain Event**    | Plain class в `domain/events/` — факт из aggregate (`this.apply(...)`). Не DTO, не OrmEntity                           |
+| **Event Handler**   | `@EventsHandler` в модуле side-effect (`email/application/event-handlers/`) — шлёт письмо через `EmailService`         |
 | **Repository**      | CUD-доступ через domain entities; query-репозитории возвращают `*Model` для read side                                  |
 
 **Поток запроса:**
@@ -151,6 +155,24 @@ main.ts → app/ → modules/ → core/
 ```
 HTTP → Controller → CommandBus/QueryBus → Handler → UseCase.execute() → Repository / Domain Service
 ```
+
+**Поток domain event (side-effect, сейчас email):**
+
+```
+UseCase → persist → DomainEventPublisher.publishUncommitted(original aggregate) → @EventsHandler → EmailService
+```
+
+`CommandBus` / `QueryBus` — как раньше. Для этих событий **не** используется `EventBus.publish()`: в `@nestjs/cqrs` v10 он **не ждёт** handlers (гонка с e2e-чтением confirmation-code). `DomainEventPublisher` (`core/events/domain-event-publisher.ts`, `CoreModule`) резолвит `@EventsHandler` через токен `DOMAIN_EVENT_HANDLERS` + `ModuleRef` и **await** `handle()`. Не дублировать `EventBus.publish` на те же события — письма уйдут дважды.
+
+Публикация **после** успешного persist, с **исходного** aggregate: `UserRepository.createUser` возвращает reconstituted entity **без** uncommitted events.
+
+| Событие                              | Когда `apply()`                                    | Публикует use case                  |
+| ------------------------------------ | -------------------------------------------------- | ----------------------------------- |
+| `UserRegisteredEvent`                | только `UserEntity.create({ isConfirmed: false })` | `RegisterUserUseCase`               |
+| `UserConfirmationCodeUpdatedEvent`   | `updateConfirmationCode()`                         | `RegistrationEmailResendingUseCase` |
+| `UserPasswordRecoveryRequestedEvent` | `setRecoveryData()`                                | `PasswordRecoveryUseCase`           |
+
+`reconstitute()` и SA `create({ isConfirmed: true })` события **не** применяют. `RegistrationUseCase` только делегирует в `RegisterUserUseCase` (без `EmailService`); `AuthModule` не импортирует `EmailModule`.
 
 **Регистрация в модуле** — через массивы провайдеров:
 
@@ -169,20 +191,23 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 })
 ```
 
-**Use case vs domain entity:** use case — тонкий оркестратор (загрузка entity из repository, вызов метода entity, `save`). Бизнес-правила и инварианты живут в `domain/entities/*`.
+`EmailModule` регистрирует `@EventsHandler` так же массивом: `...emailEventHandlers` и `{ provide: DOMAIN_EVENT_HANDLERS, useValue: emailEventHandlers }`.
+
+**Use case vs domain entity:** use case — тонкий оркестратор (загрузка entity из repository, вызов метода entity, `save`). Бизнес-правила и инварианты живут в `domain/entities/*`. Пока `AggregateRoot` — только `UserEntity` (не `UserDb`, не `*OrmEntity`, не HTTP DTO, не остальные domain entities).
 
 ### Domain layer (DDD)
 
 Модули `user`, `blog`, `post`, `comment`, `quiz`, `session` используют **rich domain layer** по образцу [express-incubator](https://github.com/Alexey4717/express-incubator):
 
-| Артефакт              | Расположение                                                            | Назначение                                                                                                                                                           |
-| --------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Entity**            | `domain/entities/*.entity.ts`                                           | Aggregate root: `private constructor`, `static create()`, `static reconstitute(*Db)`, `toDb()`, getters, бизнес-методы. Бросает `DomainException`. Без `*OrmEntity`. |
-| **PersistenceMapper** | `infrastructure/*persistence-mapper.ts` (или `infrastructure/mappers/`) | `toDomain(OrmEntity)` / `toPersistence(Entity)` — единственное место, где domain встречается с TypeORM shape                                                         |
-| **OrmEntity**         | `infrastructure/*.orm-entity.ts`                                        | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                                     |
-| **Model**             | `models/*.model.ts`                                                     | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                                              |
-| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts`                              | Runtime-маппинг HTTP-ответа из Model. **Исключение:** у `quiz` view ≡ model 1:1 — отдельный view-mapper не вводится                                                  |
-| **Swagger ViewDto**   | `dto/*-view.swagger.dto.ts`                                             | OpenAPI-схема ответа (`@ApiProperty`); регистрация в `app/setup/swagger.setup.ts`                                                                                    |
+| Артефакт              | Расположение                                                            | Назначение                                                                                                                                                                                                                        |
+| --------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Entity**            | `domain/entities/*.entity.ts`                                           | Aggregate root: `private constructor`, `static create()`, `static reconstitute(*Db)`, `toDb()`, getters, бизнес-методы. Бросает `DomainException`. Без `*OrmEntity`. Domain events — только у `UserEntity extends AggregateRoot`. |
+| **Domain Event**      | `domain/events/*.event.ts`                                              | Plain class (поля в constructor). `apply()` в бизнес-методах / `create({ isConfirmed: false })`, не в `reconstitute()`.                                                                                                           |
+| **PersistenceMapper** | `infrastructure/*persistence-mapper.ts` (или `infrastructure/mappers/`) | `toDomain(OrmEntity)` / `toPersistence(Entity)` — единственное место, где domain встречается с TypeORM shape                                                                                                                      |
+| **OrmEntity**         | `infrastructure/*.orm-entity.ts`                                        | TypeORM-сущность (таблица PostgreSQL). Имя `*OrmEntity` — чтобы не конфликтовать с domain Entity                                                                                                                                  |
+| **Model**             | `models/*.model.ts`                                                     | Read-модель для query-репозиториев и внутреннего обмена; плоский snapshot без поведения                                                                                                                                           |
+| **ViewModel**         | `types/view-models.ts`, `*.view-mapper.ts`                              | Runtime-маппинг HTTP-ответа из Model. **Исключение:** у `quiz` view ≡ model 1:1 — отдельный view-mapper не вводится                                                                                                               |
+| **Swagger ViewDto**   | `dto/*-view.swagger.dto.ts`                                             | OpenAPI-схема ответа (`@ApiProperty`); регистрация в `app/setup/swagger.setup.ts`                                                                                                                                                 |
 
 #### Куда что помещать
 
@@ -193,6 +218,10 @@ const blogQueryHandlers = [GetBlogsHandler, /* … */];
 | Swagger endpoint decorators         | `api/*.swagger.decorators.ts`                                       | `post.swagger.decorators.ts`                                           |
 | Общие Swagger-модели / декораторы   | `core/swagger/` (без доменных view-DTO)                             | `ValidationErrorResponseDto`, `PaginatedMetaDto`, `ApiValidationError` |
 | Бизнес-инварианты                   | `domain/entities/*.entity.ts` → `throw DomainException`             | `UserEntity.confirmEmail()`                                            |
+| Domain event                        | `domain/events/*.event.ts`                                          | `UserRegisteredEvent`                                                  |
+| `apply()` события                   | `domain/entities/*` (`extends AggregateRoot`)                       | `UserEntity.updateConfirmationCode()`                                  |
+| Публикация после persist            | use case → `DomainEventPublisher.publishUncommitted(original)`      | `RegisterUserUseCase`                                                  |
+| Email side-effect                   | `email/application/event-handlers/` + токен `DOMAIN_EVENT_HANDLERS` | `SendRegistrationEmailHandler`                                         |
 | Оркестрация сценария                | `application/use-cases/*UseCase.execute()`                          | `UpdateCommentUseCase`                                                 |
 | OrmEntity ↔ Entity                  | `infrastructure/*PersistenceMapper`                                 | `blog.persistence-mapper.ts`                                           |
 | OrmEntity → Model (read)            | `infrastructure/*mapper`                                            | `blog.mapper.ts`                                                       |
@@ -213,6 +242,12 @@ UseCase → Repository.find*() → Entity.method() → Repository.save(entity)
          PersistenceMapper.toDomain(OrmEntity)
                 ↓
          PersistenceMapper.toPersistence(entity) → TypeORM save/update
+```
+
+Если aggregate применил domain event — **после** успешного persist, с **оригинала**:
+
+```
+Entity.apply(event) → Repository.create/save → DomainEventPublisher.publishUncommitted(original) → @EventsHandler
 ```
 
 **Поток query (read):**
@@ -690,7 +725,7 @@ Controllers, репозитории и HTTP-контракты покрываю�
 | `EmailConfig`    | `email`    | `NODEMAILER_*`, `NODEMAILER_FROM`, `MAIN_URL`                                                     |
 | `SessionConfig`  | `session`  | `REFRESH_TOKEN_LIFE_TIME`                                                                         |
 
-`CoreModule` помечен `@Global()` — `CoreConfig`, `BcryptService`, `TrimValidator` и глобальные exception filters доступны после одного импорта `CoreModule` в `AppModule`. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
+`CoreModule` помечен `@Global()` — `CoreConfig`, `BcryptService`, `TrimValidator`, `DomainEventPublisher` и глобальные exception filters доступны после одного импорта `CoreModule` в `AppModule`. При старте приложения невалидная конфигурация приводит к **fail-fast** ошибке в конструкторе config-класса.
 
 ### Использование *Config (инъекция и чтение)
 
