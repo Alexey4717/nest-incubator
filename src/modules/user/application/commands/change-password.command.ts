@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 
 import { Notification } from '@/core/notification/notification';
+import { TypedCommand } from '@/core/types/cqrs-augmentation';
 
 import { ChangePasswordUseCase } from '../use-cases/change-password.use-case';
 
@@ -9,8 +10,10 @@ type ChangePasswordInput = {
   newPassword: string;
 };
 
-export class ChangePasswordCommand {
-  constructor(public readonly input: ChangePasswordInput) {}
+export class ChangePasswordCommand extends TypedCommand<Notification<null>> {
+  constructor(public readonly input: ChangePasswordInput) {
+    super();
+  }
 }
 
 @CommandHandler(ChangePasswordCommand)

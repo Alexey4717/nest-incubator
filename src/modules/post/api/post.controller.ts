@@ -26,7 +26,7 @@ import { CreateCommentInPostCommand } from '@/modules/comment/application/comman
 import { CommentViewMapper } from '@/modules/comment/comment.view-mapper';
 import { GetPostCommentsQueryParamsDto } from '@/modules/comment/dto/get-post-comments-query-params.dto';
 import { LikeInputDto } from '@/modules/like/dto/like-input.dto';
-import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
+import { FindUserByIdQuery } from '@/modules/user/application/queries/find-user-by-id.query';
 
 import { CreatePostCommand } from '../application/commands/create-post.command';
 import { DeletePostCommand } from '../application/commands/delete-post.command';
@@ -58,7 +58,6 @@ export class PostController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-    private readonly findUserByIdUseCase: FindUserByIdUseCase,
     private readonly commentViewMapper: CommentViewMapper,
   ) {}
 
@@ -118,7 +117,7 @@ export class PostController {
     @Body() body: CreateCommentInPostDto,
     @CurrentUserId() userId: string,
   ) {
-    const user = throwIfNotFound(await this.findUserByIdUseCase.execute(userId));
+    const user = throwIfNotFound(await this.queryBus.execute(new FindUserByIdQuery(userId)));
 
     const createdComment = notificationToDomainException(
       await this.commandBus.execute(

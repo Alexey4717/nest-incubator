@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 
 import { CoreConfig } from '@/core/core.config';
 import { notificationToDomainException } from '@/core/notification/notification-to-domain';
@@ -9,8 +10,8 @@ import { CreateCommentInPostUseCase } from '@/modules/comment/application/use-ca
 import { CreatePostUseCase } from '@/modules/post/application/use-cases/create-post.use-case';
 import { PostModel } from '@/modules/post/models/post.model';
 import { DeleteAllDataUseCase } from '@/modules/testing/application/use-cases/delete-all-data.use-case';
+import { RegisterUserCommand } from '@/modules/user/application/commands/register-user.command';
 import { CreateUserUseCase } from '@/modules/user/application/use-cases/create-user.use-case';
-import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';
 import { CreateUserDTO } from '@/modules/user/dto/create-user.dto';
 
 import {
@@ -27,9 +28,9 @@ export class SeedService {
 
   constructor(
     private readonly coreConfig: CoreConfig,
+    private readonly commandBus: CommandBus,
     private readonly deleteAllDataUseCase: DeleteAllDataUseCase,
     private readonly createUserUseCase: CreateUserUseCase,
-    private readonly registerUserUseCase: RegisterUserUseCase,
     private readonly createBlogUseCase: CreateBlogUseCase,
     private readonly createPostUseCase: CreatePostUseCase,
     private readonly createCommentInPostUseCase: CreateCommentInPostUseCase,
@@ -47,7 +48,9 @@ export class SeedService {
     const devUser = notificationToDomainException(
       await this.createUserUseCase.execute(this.toCreateUserDto(SEED_USERS.dev)),
     );
-    notificationToDomainException(await this.registerUserUseCase.execute(SEED_USERS.pending));
+    notificationToDomainException(
+      await this.commandBus.execute(new RegisterUserCommand(SEED_USERS.pending)),
+    );
 
     this.logger.log('Creating blog…');
     const blog = notificationToDomainException(

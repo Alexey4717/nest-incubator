@@ -15,8 +15,6 @@ import { TrimValidator } from './validators/trim.validator';
     TrimValidator,
     BcryptService,
     DomainEventPublisher,
-    AllHttpExceptionsFilter,
-    DomainHttpExceptionsFilter,
     { provide: APP_FILTER, useClass: AllHttpExceptionsFilter },
     { provide: APP_FILTER, useClass: DomainHttpExceptionsFilter },
   ],

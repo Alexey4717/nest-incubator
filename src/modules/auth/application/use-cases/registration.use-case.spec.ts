@@ -1,16 +1,17 @@
+import { CommandBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 import { Notification } from '@/core/notification/notification';
 
-import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';
+import { RegisterUserCommand } from '@/modules/user/application/commands/register-user.command';
 
 import { RegistrationUseCase } from './registration.use-case';
 
 describe('RegistrationUseCase', () => {
   let useCase: RegistrationUseCase;
-  let registerUserUseCase: { execute: jest.Mock };
+  let commandBus: { execute: jest.Mock };
 
   const input = {
     login: 'login',
@@ -19,20 +20,17 @@ describe('RegistrationUseCase', () => {
   };
 
   beforeEach(async () => {
-    registerUserUseCase = { execute: jest.fn() };
+    commandBus = { execute: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RegistrationUseCase,
-        { provide: RegisterUserUseCase, useValue: registerUserUseCase },
-      ],
+      providers: [RegistrationUseCase, { provide: CommandBus, useValue: commandBus }],
     }).compile();
 
     useCase = module.get(RegistrationUseCase);
   });
 
-  it('registers user via RegisterUserUseCase', async () => {
-    registerUserUseCase.execute.mockResolvedValue(
+  it('registers user via RegisterUserCommand', async () => {
+    commandBus.execute.mockResolvedValue(
       Notification.ok({
         email: 'user@example.com',
         login: 'login',
@@ -41,11 +39,12 @@ describe('RegistrationUseCase', () => {
     );
 
     await expect(useCase.execute(input)).resolves.toBeUndefined();
-    expect(registerUserUseCase.execute).toHaveBeenCalledWith(input);
+    expect(commandBus.execute).toHaveBeenCalledWith(expect.any(RegisterUserCommand));
+    expect(commandBus.execute.mock.calls[0][0].input).toEqual(input);
   });
 
   it('throws DomainException when registration fails', async () => {
-    registerUserUseCase.execute.mockResolvedValue(
+    commandBus.execute.mockResolvedValue(
       Notification.fail(DomainExceptionCode.BadRequest, [
         { message: 'login already exists', field: 'login' },
       ]),

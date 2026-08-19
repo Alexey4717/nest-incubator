@@ -1,4 +1,4 @@
-import { BlogDb, BlogEntity } from '../domain/entities/blog.entity';
+import { BlogEntity } from '../domain/entities/blog.entity';
 import { BlogModel } from '../models/blog.model';
 import { BlogOrmEntity } from './blog.orm-entity';
 
@@ -10,28 +10,6 @@ export function toDomain(entity: BlogOrmEntity): BlogModel {
     description: entity.description,
     isMembership: entity.isMembership,
     createdAt: entity.createdAt.toISOString(),
-  };
-}
-
-export function toOrm(model: BlogModel): BlogOrmEntity {
-  const entity = new BlogOrmEntity();
-  entity.publicId = model.id;
-  entity.name = model.name;
-  entity.websiteUrl = model.websiteUrl;
-  entity.description = model.description;
-  entity.isMembership = model.isMembership ?? false;
-  entity.createdAt = new Date(model.createdAt);
-  return entity;
-}
-
-export function modelToDb(model: BlogModel): BlogDb {
-  return {
-    id: model.id,
-    name: model.name,
-    websiteUrl: model.websiteUrl,
-    description: model.description,
-    isMembership: model.isMembership,
-    createdAt: new Date(model.createdAt),
   };
 }
 

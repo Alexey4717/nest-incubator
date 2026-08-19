@@ -6,7 +6,6 @@ export class CreateUserDTO {
   @ApiProperty({ minLength: 3, maxLength: 10, example: 'userLogin' })
   @Length(3, 10)
   @IsString()
-  // @UserLoginExist()
   login = '';
 
   /** User password (6-20 characters) */
@@ -18,6 +17,5 @@ export class CreateUserDTO {
   /** User email address */
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
-  // @UserEmailExist()
   email = '';
 }

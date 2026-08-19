@@ -1,30 +1,32 @@
+import { QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { FindUserByIdUseCase } from '@/modules/user/application/use-cases/find-user-by-id.use-case';
+import { FindUserByIdQuery } from '@/modules/user/application/queries/find-user-by-id.query';
 
 import { GetMeUseCase } from './get-me.use-case';
 
 describe('GetMeUseCase', () => {
   let useCase: GetMeUseCase;
-  let findUserByIdUseCase: { execute: jest.Mock };
+  let queryBus: { execute: jest.Mock };
 
   beforeEach(async () => {
-    findUserByIdUseCase = { execute: jest.fn() };
+    queryBus = { execute: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GetMeUseCase, { provide: FindUserByIdUseCase, useValue: findUserByIdUseCase }],
+      providers: [GetMeUseCase, { provide: QueryBus, useValue: queryBus }],
     }).compile();
 
     useCase = module.get(GetMeUseCase);
   });
 
   it('returns null when user is not found', async () => {
-    findUserByIdUseCase.execute.mockResolvedValue(null);
+    queryBus.execute.mockResolvedValue(null);
     await expect(useCase.execute('missing')).resolves.toBeNull();
+    expect(queryBus.execute).toHaveBeenCalledWith(expect.any(FindUserByIdQuery));
   });
 
   it('maps user entity to MeViewModel', async () => {
-    findUserByIdUseCase.execute.mockResolvedValue({
+    queryBus.execute.mockResolvedValue({
       id: 'u1',
       login: 'alice',
       email: 'a@b.c',
@@ -35,5 +37,6 @@ describe('GetMeUseCase', () => {
       login: 'alice',
       email: 'a@b.c',
     });
+    expect(queryBus.execute.mock.calls[0][0].id).toBe('u1');
   });
 });

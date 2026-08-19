@@ -67,6 +67,6 @@ const userQueryHandlers = [GetUsersHandler, FindUserByIdHandler, CheckCredential
     UserLoginExistsValidator,
     UserEmailExistsValidator,
   ],
-  exports: [...userUseCases, UserRepository, UserQueryRepository],
+  exports: [CreateUserUseCase, UserRepository, UserQueryRepository],
 })
 export class UserModule {}

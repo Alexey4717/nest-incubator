@@ -45,21 +45,6 @@ export function toDomain(entity: UserOrmEntity): UserModel {
   };
 }
 
-export function toOrm(model: UserModel): UserOrmEntity {
-  const entity = new UserOrmEntity();
-  entity.publicId = model.id;
-  entity.login = model.login;
-  entity.email = model.email;
-  entity.passwordHash = model.passwordHash;
-  entity.createdAt = new Date(model.createdAt);
-  entity.confirmationCode = model.confirmationCode;
-  entity.confirmationExpiration = model.confirmationExpiration;
-  entity.isConfirmed = model.isConfirmed;
-  entity.recoveryCode = model.recoveryCode;
-  entity.recoveryExpiration = model.recoveryExpiration;
-  return entity;
-}
-
 export function modelToDb(model: UserModel): UserDb {
   return {
     id: model.id,

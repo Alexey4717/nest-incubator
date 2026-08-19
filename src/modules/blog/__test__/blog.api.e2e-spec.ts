@@ -1,10 +1,7 @@
 import { constants } from 'http2';
 import request from 'supertest';
 
-import {
-  expectPaginatorItemsCount,
-  expectPaginatorShape,
-} from '@/__test__/assertions/response.helpers';
+import { expectPaginatorItemsCount } from '@/__test__/assertions/response.helpers';
 import { invalidInputData, validInputData } from '@/__test__/fixtures/invalid-input-data';
 import { E2eContext, initSettings } from '@/__test__/setup/init-settings';
 import { ADMIN_BASIC_AUTH_HEADER } from '@/__test__/utils/basic-auth.helper';

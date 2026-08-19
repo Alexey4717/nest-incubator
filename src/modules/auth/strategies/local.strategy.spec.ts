@@ -1,33 +1,36 @@
+import { QueryBus } from '@nestjs/cqrs';
+
 import { DomainExceptionCode } from '@/core/errors/domain-exception-code.enum';
 import { DomainException } from '@/core/errors/domain.exception';
 
-import { CheckCredentialsUseCase } from '@/modules/user/application/use-cases/check-credentials.use-case';
+import { CheckCredentialsQuery } from '@/modules/user/application/queries/check-credentials.query';
 
 import { LocalStrategy } from './local.strategy';
 
 describe('LocalStrategy', () => {
-  const checkCredentialsUseCase = {
+  const queryBus = {
     execute: jest.fn(),
   };
 
-  const strategy = new LocalStrategy(checkCredentialsUseCase as unknown as CheckCredentialsUseCase);
+  const strategy = new LocalStrategy(queryBus as unknown as QueryBus);
 
   beforeEach(() => {
-    checkCredentialsUseCase.execute.mockReset();
+    queryBus.execute.mockReset();
   });
 
   it('returns authenticated user when credentials are valid', async () => {
-    checkCredentialsUseCase.execute.mockResolvedValue({ id: 'user-1' });
+    queryBus.execute.mockResolvedValue({ id: 'user-1' });
 
     await expect(strategy.validate('login', 'password')).resolves.toEqual({ userId: 'user-1' });
-    expect(checkCredentialsUseCase.execute).toHaveBeenCalledWith({
+    expect(queryBus.execute).toHaveBeenCalledWith(expect.any(CheckCredentialsQuery));
+    expect(queryBus.execute.mock.calls[0][0].input).toEqual({
       loginOrEmail: 'login',
       password: 'password',
     });
   });
 
   it('throws Unauthorized when credentials are invalid', async () => {
-    checkCredentialsUseCase.execute.mockResolvedValue(null);
+    queryBus.execute.mockResolvedValue(null);
 
     await expect(strategy.validate('login', 'bad')).rejects.toThrow(DomainException);
     await expect(strategy.validate('login', 'bad')).rejects.toMatchObject({

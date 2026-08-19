@@ -31,18 +31,6 @@ export function toDomain(
   };
 }
 
-export function toOrm(model: PostModel): PostOrmEntity {
-  const entity = new PostOrmEntity();
-  entity.publicId = model.id;
-  entity.title = model.title;
-  entity.shortDescription = model.shortDescription;
-  entity.content = model.content;
-  entity.blogId = model.blogId;
-  entity.blogName = model.blogName;
-  entity.createdAt = new Date(model.createdAt);
-  return entity;
-}
-
 type PostReactionRaw = {
   userId: string;
   userLogin: string;

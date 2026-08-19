@@ -189,9 +189,7 @@ export const invalidInputData = {
 };
 
 export const validInputData = {
-  user: validUser,
   blog: validBlog,
   post: validPost,
   comment: validComment,
-  authRegistration: validAuthRegistration,
 };

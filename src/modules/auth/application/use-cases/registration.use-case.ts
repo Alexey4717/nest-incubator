@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 
 import { notificationToDomainException } from '@/core/notification/notification-to-domain';
 import { IUseCase } from '@/core/types/use-case';
 
-import { RegisterUserUseCase } from '@/modules/user/application/use-cases/register-user.use-case';
+import { RegisterUserCommand } from '@/modules/user/application/commands/register-user.command';
 
 type RegistrationInput = {
   login: string;
@@ -13,9 +14,9 @@ type RegistrationInput = {
 
 @Injectable()
 export class RegistrationUseCase implements IUseCase<RegistrationInput, void> {
-  constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   async execute(input: RegistrationInput): Promise<void> {
-    notificationToDomainException(await this.registerUserUseCase.execute(input));
+    notificationToDomainException(await this.commandBus.execute(new RegisterUserCommand(input)));
   }
 }

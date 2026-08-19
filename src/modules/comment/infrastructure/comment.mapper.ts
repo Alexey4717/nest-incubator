@@ -1,7 +1,6 @@
 import { CommentEntity } from '../domain/entities/comment.entity';
 import { CommentModel, CommentReactionModel } from '../models/comment.model';
 import { CommentReactionOrmEntity } from './comment-reaction.orm-entity';
-import { CommentOrmEntity } from './comment.orm-entity';
 
 export function reactionToDomain(
   reaction: CommentReactionOrmEntity,
@@ -12,49 +11,6 @@ export function reactionToDomain(
     likeStatus: reaction.likeStatus,
     createdAt: reaction.createdAt.toISOString(),
   };
-}
-
-export function reactionToOrm(
-  commentId: string,
-  reaction: CommentReactionModel,
-): CommentReactionOrmEntity {
-  const entity = new CommentReactionOrmEntity();
-  entity.commentId = commentId;
-  entity.userId = reaction.userId;
-  entity.likeStatus = reaction.likeStatus;
-  entity.createdAt = new Date(reaction.createdAt);
-  return entity;
-}
-
-export function toDomain(
-  entity: CommentOrmEntity,
-  reactions: CommentReactionOrmEntity[] = [],
-  fkPublicIds?: { postId: string; userId: string },
-): CommentModel {
-  return {
-    id: entity.publicId,
-    postId: fkPublicIds?.postId ?? entity.postId,
-    content: entity.content,
-    commentatorInfo: {
-      userId: fkPublicIds?.userId ?? entity.userId,
-      userLogin: entity.userLogin,
-    },
-    createdAt: entity.createdAt.toISOString(),
-    reactions: reactions.map((reaction) =>
-      reactionToDomain(reaction, fkPublicIds?.userId ?? reaction.userId),
-    ),
-  };
-}
-
-export function toOrm(model: CommentModel): CommentOrmEntity {
-  const entity = new CommentOrmEntity();
-  entity.publicId = model.id;
-  entity.postId = model.postId;
-  entity.content = model.content;
-  entity.userId = model.commentatorInfo.userId;
-  entity.userLogin = model.commentatorInfo.userLogin;
-  entity.createdAt = new Date(model.createdAt);
-  return entity;
 }
 
 type CommentReactionRaw = {

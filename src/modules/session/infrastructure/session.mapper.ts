@@ -14,17 +14,6 @@ export function toDomain(entity: SessionOrmEntity, userPublicId: string): Sessio
   };
 }
 
-export function toOrm(model: SessionModel): SessionOrmEntity {
-  const entity = new SessionOrmEntity();
-  entity.deviceId = model.deviceId;
-  entity.userId = model.userId;
-  entity.ip = model.ip;
-  entity.title = model.title;
-  entity.lastActiveDate = new Date(model.lastActiveDate);
-  entity.currentRefreshTokenJti = model.currentRefreshTokenJti;
-  return entity;
-}
-
 export function modelToDb(model: SessionModel): SessionDb {
   return {
     userId: model.userId,
